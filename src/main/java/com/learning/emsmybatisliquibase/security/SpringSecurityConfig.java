@@ -35,6 +35,7 @@ public class SpringSecurityConfig {
         http.csrf(AbstractHttpConfigurer::disable).authorizeHttpRequests(authorize -> {
             authorize.requestMatchers(new AntPathRequestMatcher("/api/auth/**"),
                     new AntPathRequestMatcher("/api/password/**"),
+                    new AntPathRequestMatcher("/api/employeeSession/**"),
                     new AntPathRequestMatcher("/api/otp/**"),
                     new AntPathRequestMatcher("/swagger-ui/**"),
                     new AntPathRequestMatcher("/swagger-ui.html"),

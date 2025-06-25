@@ -4,9 +4,9 @@ import com.learning.emsmybatisliquibase.dao.EmployeeSessionDao;
 import com.learning.emsmybatisliquibase.entity.EmployeeSession;
 import com.learning.emsmybatisliquibase.exception.IntegrityException;
 import com.learning.emsmybatisliquibase.exception.NotFoundException;
+import com.learning.emsmybatisliquibase.service.EmployeeService;
 import com.learning.emsmybatisliquibase.service.EmployeeSessionService;
 import com.learning.emsmybatisliquibase.utils.ErrorMessageUtil;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -23,18 +23,21 @@ public class EmployeeSessionServiceImpl implements EmployeeSessionService {
 
     private final EmployeeSessionDao employeeSessionDao;
 
+    private final EmployeeService employeeService;
+
     private static final String ACTIVE = "active";
 
     private static final String INACTIVE = "inactive";
 
     @Override
-    public Map<String, List<EmployeeSession>> getByEmployeeUuid(UUID employeeUuid, Boolean isActive) {
+    public Map<String, List<EmployeeSession>> get(String email, Boolean isActive) {
+        var employee = employeeService.getByEmail(email.trim());
         if (null != isActive) {
             var activeMessage = isActive ? ACTIVE : INACTIVE;
-            return Map.of(activeMessage, employeeSessionDao.getByEmployeeUuidAndStatus(employeeUuid, isActive));
+            return Map.of(activeMessage, employeeSessionDao.getByEmployeeUuidAndStatus(employee.getUuid(), isActive));
         }
-        return Map.of(ACTIVE, employeeSessionDao.getByEmployeeUuidAndStatus(employeeUuid, true),
-                INACTIVE, employeeSessionDao.getByEmployeeUuidAndStatus(employeeUuid, false));
+        return Map.of(ACTIVE, employeeSessionDao.getByEmployeeUuidAndStatus(employee.getUuid(), true),
+                INACTIVE, employeeSessionDao.getByEmployeeUuidAndStatus(employee.getUuid(), false));
     }
 
     @Override

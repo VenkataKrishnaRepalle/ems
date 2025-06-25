@@ -18,10 +18,10 @@ public class EmployeeSessionController {
 
     private final EmployeeSessionService employeeSessionService;
 
-    @GetMapping("/get/{employeeUuid}")
-    public ResponseEntity<Map<String, List<EmployeeSession>>> getByEmployeeUuid(@PathVariable UUID employeeUuid,
+    @GetMapping("/get/{email}")
+    public ResponseEntity<Map<String, List<EmployeeSession>>> getByEmployeeUuid(@PathVariable String email,
                                                                                 @RequestParam(required = false) Boolean isActive) {
-        return ResponseEntity.ok(employeeSessionService.getByEmployeeUuid(employeeUuid, isActive));
+        return ResponseEntity.ok(employeeSessionService.get(email, isActive));
     }
 
     @PutMapping("/update/{employeeUuid}")

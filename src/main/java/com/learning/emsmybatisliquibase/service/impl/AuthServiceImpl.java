@@ -119,7 +119,9 @@ public class AuthServiceImpl implements AuthService {
         SecurityContextHolder.getContext().setAuthentication(authentication);
         String token = jwtTokenProvider.generateToken(authentication);
 
-        saveSession(request, employee, loginDto.getRequestQuery(), token);
+        if (!UtilityService.getLocationInfo(loginDto.getRequestQuery()).isEmpty()) {
+            saveSession(request, employee, loginDto.getRequestQuery(), token);
+        }
 
         var roles = employeeRoleService.getRolesByEmployeeUuid(employee.getUuid())
                 .stream()

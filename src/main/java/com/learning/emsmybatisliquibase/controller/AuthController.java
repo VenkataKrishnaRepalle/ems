@@ -26,6 +26,12 @@ public class AuthController {
         return new ResponseEntity<>(authService.login(loginDto, request), HttpStatus.OK);
     }
 
+    @PostMapping("/refresh-token")
+    public ResponseEntity<JwtAuthResponseDto> refreshToken(@RequestBody String refreshToken,
+                                                           HttpServletRequest request) {
+        return new ResponseEntity<>(authService.refreshToken(refreshToken, request), HttpStatus.OK);
+    }
+
     @PostMapping("/validate-token")
     public ResponseEntity<Map<String, Boolean>> validateToken(@RequestParam("employeeId") UUID employeeId,
                                                               @RequestHeader("authorization") String token) {

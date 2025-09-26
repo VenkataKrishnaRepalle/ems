@@ -11,11 +11,15 @@ import java.util.concurrent.ConcurrentHashMap;
 @Getter
 @ToString
 public class RequestQuery {
-    private final Map<String, Object> properties = new ConcurrentHashMap<>();
+    private Map<String, Object> properties;
 
     @JsonAnySetter
     public void setProperty(String key, Object value) {
         properties.put(key, value);
+    }
+
+    public void setProperties(Map<String, Object> values) {
+        properties.putAll(values);
     }
 
     public void removeProperty(String propertyName) {
@@ -40,5 +44,12 @@ public class RequestQuery {
             return (List<?>) lists;
         }
         return null;
+    }
+    public RequestQuery() {
+        properties = new ConcurrentHashMap<>();
+    }
+
+    public RequestQuery(Map<String, Object> properties) {
+        this.properties = new ConcurrentHashMap<>(properties);
     }
 }

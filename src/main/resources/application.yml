@@ -14,7 +14,7 @@ spring:
   datasource:
     username: postgres
     password: root
-    url: jdbc:postgresql://localhost:5432/ems
+    url: jdbc:postgresql://localhost:5432/postgres?options=-c%20TimeZone=Asia/Kolkata
     driver-class-name: org.postgresql.Driver
     hikari:
       pool-name: RestDB-Pool
@@ -30,6 +30,8 @@ spring:
         cacheServerConfiguration: true
         elideSetAutoCommits: true
         maintainTimeStatus: false
+  hikari:
+    connection-init-sql: SET TIMEZONE='Asia/Kolkata'
   jpa:
     database: postgresql
     properties:
@@ -37,6 +39,8 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         show_sql: true
         format_sql: true
+      jdbc:
+        time_zone: Asia/Kolkata
     hibernate:
       ddl-auto: update
 
@@ -49,7 +53,7 @@ spring:
 
   liquibase:
     enabled: true
-    change-log: classpath:db/changelog/master.xml
+    change-log: classpath:db/changelog/db.changelog-master.xml
 
   jackson:
     serialization:
@@ -110,7 +114,9 @@ maximum:
 app:
   jwt:
     secret: 8ae2a6ebc0cd16aecb0e94e85c1eed0a1b1d8a668f65c3838b341a99197ff370
+    refresh-secret: 9ae2a6ebc0cd16aecb0e94e85c1eed0a1b1d8a668f65c3838b341a99197ff371
   jwt-expiration-milliseconds: 18000000
+  refresh-token-expiration-milliseconds: 86400000
 
 default:
   send:

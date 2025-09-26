@@ -42,7 +42,7 @@ docker volume create postgres_data
     * Now we can run the Postgres Docker container using the following command:
 
 ```bash
-docker run --name postgres -e POSTGRES_PASSWORD=root -d -p 5432:5432 -v postgres_data:/var/lib/postgresql/data postgres 
+docker run --name postgres -e POSTGRES_PASSWORD=root -d -p 5432:5432 -v postgres_data:/var/lib/postgresql/data postgres
 ```
 
 4. Verify the Container is Running
@@ -52,7 +52,6 @@ docker run --name postgres -e POSTGRES_PASSWORD=root -d -p 5432:5432 -v postgres
 ```bash
 docker ps
 ```
-
 
 ## Setup podman Postgres DB
 1. Pull the podman docker Image

@@ -21,6 +21,7 @@ import com.learning.emsmybatisliquibase.service.ProfileService;
 import com.learning.emsmybatisliquibase.service.AuthService;
 import com.learning.emsmybatisliquibase.utils.UtilityService;
 import eu.bitwalker.useragentutils.UserAgent;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -117,9 +118,10 @@ public class AuthServiceImpl implements AuthService {
                 ));
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
-        String token = jwtTokenProvider.generateToken(authentication);
+        String token = jwtTokenProvider.generateToken(authentication, "access");
+        String refreshToken = jwtTokenProvider.generateToken(authentication, "refreshToken");
 
-        if (!UtilityService.getLocationInfo(loginDto.getRequestQuery()).isEmpty()) {
+        if (null != loginDto.getRequestQuery()) {
             saveSession(request, employee, loginDto.getRequestQuery(), token);
         }
 
@@ -131,6 +133,7 @@ public class AuthServiceImpl implements AuthService {
                 .employeeId(employee.getUuid())
                 .email(employee.getEmail())
                 .accessToken(token)
+                .refreshToken(refreshToken)
                 .tokenType("Bearer")
                 .roles(roles)
                 .build();
@@ -146,6 +149,9 @@ public class AuthServiceImpl implements AuthService {
         var latitude = geoLocations.get("latitude");
         var location = getLocation(longitude, latitude);
         var platform = UtilityService.getPlatform(requestQuery);
+        if (location == null || location.getProperties().isEmpty()) {
+            return;
+        }
         EmployeeSession session = EmployeeSession.builder()
                 .uuid(UUID.randomUUID())
                 .employeeUuid(employee.getUuid())
@@ -191,6 +197,38 @@ public class AuthServiceImpl implements AuthService {
         return Map.of("expired", !isValid);
     }
 
+    @Override
+    public JwtAuthResponseDto refreshToken(String refreshToken, HttpServletRequest request) {
+        if (!StringUtils.hasText(refreshToken) && !refreshToken.startsWith("Bearer ")) {
+            throw new InvalidInputException("TOKEN_NOT_PROVIDED", "Token not provided");
+        }
+
+        boolean validated = jwtTokenProvider.validateToken(refreshToken, request);
+        if (validated) {
+            var employeeId = UUID.fromString(jwtTokenProvider.getUsername(refreshToken.substring(7)));
+            var employee = employeeService.getById(employeeId);
+            var passwords = passwordDao.getByEmployeeUuidAndStatus(employeeId, PasswordStatus.ACTIVE);
+            var roles = employeeRoleService.getRolesByEmployeeUuid(employee.getUuid())
+                    .stream()
+                    .map(RoleType::toString)
+                    .toList();
+            String token = jwtTokenProvider.generateToken(
+                    new UsernamePasswordAuthenticationToken(
+                            String.valueOf(employee.getUuid()),
+                            passwords.get(0)), "access");
+            return JwtAuthResponseDto.builder()
+                    .employeeId(employee.getUuid())
+                    .email(employee.getEmail())
+                    .accessToken(token)
+                    .refreshToken(refreshToken.substring(7))
+                    .tokenType("Bearer")
+                    .roles(roles)
+                    .build();
+        } else {
+            throw new InvalidInputException("INVALID_REFRESH_TOKEN", "Invalid refresh token");
+        }
+    }
+
     public boolean isCurrentUser(final UUID userId) {
         if (userId == null) {
             return false;
@@ -213,6 +251,7 @@ public class AuthServiceImpl implements AuthService {
         return employee.getManagerUuid().equals(currentUserId);
     }
 
+    @CircuitBreaker(name = "locationService", fallbackMethod = "getLocationFallback")
     private RequestQuery getLocation(String longitude, String latitude) {
         return webClient.get()
                 .uri(uriBuilder -> uriBuilder
@@ -225,4 +264,10 @@ public class AuthServiceImpl implements AuthService {
                 .block();
     }
 
+    private RequestQuery getLocationFallback(String longitude, String latitude, Throwable throwable) {
+        log.error("Location service is down: {}", throwable.getMessage());
+        return new RequestQuery();
+    }
+
 }
+

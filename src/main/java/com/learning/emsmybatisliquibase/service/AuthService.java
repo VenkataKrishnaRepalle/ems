@@ -13,4 +13,6 @@ public interface AuthService {
     SuccessResponseDto verifyEmail(String email);
 
     Map<String, Boolean> validateToken(UUID employeeId, String token);
+
+    JwtAuthResponseDto refreshToken(String refreshToken, HttpServletRequest request);
 }

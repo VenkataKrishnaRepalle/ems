@@ -19,19 +19,37 @@ public class JwtTokenProvider {
 
     @Value("${app.jwt.secret}")
     private String jwtSecretKey;
+
     @Value("${app.jwt-expiration-milliseconds}")
     private Long jwtExpirationDate;
 
-    public String generateToken(Authentication authentication) {
+    @Value("${app.jwt.refresh-secret}")
+    private String refreshTokenSecretKey;
+
+    @Value("${app.refresh-token-expiration-milliseconds}")
+    private Long refreshTokenExpirationDate;
+
+    public String generateToken(Authentication authentication, String tokenType) {
         String username = authentication.getName();
         Date currentDate = new Date();
         Date expireDate = new Date(currentDate.getTime() + jwtExpirationDate);
-
         return Jwts.builder()
                 .setSubject(username)
                 .setIssuedAt(new Date())
                 .setExpiration(expireDate)
                 .signWith(key())
+                .compact();
+    }
+
+    public String generateRefreshToken(Authentication authentication) {
+        String username = authentication.getName();
+        Date currentDate = new Date();
+        Date expireDate = new Date(currentDate.getTime() + refreshTokenExpirationDate);
+        return Jwts.builder()
+                .setSubject(username)
+                .setIssuedAt(new Date())
+                .setExpiration(expireDate)
+                .signWith(Keys.hmacShaKeyFor(Decoders.BASE64.decode(refreshTokenSecretKey)))
                 .compact();
     }
 

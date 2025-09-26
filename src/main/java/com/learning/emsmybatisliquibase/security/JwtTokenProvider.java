@@ -11,6 +11,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
+import javax.crypto.SecretKey;
 import java.security.Key;
 import java.util.Date;
 
@@ -29,14 +30,14 @@ public class JwtTokenProvider {
     @Value("${app.refresh-token-expiration-milliseconds}")
     private Long refreshTokenExpirationDate;
 
-    public String generateToken(Authentication authentication, String tokenType) {
+    public String generateToken(Authentication authentication) {
         String username = authentication.getName();
         Date currentDate = new Date();
         Date expireDate = new Date(currentDate.getTime() + jwtExpirationDate);
         return Jwts.builder()
-                .setSubject(username)
-                .setIssuedAt(new Date())
-                .setExpiration(expireDate)
+                .subject(username)
+                .issuedAt(new Date())
+                .expiration(expireDate)
                 .signWith(key())
                 .compact();
     }
@@ -46,9 +47,9 @@ public class JwtTokenProvider {
         Date currentDate = new Date();
         Date expireDate = new Date(currentDate.getTime() + refreshTokenExpirationDate);
         return Jwts.builder()
-                .setSubject(username)
-                .setIssuedAt(new Date())
-                .setExpiration(expireDate)
+                .subject(username)
+                .issuedAt(new Date())
+                .expiration(expireDate)
                 .signWith(Keys.hmacShaKeyFor(Decoders.BASE64.decode(refreshTokenSecretKey)))
                 .compact();
     }
@@ -59,12 +60,28 @@ public class JwtTokenProvider {
         );
     }
 
+    private Key refreshKey() {
+        return Keys.hmacShaKeyFor(
+                Decoders.BASE64.decode(refreshTokenSecretKey)
+        );
+    }
+
     public String getUsername(String token) {
         Claims claims = Jwts.parser()
-                .setSigningKey(key())
+                .verifyWith((SecretKey) key())
                 .build()
-                .parseClaimsJws(token)
-                .getBody();
+                .parseSignedClaims(token)
+                .getPayload();
+
+        return claims.getSubject();
+    }
+
+    public String getUsernameForRefreshToken(String token) {
+        Claims claims = Jwts.parser()
+                .verifyWith((SecretKey) refreshKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
 
         return claims.getSubject();
     }
@@ -73,7 +90,7 @@ public class JwtTokenProvider {
     public boolean validateToken(String token, HttpServletRequest request) {
         try {
             Jwts.parser()
-                    .setSigningKey(key())
+                    .verifyWith((SecretKey) key())
                     .build()
                     .parse(token);
             return true;
@@ -91,8 +108,20 @@ public class JwtTokenProvider {
 
     public boolean validateToken(String token) {
         try {
-            var claims = Jwts.parser()
+            Jwts.parser()
                     .setSigningKey(key())
+                    .build()
+                    .parse(token);
+            return true;
+        } catch (Exception ex) {
+            return false;
+        }
+    }
+
+    public boolean validateRefreshToken(String token) {
+        try {
+            Jwts.parser()
+                    .setSigningKey(refreshKey())
                     .build()
                     .parse(token);
             return true;

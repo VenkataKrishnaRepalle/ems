@@ -41,6 +41,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import static com.learning.emsmybatisliquibase.exception.errorcodes.EmployeeErrorCodes.PASSWORD_NOT_MATCHED;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -70,7 +71,7 @@ public class AuthServiceImpl implements AuthService {
     private final WebClient webClient;
 
     @Value("${maximum.login.count}")
-    Integer MAX_LOGIN_COUNT;
+    private Integer maxLoginCount;
 
     @Value("${api.location.key}")
     String key;
@@ -107,8 +108,8 @@ public class AuthServiceImpl implements AuthService {
         }
 
         var sessions = employeeSessionDao.getByEmployeeUuid(employee.getUuid());
-        if (sessions.size() >= MAX_LOGIN_COUNT) {
-            throw new FoundException("MAX_LOGIN_ATTEMPT_REACHED", "Max login attempts of " + MAX_LOGIN_COUNT +
+        if (sessions.size() >= maxLoginCount) {
+            throw new FoundException("MAX_LOGIN_ATTEMPT_REACHED", "Max login attempts of " + maxLoginCount +
                     " reached to your account");
         }
         Authentication authentication = authenticationManager.authenticate(
@@ -118,8 +119,8 @@ public class AuthServiceImpl implements AuthService {
                 ));
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
-        String token = jwtTokenProvider.generateToken(authentication, "access");
-        String refreshToken = jwtTokenProvider.generateToken(authentication, "refreshToken");
+        String token = jwtTokenProvider.generateToken(authentication);
+        String refreshToken = jwtTokenProvider.generateRefreshToken(authentication);
 
         if (null != loginDto.getRequestQuery()) {
             saveSession(request, employee, loginDto.getRequestQuery(), token);
@@ -129,14 +130,7 @@ public class AuthServiceImpl implements AuthService {
                 .stream()
                 .map(RoleType::toString)
                 .toList();
-        return JwtAuthResponseDto.builder()
-                .employeeId(employee.getUuid())
-                .email(employee.getEmail())
-                .accessToken(token)
-                .refreshToken(refreshToken)
-                .tokenType("Bearer")
-                .roles(roles)
-                .build();
+        return generateJwtResponse(employee.getUuid(), employee.getEmail(), token, refreshToken, roles);
     }
 
     private void saveSession(HttpServletRequest request, Employee employee, RequestQuery requestQuery, String token) {
@@ -203,11 +197,15 @@ public class AuthServiceImpl implements AuthService {
             throw new InvalidInputException("TOKEN_NOT_PROVIDED", "Token not provided");
         }
 
-        boolean validated = jwtTokenProvider.validateToken(refreshToken, request);
-        if (validated) {
-            var employeeId = UUID.fromString(jwtTokenProvider.getUsername(refreshToken.substring(7)));
+        refreshToken =refreshToken.substring(7);
+        boolean isValid = jwtTokenProvider.validateRefreshToken(refreshToken);
+        if (isValid) {
+            var employeeId = UUID.fromString(jwtTokenProvider.getUsernameForRefreshToken(refreshToken));
             var employee = employeeService.getById(employeeId);
             var passwords = passwordDao.getByEmployeeUuidAndStatus(employeeId, PasswordStatus.ACTIVE);
+            if(passwords.size() != 1) {
+                throw new InvalidInputException("ACCOUNT_LOCKED", "Account Locked, Please reset password");
+            }
             var roles = employeeRoleService.getRolesByEmployeeUuid(employee.getUuid())
                     .stream()
                     .map(RoleType::toString)
@@ -215,18 +213,22 @@ public class AuthServiceImpl implements AuthService {
             String token = jwtTokenProvider.generateToken(
                     new UsernamePasswordAuthenticationToken(
                             String.valueOf(employee.getUuid()),
-                            passwords.get(0)), "access");
-            return JwtAuthResponseDto.builder()
-                    .employeeId(employee.getUuid())
-                    .email(employee.getEmail())
-                    .accessToken(token)
-                    .refreshToken(refreshToken.substring(7))
-                    .tokenType("Bearer")
-                    .roles(roles)
-                    .build();
+                            passwords.get(0).getPassword()));
+            return generateJwtResponse(employeeId, employee.getEmail(), token, refreshToken, roles);
         } else {
             throw new InvalidInputException("INVALID_REFRESH_TOKEN", "Invalid refresh token");
         }
+    }
+
+    private JwtAuthResponseDto generateJwtResponse(UUID employeeId, String email, String token, String refreshToken, List<String> roles) {
+        return JwtAuthResponseDto.builder()
+                .employeeId(employeeId)
+                .email(email)
+                .accessToken(token)
+                .refreshToken(refreshToken)
+                .tokenType("Bearer")
+                .roles(roles)
+                .build();
     }
 
     public boolean isCurrentUser(final UUID userId) {
@@ -264,7 +266,7 @@ public class AuthServiceImpl implements AuthService {
                 .block();
     }
 
-    private RequestQuery getLocationFallback(String longitude, String latitude, Throwable throwable) {
+    private RequestQuery getLocationFallback(Throwable throwable) {
         log.error("Location service is down: {}", throwable.getMessage());
         return new RequestQuery();
     }

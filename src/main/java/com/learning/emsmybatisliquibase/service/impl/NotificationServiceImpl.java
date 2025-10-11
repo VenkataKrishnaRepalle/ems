@@ -16,7 +16,10 @@ import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Locale;
 
 @Slf4j
 @Service
@@ -87,7 +90,7 @@ public class NotificationServiceImpl implements NotificationService {
 
                 Context context = new Context();
                 context.setVariable("name", employee.getFirstName() + " " + employee.getLastName());
-                context.setVariable("reviewStartDate", employee.getStartTime());
+                context.setVariable("reviewStartDate", formatDateTime(String.valueOf(employee.getStartTime())));
                 context.setVariable("reviewType", reviewType);
 
                 helper.setText(templateEngine.process(beforeReviewStartName, context), true);
@@ -110,7 +113,7 @@ public class NotificationServiceImpl implements NotificationService {
 
                 Context context = new Context();
                 context.setVariable("name", employee.getFirstName() + " " + employee.getLastName());
-                context.setVariable("reviewStartDate", employee.getStartTime());
+                context.setVariable("reviewStartDate", formatDateTime(String.valueOf(employee.getStartTime())));
                 context.setVariable("reviewType", reviewType);
 
                 helper.setText(templateEngine.process(reviewStartName, context), true);
@@ -130,5 +133,26 @@ public class NotificationServiceImpl implements NotificationService {
         helper.setTo(toEmail);
         helper.setSubject(subject);
         return helper;
+    }
+
+    public static String formatDateTime(String isoDateTime) {
+        OffsetDateTime dateTime = OffsetDateTime.parse(isoDateTime);
+
+        int day = dateTime.getDayOfMonth();
+        String dayWithOrdinal;
+
+        if (day >= 11 && day <= 13) {
+            dayWithOrdinal = day + "th";
+        } else {
+            dayWithOrdinal = switch (day % 10) {
+                case 1 -> day + "st";
+                case 2 -> day + "nd";
+                case 3 -> day + "rd";
+                default -> day + "th";
+            };
+        }
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMMM yyyy 'at' ha", Locale.ENGLISH);
+        return dayWithOrdinal + " " + dateTime.format(formatter);
     }
 }

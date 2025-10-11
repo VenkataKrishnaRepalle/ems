@@ -42,7 +42,7 @@ public class NotificationServiceImpl implements NotificationService {
     String emailTemplateSuccessfulOnboard;
 
     @Value("${email.template.review.start.before.name}")
-    String beforeReviewStartEmail;
+    String beforeReviewStartName;
 
     @Value("${email.template.review.start.before.subject}")
     String beforeReviewStartSubject;
@@ -90,7 +90,7 @@ public class NotificationServiceImpl implements NotificationService {
                 context.setVariable("reviewStartDate", employee.getStartTime());
                 context.setVariable("reviewType", reviewType);
 
-                helper.setText(templateEngine.process(beforeReviewStartEmail, context), true);
+                helper.setText(templateEngine.process(beforeReviewStartName, context), true);
                 mailSender.send(helper.getMimeMessage());
             } catch (MessagingException e) {
                 log.error("Error Sending Notification before start email to colleague {}", employee.getUuid(), e);
@@ -103,17 +103,17 @@ public class NotificationServiceImpl implements NotificationService {
     public void sendStartNotification(ReviewType reviewType) {
         var notifications = reviewTimelineDao.getTimelineIdsByReviewType(reviewType);
         var thread = new Thread(() -> notifications.forEach(employee -> {
-            log.info("Sending notification before start email to colleague {}", employee.getUuid());
+            log.info("Sending notification start email to colleague {}", employee.getUuid());
             try {
                 MimeMessageHelper helper = createMimeMessageHelper(defaultEmail, employee.getEmail(),
-                        beforeReviewStartSubject);
+                        reviewStartSubject);
 
                 Context context = new Context();
                 context.setVariable("name", employee.getFirstName() + " " + employee.getLastName());
                 context.setVariable("reviewStartDate", employee.getStartTime());
                 context.setVariable("reviewType", reviewType);
 
-                helper.setText(templateEngine.process(beforeReviewStartEmail, context), true);
+                helper.setText(templateEngine.process(reviewStartName, context), true);
                 mailSender.send(helper.getMimeMessage());
             } catch (MessagingException e) {
                 log.error("Error Sending Notification before start email to colleague {}", employee.getUuid(), e);

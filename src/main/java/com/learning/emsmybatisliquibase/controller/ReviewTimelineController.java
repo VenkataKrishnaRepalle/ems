@@ -36,8 +36,8 @@ public class ReviewTimelineController {
     }
 
     @PutMapping("/startTimeline")
-    public ResponseEntity<SuccessResponseDto> updateTimelineForQuarter(@RequestBody ReviewType completedReviewType,
-                                                                       @RequestBody ReviewType startReviewType) {
+    public ResponseEntity<SuccessResponseDto> updateTimelineForQuarter(@RequestParam ReviewType completedReviewType,
+                                                                       @RequestParam ReviewType startReviewType) {
         return new ResponseEntity<>(reviewTimelineService.startTimelinesForQuarter(completedReviewType,
                 startReviewType),
                 HttpStatus.ACCEPTED);

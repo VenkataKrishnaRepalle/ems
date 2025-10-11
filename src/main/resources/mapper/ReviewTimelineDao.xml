@@ -50,12 +50,12 @@
 
     <select id="findByStatusAndReviewType" resultMap="reviewTimelineStructure">
         SELECT t.*
-        from employee_period ec
-                 left join period c on c.uuid = ec.period_uuid
-                 left join review_timeline t on ec.uuid = t.employee_period_uuid
-        where ec.status = #{status}
+        from employee_period ep
+                 left join period p on p.uuid = ep.period_uuid
+                 left join review_timeline t on ep.uuid = t.employee_period_uuid
+        where t.status = #{status}
           and t.type = #{reviewType}
-          and c.status = 'STARTED'
+          and p.status = 'STARTED'
           and t.status != 'LOCKED'
     </select>
 

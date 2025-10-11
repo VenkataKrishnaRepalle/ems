@@ -12,15 +12,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 
-import java.time.OffsetDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Locale;
 
 @Slf4j
 @Service
@@ -57,64 +53,73 @@ public class NotificationServiceImpl implements NotificationService {
     @Value("${email.template.review.start.subject}")
     String reviewStartSubject;
 
-    @Async("notificationExecutor")
     @Override
     public void sendSuccessfulEmployeeOnBoard(Employee employee, String password, int capacity) {
-        String templateName = (capacity == 1)
-                ? emailTemplateNameSuccessfulOnboard
-                : getEmailTemplateNameSuccessfulOnboardTempPassword;
+        String templateName = capacity == 1 ? emailTemplateNameSuccessfulOnboard :
+                getEmailTemplateNameSuccessfulOnboardTempPassword;
+        Thread thread = new Thread(() -> {
+            try {
+                MimeMessageHelper helper = createMimeMessageHelper(defaultEmail, employee.getEmail(),
+                        emailTemplateSuccessfulOnboard);
 
-        try {
-            MimeMessageHelper helper = createMimeMessageHelper(
-                    defaultEmail,
-                    employee.getEmail(),
-                    emailTemplateSuccessfulOnboard
-            );
+                Context context = new Context();
+                context.setVariable("name", employee.getFirstName() + " " + employee.getLastName());
+                context.setVariable("email", employee.getEmail());
+                context.setVariable("phoneNumber", employee.getPhoneNumber());
+                context.setVariable("password", password);
 
-            Context context = new Context();
-            context.setVariable("name", employee.getFirstName() + " " + employee.getLastName());
-            context.setVariable("email", employee.getEmail());
-            context.setVariable("phoneNumber", employee.getPhoneNumber());
-            context.setVariable("password", password);
-
-            helper.setText(templateEngine.process(templateName, context), true);
-            mailSender.send(helper.getMimeMessage());
-        } catch (MessagingException e) {
-            log.error("Error sending successful onboarding email for employee with UUID: {}", employee.getUuid(), e);
-        }
+                helper.setText(templateEngine.process(templateName, context), true);
+                mailSender.send(helper.getMimeMessage());
+            } catch (MessagingException e) {
+                log.error("Error sending successful onboarding email for employee with UUID: {}", employee.getUuid(), e);
+            }
+        });
+        thread.start();
     }
 
-    @Async("notificationExecutor")
     @Override
     public void sendNotificationBeforeStart(List<NotificationDto> notifications, ReviewType reviewType) {
-        notifications.forEach(employee ->
-                mimeHelper(reviewType, employee, beforeReviewStartSubject, beforeReviewStartName)
-        );
+        var thread = new Thread(() -> notifications.forEach(employee -> {
+            log.info("Sending notification before start email to colleague {}", employee.getUuid());
+            try {
+                MimeMessageHelper helper = createMimeMessageHelper(defaultEmail, employee.getEmail(),
+                        beforeReviewStartSubject);
+
+                Context context = new Context();
+                context.setVariable("name", employee.getFirstName() + " " + employee.getLastName());
+                context.setVariable("reviewStartDate", employee.getStartTime());
+                context.setVariable("reviewType", reviewType);
+
+                helper.setText(templateEngine.process(beforeReviewStartName, context), true);
+                mailSender.send(helper.getMimeMessage());
+            } catch (MessagingException e) {
+                log.error("Error Sending Notification before start email to colleague {}", employee.getUuid(), e);
+            }
+        }));
+        thread.start();
     }
 
-    @Async("notificationExecutor")
     @Override
     public void sendStartNotification(ReviewType reviewType) {
         var notifications = reviewTimelineDao.getTimelineIdsByReviewType(reviewType);
-        notifications.forEach(employee -> {
+        var thread = new Thread(() -> notifications.forEach(employee -> {
             log.info("Sending notification start email to colleague {}", employee.getUuid());
-            mimeHelper(reviewType, employee, reviewStartSubject, reviewStartName);
-        });
-    }
+            try {
+                MimeMessageHelper helper = createMimeMessageHelper(defaultEmail, employee.getEmail(),
+                        reviewStartSubject);
 
-    private void mimeHelper(ReviewType reviewType, NotificationDto employee, String subject, String templateName) {
-        try {
-            MimeMessageHelper helper = createMimeMessageHelper(defaultEmail, employee.getEmail(), subject);
-            Context context = new Context();
-            context.setVariable("name", employee.getFirstName() + " " + employee.getLastName());
-            context.setVariable("reviewStartDate", formatDateTime(String.valueOf(employee.getStartTime())));
-            context.setVariable("reviewType", reviewType);
+                Context context = new Context();
+                context.setVariable("name", employee.getFirstName() + " " + employee.getLastName());
+                context.setVariable("reviewStartDate", employee.getStartTime());
+                context.setVariable("reviewType", reviewType);
 
-            helper.setText(templateEngine.process(templateName, context), true);
-            mailSender.send(helper.getMimeMessage());
-        } catch (MessagingException e) {
-            log.error("Error Sending Notification email to colleague {}", employee.getUuid(), e);
-        }
+                helper.setText(templateEngine.process(reviewStartName, context), true);
+                mailSender.send(helper.getMimeMessage());
+            } catch (MessagingException e) {
+                log.error("Error Sending Notification before start email to colleague {}", employee.getUuid(), e);
+            }
+        }));
+        thread.start();
     }
 
     private MimeMessageHelper createMimeMessageHelper(String fromEmail, String toEmail, String subject)
@@ -125,22 +130,5 @@ public class NotificationServiceImpl implements NotificationService {
         helper.setTo(toEmail);
         helper.setSubject(subject);
         return helper;
-    }
-
-    public static String formatDateTime(String isoDateTime) {
-        OffsetDateTime dateTime = OffsetDateTime.parse(isoDateTime);
-        int day = dateTime.getDayOfMonth();
-        String dayWithOrdinal = switch (day) {
-            case 11, 12, 13 -> day + "th";
-            default -> switch (day % 10) {
-                case 1 -> day + "st";
-                case 2 -> day + "nd";
-                case 3 -> day + "rd";
-                default -> day + "th";
-            };
-        };
-
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMMM yyyy 'at' ha", Locale.ENGLISH);
-        return dayWithOrdinal + " " + dateTime.format(formatter);
     }
 }

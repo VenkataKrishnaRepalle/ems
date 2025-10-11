@@ -101,6 +101,7 @@ public class ReviewTimelineServiceImpl implements ReviewTimelineService {
             timeline.setUpdatedTime(Instant.now());
             update(timeline);
         });
+
         notificationService.sendStartNotification(startedReviewType);
 
         return SuccessResponseDto.builder()

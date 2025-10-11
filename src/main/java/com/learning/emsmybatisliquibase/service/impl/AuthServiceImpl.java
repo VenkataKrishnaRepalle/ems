@@ -27,6 +27,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -37,6 +38,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
 
 import static com.learning.emsmybatisliquibase.exception.errorcodes.EmployeeErrorCodes.PASSWORD_NOT_MATCHED;
 
@@ -79,7 +81,16 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public JwtAuthResponseDto login(LoginDto loginDto, HttpServletRequest request) {
-        var employee = employeeService.getByEmail(loginDto.getEmail());
+        var employeeByEmail = employeeService.findByEmail(loginDto.getEmail());
+        var employeeByUsername = employeeService.findByUsername(loginDto.getEmail());
+        Employee employee = null;
+        if(employeeByEmail.isPresent()) {
+            employee = employeeByEmail.get();
+        } else if (employeeByUsername.isPresent()) {
+            employee = employeeByUsername.get();
+        } else {
+            throw new InvalidInputException("INVALID_INPUT", "Invalid email or username");
+        }
         var profile = profileService.getByEmployeeUuid(employee.getUuid());
         if (profile.getProfileStatus() == ProfileStatus.PENDING) {
             throw new InvalidInputException("ACCOUNT_NOT_ACTIVATED", "Account not activated, Please set new password");
@@ -262,6 +273,10 @@ public class AuthServiceImpl implements AuthService {
                         .queryParam("key", key)
                         .build())
                 .retrieve()
+                .onStatus(HttpStatusCode::is4xxClientError, clientResponse -> {
+                    log.error("Error fetching Location: {}", clientResponse.statusCode());
+                    return clientResponse.createException().flatMap(Mono::error);
+                })
                 .bodyToMono(RequestQuery.class)
                 .block();
     }
@@ -272,4 +287,3 @@ public class AuthServiceImpl implements AuthService {
     }
 
 }
-

@@ -31,6 +31,8 @@ public class Employee implements Serializable {
 
     private String phoneNumber;
 
+    private String username;
+
     private String email;
 
     private UUID managerUuid;

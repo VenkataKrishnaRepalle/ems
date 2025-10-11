@@ -7,6 +7,7 @@ import com.learning.emsmybatisliquibase.service.EmployeeService;
 import jakarta.mail.MessagingException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -25,6 +26,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/employee")
 @RequiredArgsConstructor
+@Slf4j
 public class EmployeeController {
 
     private final EmployeeService employeeService;
@@ -32,6 +34,7 @@ public class EmployeeController {
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'EMPLOYEE')")
     @GetMapping(value = "/me")
     public ResponseEntity<EmployeeResponseDto> getMe() {
+        log.info("Employee Controller:: /me is called");
         return new ResponseEntity<>(employeeService.getMe(), HttpStatus.OK);
     }
 

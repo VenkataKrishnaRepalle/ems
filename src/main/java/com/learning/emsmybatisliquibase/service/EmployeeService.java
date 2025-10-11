@@ -7,7 +7,7 @@ import jakarta.mail.MessagingException;
 
 import java.io.UnsupportedEncodingException;
 import java.util.List;
-import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface EmployeeService {
@@ -17,6 +17,10 @@ public interface EmployeeService {
     Employee getById(UUID id);
 
     Employee getByEmail(String email);
+
+    Optional<Employee> findByEmail(String email);
+
+    Optional<Employee> findByUsername(String username);
 
     void updateLeavingDate(UUID id, UpdateLeavingDateDto updateLeavingDate);
 

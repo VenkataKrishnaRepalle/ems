@@ -2,6 +2,7 @@ package com.learning.emsmybatisliquibase.security;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -32,7 +33,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
-        String token = getTokenFromRequest(request);
+        String token = null;
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for(var cookie : cookies) {
+                if (cookie.getName().equals("token")) {
+                    token = cookie.getValue();
+                }
+            }
+        }
+        if(token == null) {
+            token = getTokenFromRequest(request);
+        }
 
         if (StringUtils.hasText(token) && jwtTokenProvider.validateToken(token, request)) {
             String username = jwtTokenProvider.getUsername(token);

@@ -6,6 +6,7 @@ import com.learning.emsmybatisliquibase.entity.*;
 import com.learning.emsmybatisliquibase.entity.enums.JobTitleType;
 import com.learning.emsmybatisliquibase.entity.enums.PeriodStatus;
 import com.learning.emsmybatisliquibase.entity.enums.ProfileStatus;
+import com.learning.emsmybatisliquibase.entity.enums.RoleType;
 import com.learning.emsmybatisliquibase.exception.FoundException;
 import com.learning.emsmybatisliquibase.exception.IntegrityException;
 import com.learning.emsmybatisliquibase.exception.InvalidInputException;
@@ -52,6 +53,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     private final NotificationService notificationService;
 
     private final Random random = new Random();
+    private final EmployeeRoleService employeeRoleService;
 
     @Override
     @Transactional
@@ -69,6 +71,9 @@ public class EmployeeServiceImpl implements EmployeeService {
         boolean isManager = "T".equalsIgnoreCase(employeeDto.getIsManager());
         var employee = employeeMapper.addEmployeeDtoToEmployee(employeeDto);
         employee.setUuid(UUID.randomUUID());
+        if(null == employee.getUsername()) {
+            employee.setUsername(employee.getEmail());
+        }
         employee.setIsManager(isManager);
         employee.setManagerUuid(employeeDto.getManagerUuid());
         employee.setCreatedTime(Instant.now());
@@ -83,7 +88,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         }
 
         String password;
-        if (Boolean.TRUE.equals(validatePasswords(employeeDto.getPassword(), employeeDto.getConfirmPassword()))) {
+        if (validatePasswords(employeeDto.getPassword(), employeeDto.getConfirmPassword())) {
             password = employeeDto.getPassword();
         } else {
             password = generateRandomPassword();
@@ -112,7 +117,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 
         employeePeriodService.periodAssignment(List.of(employee.getUuid()));
 
-        if (Boolean.FALSE.equals(validatePasswords(employeeDto.getPassword(), employeeDto.getConfirmPassword()))) {
+        if (!validatePasswords(employeeDto.getPassword(), employeeDto.getConfirmPassword())) {
             notificationService.sendSuccessfulEmployeeOnBoard(employee, password, 0);
         } else {
             notificationService.sendSuccessfulEmployeeOnBoard(employee, password, 1);
@@ -130,14 +135,14 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     private ProfileStatus profileStatus(AddEmployeeDto employeeDto) {
         ProfileStatus profileStatus;
-        Boolean value = validatePasswords(employeeDto.getPassword(), employeeDto.getConfirmPassword());
+        boolean value = validatePasswords(employeeDto.getPassword(), employeeDto.getConfirmPassword());
         if (employeeDto.getLeavingDate() != null && employeeDto.getLeavingDate().isAfter(LocalDate.now())) {
             profileStatus = ProfileStatus.INACTIVE;
         } else if ((employeeDto.getLeavingDate() == null ||
-                employeeDto.getLeavingDate().isBefore(LocalDate.now())) && Boolean.TRUE.equals(!value)) {
+                employeeDto.getLeavingDate().isBefore(LocalDate.now())) && !value) {
             profileStatus = ProfileStatus.PENDING;
         } else if ((employeeDto.getLeavingDate() == null ||
-                employeeDto.getLeavingDate().isBefore(LocalDate.now())) && Boolean.TRUE.equals(value)) {
+                employeeDto.getLeavingDate().isBefore(LocalDate.now())) && value) {
             profileStatus = ProfileStatus.ACTIVE;
         } else {
             profileStatus = ProfileStatus.PENDING;
@@ -145,7 +150,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         return profileStatus;
     }
 
-    private Boolean validatePasswords(String password, String confirmPassword) {
+    private boolean validatePasswords(String password, String confirmPassword) {
         return StringUtils.isNotEmpty(password) && StringUtils.isNotEmpty(confirmPassword);
     }
 
@@ -220,6 +225,16 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
+    public Optional<Employee> findByEmail(String email) {
+        return Optional.ofNullable(employeeDao.getByEmail(email));
+    }
+
+    @Override
+    public Optional<Employee> findByUsername(String username) {
+        return Optional.ofNullable(employeeDao.getByUsername(username));
+    }
+
+    @Override
     public List<Employee> getByManagerUuid(UUID managerId) {
         var employee = getById(managerId);
         if (employee.getIsManager().equals(Boolean.TRUE)) {
@@ -275,7 +290,15 @@ public class EmployeeServiceImpl implements EmployeeService {
         var employeeUuid = UUID.fromString(SecurityContextHolder.getContext()
                 .getAuthentication()
                 .getName());
-        return employeeDao.getMe(employeeUuid);
+        var employee = employeeDao.getMe(employeeUuid);
+        var roles = employeeRoleService.getRolesByEmployeeUuid(employee.getUuid())
+                .stream()
+                .map(RoleType::toString)
+                .toList();
+        if(!roles.isEmpty()) {
+            employee.setRoles(roles);
+        }
+        return employee;
     }
 
     @Override

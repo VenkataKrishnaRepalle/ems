@@ -17,6 +17,8 @@ public interface EmployeeDao {
 
     Employee getByEmail(@Param("email") String email);
 
+    Employee getByUsername(@Param("username") String username);
+
     int insert(@Param("employee") Employee employee);
 
     int updateLeavingDate(@Param("leavingDate") Date leavingDate, @Param("employeeUuid") UUID employeeUuid);

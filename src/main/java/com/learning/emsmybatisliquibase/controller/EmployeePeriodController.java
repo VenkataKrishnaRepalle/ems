@@ -6,6 +6,7 @@ import com.learning.emsmybatisliquibase.dto.SuccessResponseDto;
 import com.learning.emsmybatisliquibase.entity.enums.PeriodStatus;
 import com.learning.emsmybatisliquibase.service.EmployeePeriodService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,6 +19,7 @@ import java.util.UUID;
 @RequestMapping("api/employeePeriod")
 @RestController
 @RequiredArgsConstructor
+@Slf4j
 public class EmployeePeriodController {
 
     private final EmployeePeriodService employeePeriodService;
@@ -42,6 +44,7 @@ public class EmployeePeriodController {
     @GetMapping("getByYear/{employeeId}")
     public ResponseEntity<EmployeeCycleAndTimelineResponseDto> getByYear(@PathVariable UUID employeeId,
                                                                          @RequestParam(name = "year", required = false) Optional<Long> year) {
+        log.info("Employee Controller:: getByYear is called");
         return new ResponseEntity<>(employeePeriodService.getByYear(employeeId, year), HttpStatus.OK);
     }
 

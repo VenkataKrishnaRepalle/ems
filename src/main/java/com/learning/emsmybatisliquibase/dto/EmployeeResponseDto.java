@@ -1,6 +1,7 @@
 package com.learning.emsmybatisliquibase.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.learning.emsmybatisliquibase.entity.enums.Gender;
 import com.learning.emsmybatisliquibase.entity.enums.ProfileStatus;
 import lombok.AllArgsConstructor;
@@ -10,6 +11,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 
 @Data
@@ -52,4 +54,7 @@ public class EmployeeResponseDto {
     private LocalDate leavingDate;
 
     private ProfileStatus status;
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    private List<String> roles;
 }

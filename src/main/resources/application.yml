@@ -14,7 +14,7 @@ spring:
   datasource:
     username: postgres
     password: root
-    url: jdbc:postgresql://localhost:5432/postgres?options=-c%20TimeZone=Asia/Kolkata
+    url: jdbc:postgresql://localhost:5430/ems-docker
     driver-class-name: org.postgresql.Driver
     hikari:
       pool-name: RestDB-Pool
@@ -30,8 +30,6 @@ spring:
         cacheServerConfiguration: true
         elideSetAutoCommits: true
         maintainTimeStatus: false
-  hikari:
-    connection-init-sql: SET TIMEZONE='Asia/Kolkata'
   jpa:
     database: postgresql
     properties:
@@ -136,3 +134,9 @@ email:
         before:
           name: review-before-start
           subject: Your Quarter Review will start
+
+resilience4j.circuitbreaker:
+  instances:
+    locationService:
+      record-exceptions:
+        - org.springframework.web.reactive.function.client.WebClientResponseException

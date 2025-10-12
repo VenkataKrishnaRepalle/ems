@@ -42,9 +42,6 @@ class AuthServiceImplTest {
     @Mock
     PasswordService passwordService;
 
-    @Mock
-    private PasswordDao passwordDao;
-
     @Test
     void testLogin_InvalidCredentials_ThrowsInvalidInputException() {
         UUID employeeUuid = UUID.randomUUID();

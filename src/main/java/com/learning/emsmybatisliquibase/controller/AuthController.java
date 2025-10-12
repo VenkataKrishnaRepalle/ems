@@ -49,4 +49,10 @@ public class AuthController {
     public ResponseEntity<SuccessResponseDto> verifyEmail(@RequestParam(name = "email") String email) {
         return new ResponseEntity<>(authService.verifyEmail(email), HttpStatus.OK);
     }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(HttpServletRequest request, HttpServletResponse response) {
+        authService.logout(request, response);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
 }

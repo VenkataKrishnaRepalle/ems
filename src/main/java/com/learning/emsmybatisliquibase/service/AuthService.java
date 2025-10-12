@@ -18,4 +18,6 @@ public interface AuthService {
     Map<String, Boolean> validateToken(String token, String refreshToken, HttpServletRequest request);
 
     EmployeeResponseDto refreshToken(String refreshToken, HttpServletRequest request, HttpServletResponse response);
+
+    void logout(HttpServletRequest request, HttpServletResponse response);
 }

@@ -256,6 +256,20 @@ public class AuthServiceImpl implements AuthService {
         }
     }
 
+    @Override
+    public void logout(HttpServletRequest request, HttpServletResponse response) {
+        removeAuthCookie(response, "accessToken");
+        removeAuthCookie(response, "refreshToken");
+    }
+
+    private void removeAuthCookie(HttpServletResponse response, String name) {
+        Cookie cookie = new Cookie(name, "");
+        cookie.setMaxAge(0);
+        cookie.setHttpOnly(true);
+        cookie.setPath("/");
+        response.addCookie(cookie);
+    }
+
     public boolean isCurrentUser(final UUID userId) {
         if (userId == null) {
             return false;

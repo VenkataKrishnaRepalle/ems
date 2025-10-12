@@ -258,7 +258,7 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public void logout(HttpServletRequest request, HttpServletResponse response) {
-        removeAuthCookie(response, "accessToken");
+        removeAuthCookie(response, "token");
         removeAuthCookie(response, "refreshToken");
     }
 

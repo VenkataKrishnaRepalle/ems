@@ -8,7 +8,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.util.Map;
-import java.util.UUID;
 
 public interface AuthService {
     EmployeeResponseDto login(LoginDto loginDto, HttpServletRequest request, HttpServletResponse response) throws JsonProcessingException;

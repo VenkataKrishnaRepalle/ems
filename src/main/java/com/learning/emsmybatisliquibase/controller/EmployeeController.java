@@ -95,7 +95,7 @@ public class EmployeeController {
                 HttpStatus.OK);
     }
 
-    @GetMapping("/get-active-managers")
+    @GetMapping("/active-managers")
     public ResponseEntity<List<EmployeeDetailsDto>> getActiveManagers() {
         return ResponseEntity.ok(employeeService.getAllActiveManagers());
     }

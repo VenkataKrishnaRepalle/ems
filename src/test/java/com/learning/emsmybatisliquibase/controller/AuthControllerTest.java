@@ -1,8 +1,7 @@
 package com.learning.emsmybatisliquibase.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.learning.emsmybatisliquibase.dto.JwtAuthResponseDto;
-import com.learning.emsmybatisliquibase.dto.LoginDto;
+
 import com.learning.emsmybatisliquibase.service.AuthService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

@@ -1,8 +1,9 @@
 package com.learning.emsmybatisliquibase.service.impl;
 
+import com.learning.emsmybatisliquibase.dao.EmployeeDao;
 import com.learning.emsmybatisliquibase.dao.EmployeeSessionDao;
 import com.learning.emsmybatisliquibase.dao.PasswordDao;
-import com.learning.emsmybatisliquibase.dto.JwtAuthResponseDto;
+import com.learning.emsmybatisliquibase.dto.EmployeeResponseDto;
 import com.learning.emsmybatisliquibase.dto.LoginDto;
 import com.learning.emsmybatisliquibase.dto.SuccessResponseDto;
 import com.learning.emsmybatisliquibase.dto.pagination.RequestQuery;
@@ -22,7 +23,9 @@ import com.learning.emsmybatisliquibase.service.AuthService;
 import com.learning.emsmybatisliquibase.utils.UtilityService;
 import eu.bitwalker.useragentutils.UserAgent;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -72,25 +75,26 @@ public class AuthServiceImpl implements AuthService {
 
     private final WebClient webClient;
 
+    private final EmployeeDao employeeDao;
+
     @Value("${maximum.login.count}")
     private Integer maxLoginCount;
 
     @Value("${api.location.key}")
     String key;
 
+    @Value("${app.jwt-expiration-milliseconds}")
+    private Integer jwtExpiryTime;
+
+    @Value("${app.refresh-token-expiration-milliseconds}")
+    private Integer refreshTokenExpiryTime;
+
     @Override
     @Transactional
-    public JwtAuthResponseDto login(LoginDto loginDto, HttpServletRequest request) {
-        var employeeByEmail = employeeService.findByEmail(loginDto.getEmail());
-        var employeeByUsername = employeeService.findByUsername(loginDto.getEmail());
-        Employee employee = null;
-        if(employeeByEmail.isPresent()) {
-            employee = employeeByEmail.get();
-        } else if (employeeByUsername.isPresent()) {
-            employee = employeeByUsername.get();
-        } else {
-            throw new InvalidInputException("INVALID_INPUT", "Invalid email or username");
-        }
+    public EmployeeResponseDto login(LoginDto loginDto, HttpServletRequest request, HttpServletResponse response) {
+        var employee = employeeService.findByEmail(loginDto.getEmail())
+                .or(() -> employeeService.findByUsername(loginDto.getEmail()))
+                .orElseThrow(() -> new InvalidInputException("INVALID_INPUT", "Invalid email or username"));
         var profile = profileService.getByEmployeeUuid(employee.getUuid());
         if (profile.getProfileStatus() == ProfileStatus.PENDING) {
             throw new InvalidInputException("ACCOUNT_NOT_ACTIVATED", "Account not activated, Please set new password");
@@ -133,15 +137,31 @@ public class AuthServiceImpl implements AuthService {
         String token = jwtTokenProvider.generateToken(authentication);
         String refreshToken = jwtTokenProvider.generateRefreshToken(authentication);
 
+        addAuthCookie(response, "token", token, jwtExpiryTime);
+        addAuthCookie(response, "refreshToken", refreshToken, refreshTokenExpiryTime);
+
         if (null != loginDto.getRequestQuery()) {
             saveSession(request, employee, loginDto.getRequestQuery(), token);
         }
 
-        var roles = employeeRoleService.getRolesByEmployeeUuid(employee.getUuid())
+        var employeeResponse = employeeDao.getMe(employee.getUuid());
+        employeeResponse.setRoles(getRoles(employee.getUuid()));
+        return employeeResponse;
+    }
+
+    private List<String> getRoles(UUID employeeUuid) {
+        return employeeRoleService.getRolesByEmployeeUuid(employeeUuid)
                 .stream()
                 .map(RoleType::toString)
                 .toList();
-        return generateJwtResponse(employee.getUuid(), employee.getEmail(), token, refreshToken, roles);
+    }
+
+    private void addAuthCookie(HttpServletResponse response, String name, String value, int maxAge) {
+        Cookie cookie = new Cookie(name, value);
+        cookie.setHttpOnly(true);
+        cookie.setPath("/");
+        cookie.setMaxAge(maxAge);
+        response.addCookie(cookie);
     }
 
     private void saveSession(HttpServletRequest request, Employee employee, RequestQuery requestQuery, String token) {
@@ -190,25 +210,29 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public Map<String, Boolean> validateToken(UUID employeeId, String token) {
-        if (!StringUtils.hasText(token) && !token.startsWith("Bearer ")) {
-            return Map.of("TOKEN_NOT_PROVIDED", true);
+    public Map<String, Boolean> validateToken(String token, String refreshToken, HttpServletRequest request) {
+        token = extractToken(token);
+        refreshToken = extractToken(refreshToken);
+        var isValidToken = jwtTokenProvider.validateToken(token);
+        var isValidRefreshToken = jwtTokenProvider.validateRefreshToken(refreshToken);
+        return Map.of("tokenActive", isValidToken, "refreshTokenActive", isValidRefreshToken);
+    }
+
+    private String extractToken(String token) {
+        if (token.startsWith("Bearer ") || token.startsWith("bearer ")) {
+            return token.substring(7);
         }
-        token = token.substring(7);
-        var isValid = jwtTokenProvider.validateToken(token);
-        if (isValid && !employeeId.toString().equals(jwtTokenProvider.getUsername(token))) {
-            isValid = false;
-        }
-        return Map.of("expired", !isValid);
+        return token;
     }
 
     @Override
-    public JwtAuthResponseDto refreshToken(String refreshToken, HttpServletRequest request) {
-        if (!StringUtils.hasText(refreshToken) && !refreshToken.startsWith("Bearer ")) {
+    public EmployeeResponseDto refreshToken(String refreshToken, HttpServletRequest request, HttpServletResponse response) {
+        if (!StringUtils.hasText(refreshToken)) {
             throw new InvalidInputException("TOKEN_NOT_PROVIDED", "Token not provided");
         }
-
-        refreshToken =refreshToken.substring(7);
+        if (refreshToken.startsWith("Bearer ")) {
+            refreshToken = refreshToken.substring(7);
+        }
         boolean isValid = jwtTokenProvider.validateRefreshToken(refreshToken);
         if (isValid) {
             var employeeId = UUID.fromString(jwtTokenProvider.getUsernameForRefreshToken(refreshToken));
@@ -217,29 +241,19 @@ public class AuthServiceImpl implements AuthService {
             if(passwords.size() != 1) {
                 throw new InvalidInputException("ACCOUNT_LOCKED", "Account Locked, Please reset password");
             }
-            var roles = employeeRoleService.getRolesByEmployeeUuid(employee.getUuid())
-                    .stream()
-                    .map(RoleType::toString)
-                    .toList();
             String token = jwtTokenProvider.generateToken(
                     new UsernamePasswordAuthenticationToken(
                             String.valueOf(employee.getUuid()),
                             passwords.get(0).getPassword()));
-            return generateJwtResponse(employeeId, employee.getEmail(), token, refreshToken, roles);
+
+            addAuthCookie(response, "token", token, jwtExpiryTime);
+            var employeeResponse = employeeDao.getMe(employeeId);
+            employeeResponse.setRoles(getRoles(employeeId));
+
+            return employeeResponse;
         } else {
             throw new InvalidInputException("INVALID_REFRESH_TOKEN", "Invalid refresh token");
         }
-    }
-
-    private JwtAuthResponseDto generateJwtResponse(UUID employeeId, String email, String token, String refreshToken, List<String> roles) {
-        return JwtAuthResponseDto.builder()
-                .employeeId(employeeId)
-                .email(email)
-                .accessToken(token)
-                .refreshToken(refreshToken)
-                .tokenType("Bearer")
-                .roles(roles)
-                .build();
     }
 
     public boolean isCurrentUser(final UUID userId) {

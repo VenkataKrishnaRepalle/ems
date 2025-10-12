@@ -213,12 +213,15 @@ public class AuthServiceImpl implements AuthService {
     public Map<String, Boolean> validateToken(String token, String refreshToken, HttpServletRequest request) {
         token = extractToken(token);
         refreshToken = extractToken(refreshToken);
-        var isValidToken = jwtTokenProvider.validateToken(token);
-        var isValidRefreshToken = jwtTokenProvider.validateRefreshToken(refreshToken);
+        var isValidToken = token != null && jwtTokenProvider.validateToken(token);
+        var isValidRefreshToken = refreshToken != null && jwtTokenProvider.validateRefreshToken(refreshToken);
         return Map.of("tokenActive", isValidToken, "refreshTokenActive", isValidRefreshToken);
     }
 
     private String extractToken(String token) {
+        if (null == token) {
+            return null;
+        }
         if (token.startsWith("Bearer ") || token.startsWith("bearer ")) {
             return token.substring(7);
         }
@@ -238,7 +241,7 @@ public class AuthServiceImpl implements AuthService {
             var employeeId = UUID.fromString(jwtTokenProvider.getUsernameForRefreshToken(refreshToken));
             var employee = employeeService.getById(employeeId);
             var passwords = passwordDao.getByEmployeeUuidAndStatus(employeeId, PasswordStatus.ACTIVE);
-            if(passwords.size() != 1) {
+            if (passwords.size() != 1) {
                 throw new InvalidInputException("ACCOUNT_LOCKED", "Account Locked, Please reset password");
             }
             String token = jwtTokenProvider.generateToken(

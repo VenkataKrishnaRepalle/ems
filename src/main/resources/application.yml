@@ -60,6 +60,12 @@ spring:
   main:
     allow-circular-references: true
 
+  batch:
+    job:
+      enabled: false
+    jdbc:
+      initialize-schema: always
+
   mail:
     host: smtp.gmail.com
     username: v4431365@gmail.com

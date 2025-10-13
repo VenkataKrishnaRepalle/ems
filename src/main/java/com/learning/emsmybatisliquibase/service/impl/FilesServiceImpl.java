@@ -17,6 +17,7 @@ import com.learning.emsmybatisliquibase.service.EmployeeService;
 import com.learning.emsmybatisliquibase.service.FilesService;
 import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
@@ -26,10 +27,10 @@ import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -45,6 +46,7 @@ import static com.learning.emsmybatisliquibase.exception.errorcodes.FileErrorCod
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class FilesServiceImpl implements FilesService {
 
     private final EmployeeService employeeService;
@@ -54,6 +56,8 @@ public class FilesServiceImpl implements FilesService {
     private final DepartmentService departmentService;
 
     private final ProfileDao profileDao;
+    
+    private final com.learning.emsmybatisliquibase.batch.EmployeeBatchService employeeBatchService;
 
     private final ReentrantLock lock = new ReentrantLock();
 
@@ -66,40 +70,10 @@ public class FilesServiceImpl implements FilesService {
     private static final String PARSE_DATE = "dd/MM/yyyy";
 
     @Override
-    @Transactional
     public SuccessResponseDto colleagueOnboard(MultipartFile file) throws IOException, MessagingException {
         var rowDatas = fileProcess(file, FileType.COLLEAGUE_ONBOARD);
-        List<UUID> employeeUuids = new ArrayList<>();
-        for (var rowData : rowDatas) {
-            if (rowData.size() != 14) {
-                continue;
-            }
-
-            var decimalFormat = new DecimalFormat("0");
-            decimalFormat.setMaximumFractionDigits(0);
-            var employee = AddEmployeeDto.builder()
-                    .firstName(rowData.get(0))
-                    .lastName(rowData.get(1))
-                    .email(rowData.get(2))
-                    .gender(rowData.get(3).equals("M") ? Gender.MALE : Gender.FEMALE)
-                    .dateOfBirth(parseDate(rowData.get(4)))
-                    .phoneNumber(decimalFormat.format(Double.parseDouble(rowData.get(5))))
-                    .joiningDate(parseDate(rowData.get(6)))
-                    .leavingDate(parseDate(rowData.get(7)))
-                    .departmentName(rowData.get(8).trim())
-                    .isManager(rowData.get(9).trim())
-                    .managerUuid(rowData.get(10).trim().isEmpty() ? null : UUID.fromString(rowData.get(10).trim()))
-                    .jobTitle(rowData.get(11))
-                    .password(rowData.get(12))
-                    .confirmPassword(rowData.get(13))
-                    .build();
-            lock.lock();
-            try {
-                employeeUuids.add(employeeService.add(employee).getUuid());
-            } finally {
-                lock.unlock();
-            }
-        }
+        List<UUID> employeeUuids = employeeBatchService.processEmployeeBatch(rowDatas);
+        
         return SuccessResponseDto.builder()
                 .success(Boolean.TRUE)
                 .data(String.valueOf(employeeUuids))

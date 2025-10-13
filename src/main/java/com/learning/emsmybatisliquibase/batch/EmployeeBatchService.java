@@ -1,16 +1,16 @@
 package com.learning.emsmybatisliquibase.batch;
 
 import com.learning.emsmybatisliquibase.dto.AddEmployeeDto;
-import com.learning.emsmybatisliquibase.entity.enums.Gender;
-import com.learning.emsmybatisliquibase.service.EmployeeService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.batch.core.*;
+import org.springframework.batch.core.job.builder.JobBuilder;
+import org.springframework.batch.core.launch.JobLauncher;
+import org.springframework.batch.core.repository.JobRepository;
+import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
 
-import java.text.DecimalFormat;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -19,93 +19,37 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class EmployeeBatchService {
 
-    private final EmployeeService employeeService;
+    private final JobLauncher jobLauncher;
+    private final JobRepository jobRepository;
+    private final PlatformTransactionManager transactionManager;
+    private final EmployeeWriter employeeWriter;
+    
     private static final int CHUNK_SIZE = 10;
-    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-    private static final DecimalFormat DECIMAL_FORMAT = new DecimalFormat("0");
 
-    static {
-        DECIMAL_FORMAT.setMaximumFractionDigits(0);
-    }
-
-    public List<UUID> processEmployeeBatch(List<List<String>> rowData) {
-        log.info("Starting batch processing for {} rows", rowData.size());
+    public List<UUID> processEmployeeBatch(List<List<String>> rowData) throws Exception {
+        log.info("Starting Spring Batch processing for {} rows", rowData.size());
         
-        List<UUID> employeeUuids = new ArrayList<>();
-        List<AddEmployeeDto> batch = new ArrayList<>();
-        int processedCount = 0;
+        employeeWriter.clearUuids();
         
-        for (List<String> row : rowData) {
-            AddEmployeeDto employee = parseEmployee(row);
-            
-            if (employee != null) {
-                batch.add(employee);
-                
-                if (batch.size() == CHUNK_SIZE) {
-                    employeeUuids.addAll(processBatch(batch));
-                    processedCount += batch.size();
-                    log.info("Processed {} employees", processedCount);
-                    batch.clear();
-                }
-            }
-        }
+        Step step = new StepBuilder("employeeStep", jobRepository)
+                .<AddEmployeeDto, AddEmployeeDto>chunk(CHUNK_SIZE, transactionManager)
+                .reader(new EmployeeReader(rowData))
+                .writer(employeeWriter)
+                .build();
         
-        if (!batch.isEmpty()) {
-            employeeUuids.addAll(processBatch(batch));
-            processedCount += batch.size();
-        }
+        Job job = new JobBuilder("employeeJob", jobRepository)
+                .start(step)
+                .build();
         
-        log.info("Batch processing completed. Total: {} employees", processedCount);
-        return employeeUuids;
-    }
-    
-    private AddEmployeeDto parseEmployee(List<String> row) {
-        if (row.size() != 14) {
-            log.warn("Skipping invalid row with {} columns", row.size());
-            return null;
-        }
+        JobParameters jobParameters = new JobParametersBuilder()
+                .addLong("timestamp", System.currentTimeMillis())
+                .toJobParameters();
         
-        try {
-            return AddEmployeeDto.builder()
-                    .firstName(row.get(0))
-                    .lastName(row.get(1))
-                    .email(row.get(2))
-                    .gender(row.get(3).equals("M") ? Gender.MALE : Gender.FEMALE)
-                    .dateOfBirth(parseDate(row.get(4)))
-                    .phoneNumber(DECIMAL_FORMAT.format(Double.parseDouble(row.get(5))))
-                    .joiningDate(parseDate(row.get(6)))
-                    .leavingDate(parseDate(row.get(7)))
-                    .departmentName(row.get(8).trim())
-                    .isManager(row.get(9).trim())
-                    .managerUuid(row.get(10).trim().isEmpty() ? null : UUID.fromString(row.get(10).trim()))
-                    .jobTitle(row.get(11))
-                    .password(row.get(12))
-                    .confirmPassword(row.get(13))
-                    .build();
-        } catch (Exception e) {
-            log.error("Error parsing employee: {}", e.getMessage());
-            return null;
-        }
-    }
-    
-    private List<UUID> processBatch(List<AddEmployeeDto> batch) {
-        List<UUID> uuids = new ArrayList<>();
+        JobExecution execution = jobLauncher.run(job, jobParameters);
         
-        for (AddEmployeeDto employee : batch) {
-            try {
-                uuids.add(employeeService.add(employee).getUuid());
-            } catch (Exception e) {
-                log.error("Failed to add employee {}: {}", employee.getEmail(), e.getMessage());
-            }
-        }
+        log.info("Batch job completed with status: {}", execution.getStatus());
+        log.info("Total employees created: {}", employeeWriter.getCreatedUuids().size());
         
-        return uuids;
-    }
-    
-    private LocalDate parseDate(String dateString) {
-        if (dateString == null || dateString.trim().isEmpty()) {
-            return null;
-        }
-        return LocalDate.parse(dateString, DATE_FORMATTER);
+        return employeeWriter.getCreatedUuids();
     }
 }

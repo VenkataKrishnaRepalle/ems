@@ -70,14 +70,20 @@ public class FilesServiceImpl implements FilesService {
     private static final String PARSE_DATE = "dd/MM/yyyy";
 
     @Override
-    public SuccessResponseDto colleagueOnboard(MultipartFile file) throws IOException, MessagingException {
+    public SuccessResponseDto colleagueOnboard(MultipartFile file) throws IOException {
         var rowDatas = fileProcess(file, FileType.COLLEAGUE_ONBOARD);
-        List<UUID> employeeUuids = employeeBatchService.processEmployeeBatch(rowDatas);
         
-        return SuccessResponseDto.builder()
-                .success(Boolean.TRUE)
-                .data(String.valueOf(employeeUuids))
-                .build();
+        try {
+            List<UUID> employeeUuids = employeeBatchService.processEmployeeBatch(rowDatas);
+            
+            return SuccessResponseDto.builder()
+                    .success(Boolean.TRUE)
+                    .data(String.valueOf(employeeUuids))
+                    .build();
+        } catch (Exception e) {
+            log.error("Batch processing failed: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to process employee batch", e);
+        }
     }
 
     public void managerAccess(MultipartFile file) throws IOException {

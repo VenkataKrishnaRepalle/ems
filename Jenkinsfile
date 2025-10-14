@@ -1,5 +1,12 @@
 pipeline {
     agent any
+    
+    triggers {
+        // Trigger build on push to any branch
+        pollSCM('* * * * *')
+        // Or use GitHub webhook
+        githubPush()
+    }
     tools {
         maven 'maven_3_9_9'
         jdk 'JDK_17'

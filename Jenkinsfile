@@ -2,6 +2,7 @@ pipeline {
     agent any
     tools {
         maven 'maven_3_9_9'
+        jdk 'JDK_17'
     }
     stages {
         stage('Build Maven') {
@@ -29,4 +30,10 @@ pipeline {
             }
         }
     }
+
+	post {
+		success { echo 'Deploy successful.' }
+		failure { echo 'Build/Deploy failed. Check logs.' }
+		always  { cleanWs() }
+	}
 }

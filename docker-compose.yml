@@ -4,6 +4,16 @@ services:
   db:
     image: postgres:16
     container_name: postgres-db
+    restart: unless-stopped
+    stop_grace_period: 1s
+    stop_signal: SIGINT
+    tmpfs:
+      - /run/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: root
@@ -14,6 +24,25 @@ services:
       - "5430:5432"
     networks:
       - mynetwork
+  redis:
+    image: redis:7-alpine
+    container_name: redis-cache
+    restart: unless-stopped
+    stop_grace_period: 1s
+    ports:
+      - "6379:6379"
+    environment:
+      - REDIS_PASSWORD=your_secure_password_123!@#
+    volumes:
+      - redis_data:/data
+    networks:
+      - mynetwork
+    command: redis-server --requirepass $${REDIS_PASSWORD}
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "$${REDIS_PASSWORD}", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
 
   app:
     build:
@@ -25,8 +54,12 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/ems-docker
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: root
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+      SPRING_REDIS_PASSWORD: your_secure_password_123!@#
     depends_on:
       - db
+      - redis
     ports:
       - "8082:8082"
     networks:
@@ -34,6 +67,7 @@ services:
 
 volumes:
   postgres_data:
+  redis_data:
 
 networks:
   mynetwork:

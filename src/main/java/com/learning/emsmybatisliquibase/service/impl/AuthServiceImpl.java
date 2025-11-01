@@ -144,7 +144,7 @@ public class AuthServiceImpl implements AuthService {
             saveSession(request, employee, loginDto.getRequestQuery(), token);
         }
 
-        var employeeResponse = employeeDao.getMe(employee.getUuid());
+        var employeeResponse = employeeDao.getEmployee(employee.getUuid());
         employeeResponse.setRoles(getRoles(employee.getUuid()));
         return employeeResponse;
     }
@@ -250,7 +250,7 @@ public class AuthServiceImpl implements AuthService {
                             passwords.get(0).getPassword()));
 
             addAuthCookie(response, "token", token, jwtExpiryTime);
-            var employeeResponse = employeeDao.getMe(employeeId);
+            var employeeResponse = employeeDao.getEmployee(employeeId);
             employeeResponse.setRoles(getRoles(employeeId));
 
             return employeeResponse;

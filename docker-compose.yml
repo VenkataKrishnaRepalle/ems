@@ -31,15 +31,13 @@ services:
     stop_grace_period: 1s
     ports:
       - "6379:6379"
-    environment:
-      - REDIS_PASSWORD=your_secure_password_123!@#
     volumes:
       - redis_data:/data
     networks:
       - mynetwork
-    command: redis-server --requirepass $${REDIS_PASSWORD}
+    command: redis-server
     healthcheck:
-      test: ["CMD", "redis-cli", "-a", "$${REDIS_PASSWORD}", "ping"]
+      test: [ "CMD", "redis-cli", "ping" ]
       interval: 5s
       timeout: 3s
       retries: 5
@@ -54,9 +52,8 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/ems-docker
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: root
-      SPRING_REDIS_HOST: redis
-      SPRING_REDIS_PORT: 6379
-      SPRING_REDIS_PASSWORD: your_secure_password_123!@#
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
     depends_on:
       - db
       - redis

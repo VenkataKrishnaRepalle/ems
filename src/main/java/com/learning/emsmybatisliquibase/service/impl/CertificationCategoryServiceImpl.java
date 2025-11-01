@@ -5,15 +5,21 @@ import com.learning.emsmybatisliquibase.dto.CertificationCategoryDto;
 import com.learning.emsmybatisliquibase.entity.CertificationCategory;
 import com.learning.emsmybatisliquibase.exception.FoundException;
 import com.learning.emsmybatisliquibase.exception.IntegrityException;
+import com.learning.emsmybatisliquibase.exception.InvalidInputException;
 import com.learning.emsmybatisliquibase.exception.NotFoundException;
 import com.learning.emsmybatisliquibase.service.CertificationCategoryService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.UUID;
 
+import static com.learning.emsmybatisliquibase.config.CacheConfig.GET_ALL_CERTIFICATION_CATEGORY_CACHE;
+import static com.learning.emsmybatisliquibase.config.CacheConfig.GET_CERTIFICATION_CATEGORY_BY_ID_CACHE;
 import static com.learning.emsmybatisliquibase.exception.errorcodes.CertificationCategoryErrorCodes.*;
 
 @Service
@@ -22,6 +28,8 @@ public class CertificationCategoryServiceImpl implements CertificationCategorySe
 
     private final CertificationCategoryDao certificationCategoryDao;
 
+    @Override
+    @Cacheable(value = GET_CERTIFICATION_CATEGORY_BY_ID_CACHE, key = "#id")
     public CertificationCategory getById(UUID id) {
         var certificationCategory = certificationCategoryDao.getById(id);
 
@@ -34,11 +42,14 @@ public class CertificationCategoryServiceImpl implements CertificationCategorySe
     }
 
     @Override
+    @Cacheable(value = GET_ALL_CERTIFICATION_CATEGORY_CACHE)
     public List<CertificationCategory> getAll() {
         return certificationCategoryDao.getAll();
     }
 
     @Override
+    @CachePut(value = GET_CERTIFICATION_CATEGORY_BY_ID_CACHE, key = "#result.uuid")
+    @CacheEvict(value = GET_ALL_CERTIFICATION_CATEGORY_CACHE, allEntries = true)
     public CertificationCategory add(CertificationCategoryDto certificationCategoryDto) {
         var certificationCategoryByName = certificationCategoryDao.
                 getByName(certificationCategoryDto.getName().trim());
@@ -66,7 +77,12 @@ public class CertificationCategoryServiceImpl implements CertificationCategorySe
     }
 
     @Override
+    @CachePut(value = GET_CERTIFICATION_CATEGORY_BY_ID_CACHE, key = "#id")
+    @CacheEvict(value = GET_ALL_CERTIFICATION_CATEGORY_CACHE, allEntries = true)
     public CertificationCategory update(UUID id, CertificationCategory certificationCategoryDto) {
+        if (!id.equals(certificationCategoryDto.getUuid())) {
+            throw new InvalidInputException(CERTIFICATION_CATEGORY_INVALID_INPUT.code(), "Invalid input");
+        }
         var certificationCategory = getById(id);
         certificationCategory.setName(certificationCategoryDto.getName().trim());
 
@@ -84,6 +100,7 @@ public class CertificationCategoryServiceImpl implements CertificationCategorySe
     }
 
     @Override
+    @CacheEvict(value = {GET_CERTIFICATION_CATEGORY_BY_ID_CACHE, GET_ALL_CERTIFICATION_CATEGORY_CACHE}, key = "#id", allEntries = true)
     public void delete(UUID id) {
         getById(id);
         try {

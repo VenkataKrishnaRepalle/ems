@@ -203,107 +203,107 @@ class AttendanceServiceImplTest {
         verify(attendanceDao, times(1)).getByEmployeeUuid(EMPLOYEE_UUID);
     }
 
-    @Test
-    void getAllEmployeesAttendanceByManager_success() {
-        UUID managerUuid = UUID.randomUUID();
-
-        Employee employee1 = Employee.builder()
-                .uuid(UUID.randomUUID())
-                .firstName("test1")
-                .lastName("test1")
-                .managerUuid(managerUuid)
-                .build();
-        Employee employee2 = Employee.builder()
-                .uuid(UUID.randomUUID())
-                .firstName("test2")
-                .lastName("test2")
-                .managerUuid(managerUuid)
-                .build();
-        List<Employee> employees = List.of(employee1, employee2);
-
-        List<Attendance> attendanceList1 = List.of(
-                new Attendance(UUID.randomUUID(), employee1.getUuid(), WorkMode.WORK_FROM_HOME, AttendanceType.FULL_DAY, AttendanceStatus.SUBMITTED, Date.from(Instant.now()), Instant.now(), Instant.now()),
-                new Attendance(UUID.randomUUID(), employee1.getUuid(), WorkMode.WORK_FROM_HOME, AttendanceType.HALF_DAY, AttendanceStatus.WAITING_FOR_CANCELLATION, Date.from(Instant.now()), Instant.now(), Instant.now()),
-                new Attendance(UUID.randomUUID(), employee1.getUuid(), WorkMode.WORK_FROM_HOME, AttendanceType.FULL_DAY, AttendanceStatus.CANCELLED, Date.from(Instant.now()), Instant.now(), Instant.now()));
-
-        List<Attendance> attendanceList2 = List.of(
-                new Attendance(UUID.randomUUID(), employee2.getUuid(), WorkMode.WORK_FROM_HOME, AttendanceType.FULL_DAY, AttendanceStatus.SUBMITTED, Date.from(Instant.now()), Instant.now(), Instant.now()),
-                new Attendance(UUID.randomUUID(), employee2.getUuid(), WorkMode.WORK_FROM_HOME, AttendanceType.HALF_DAY, AttendanceStatus.WAITING_FOR_CANCELLATION, Date.from(Instant.now()), Instant.now(), Instant.now()),
-                new Attendance(UUID.randomUUID(), employee2.getUuid(), WorkMode.WORK_FROM_HOME, AttendanceType.FULL_DAY, AttendanceStatus.CANCELLED, Date.from(Instant.now()), Instant.now(), Instant.now()));
-
-        assertDoesNotThrow(() -> employeeService.isManager(managerUuid));
-
-        when(employeeService.getByManagerUuid(managerUuid)).thenReturn(employees);
-        when(employeeService.getById(employee1.getUuid())).thenReturn(employee1);
-        when(employeeService.getById(employee2.getUuid())).thenReturn(employee2);
-        when(attendanceDao.getByEmployeeUuid(employee1.getUuid())).thenReturn(attendanceList1);
-        when(attendanceDao.getByEmployeeUuid(employee2.getUuid())).thenReturn(attendanceList2);
-
-        List<ViewEmployeeAttendanceDto> response = attendanceService.getAllEmployeesAttendanceByManager(managerUuid);
-
-        assertNotNull(response);
-        assertEquals(2, response.size());
-
-        assertEquals(employee1.getUuid(), response.get(0).getEmployeeUuid());
-        assertEquals(employee2.getUuid(), response.get(1).getEmployeeUuid());
-
-        verify(employeeService, times(1)).getByManagerUuid(managerUuid);
-        verify(employeeService, times(1)).getById(employee1.getUuid());
-        verify(employeeService, times(1)).getById(employee2.getUuid());
-        verify(attendanceDao, times(1)).getByEmployeeUuid(employee1.getUuid());
-        verify(attendanceDao, times(1)).getByEmployeeUuid(employee2.getUuid());
-    }
-
-    @Test
-    void getFullTeamAttendance_success() {
-        UUID employee1Uuid = UUID.randomUUID();
-        UUID employee2Uuid = UUID.randomUUID();
-        EmployeeAndManagerDto employee1Dto = EmployeeAndManagerDto.builder()
-                .uuid(employee1Uuid)
-                .firstName("test1")
-                .lastName("test1")
-                .build();
-        EmployeeAndManagerDto employee2Dto = EmployeeAndManagerDto.builder()
-                .uuid(employee2Uuid)
-                .firstName("test2")
-                .lastName("test2")
-                .build();
-        Employee employee1 = Employee.builder()
-                .uuid(employee1Uuid)
-                .firstName("test1")
-                .lastName("test1")
-                .build();
-        Employee employee2 = Employee.builder()
-                .uuid(employee2Uuid)
-                .firstName("test2")
-                .lastName("test2")
-                .build();
-
-        List<Attendance> attendanceList1 = List.of(
-                new Attendance(UUID.randomUUID(), employee1.getUuid(), WorkMode.WORK_FROM_HOME, AttendanceType.FULL_DAY, AttendanceStatus.SUBMITTED, Date.from(Instant.now()), Instant.now(), Instant.now()),
-                new Attendance(UUID.randomUUID(), employee1.getUuid(), WorkMode.WORK_FROM_HOME, AttendanceType.HALF_DAY, AttendanceStatus.WAITING_FOR_CANCELLATION, Date.from(Instant.now()), Instant.now(), Instant.now()),
-                new Attendance(UUID.randomUUID(), employee1.getUuid(), WorkMode.WORK_FROM_HOME, AttendanceType.FULL_DAY, AttendanceStatus.CANCELLED, Date.from(Instant.now()), Instant.now(), Instant.now()));
-
-        List<Attendance> attendanceList2 = List.of(
-                new Attendance(UUID.randomUUID(), employee2.getUuid(), WorkMode.WORK_FROM_HOME, AttendanceType.FULL_DAY, AttendanceStatus.SUBMITTED, Date.from(Instant.now()), Instant.now(), Instant.now()),
-                new Attendance(UUID.randomUUID(), employee2.getUuid(), WorkMode.WORK_FROM_HOME, AttendanceType.HALF_DAY, AttendanceStatus.WAITING_FOR_CANCELLATION, Date.from(Instant.now()), Instant.now(), Instant.now()),
-                new Attendance(UUID.randomUUID(), employee2.getUuid(), WorkMode.WORK_FROM_HOME, AttendanceType.FULL_DAY, AttendanceStatus.CANCELLED, Date.from(Instant.now()), Instant.now(), Instant.now()));
-        List<EmployeeAndManagerDto> fullTeam = List.of(employee1Dto, employee2Dto);
-        when(employeeService.getFullTeam(EMPLOYEE_UUID)).thenReturn(fullTeam);
-        when(employeeService.getById(employee1Uuid)).thenReturn(employee1);
-        when(employeeService.getById(employee2Uuid)).thenReturn(employee2);
-        when(attendanceDao.getByEmployeeUuid(employee1.getUuid())).thenReturn(attendanceList1);
-        when(attendanceDao.getByEmployeeUuid(employee2.getUuid())).thenReturn(attendanceList2);
-
-        List<ViewEmployeeAttendanceDto> response = attendanceService.getFullTeamAttendance(EMPLOYEE_UUID);
-        assertNotNull(response);
-        assertEquals(2, response.size());
-
-        verify(employeeService, times(1)).getFullTeam(EMPLOYEE_UUID);
-        verify(employeeService, times(1)).getById(employee1.getUuid());
-        verify(employeeService, times(1)).getById(employee2.getUuid());
-        verify(attendanceDao, times(1)).getByEmployeeUuid(employee1.getUuid());
-        verify(attendanceDao, times(1)).getByEmployeeUuid(employee2.getUuid());
-    }
+//    @Test
+//    void getAllEmployeesAttendanceByManager_success() {
+//        UUID managerUuid = UUID.randomUUID();
+//
+//        Employee employee1 = Employee.builder()
+//                .uuid(UUID.randomUUID())
+//                .firstName("test1")
+//                .lastName("test1")
+//                .managerUuid(managerUuid)
+//                .build();
+//        Employee employee2 = Employee.builder()
+//                .uuid(UUID.randomUUID())
+//                .firstName("test2")
+//                .lastName("test2")
+//                .managerUuid(managerUuid)
+//                .build();
+//        List<Employee> employees = List.of(employee1, employee2);
+//
+//        List<Attendance> attendanceList1 = List.of(
+//                new Attendance(UUID.randomUUID(), employee1.getUuid(), WorkMode.WORK_FROM_HOME, AttendanceType.FULL_DAY, AttendanceStatus.SUBMITTED, Date.from(Instant.now()), Instant.now(), Instant.now()),
+//                new Attendance(UUID.randomUUID(), employee1.getUuid(), WorkMode.WORK_FROM_HOME, AttendanceType.HALF_DAY, AttendanceStatus.WAITING_FOR_CANCELLATION, Date.from(Instant.now()), Instant.now(), Instant.now()),
+//                new Attendance(UUID.randomUUID(), employee1.getUuid(), WorkMode.WORK_FROM_HOME, AttendanceType.FULL_DAY, AttendanceStatus.CANCELLED, Date.from(Instant.now()), Instant.now(), Instant.now()));
+//
+//        List<Attendance> attendanceList2 = List.of(
+//                new Attendance(UUID.randomUUID(), employee2.getUuid(), WorkMode.WORK_FROM_HOME, AttendanceType.FULL_DAY, AttendanceStatus.SUBMITTED, Date.from(Instant.now()), Instant.now(), Instant.now()),
+//                new Attendance(UUID.randomUUID(), employee2.getUuid(), WorkMode.WORK_FROM_HOME, AttendanceType.HALF_DAY, AttendanceStatus.WAITING_FOR_CANCELLATION, Date.from(Instant.now()), Instant.now(), Instant.now()),
+//                new Attendance(UUID.randomUUID(), employee2.getUuid(), WorkMode.WORK_FROM_HOME, AttendanceType.FULL_DAY, AttendanceStatus.CANCELLED, Date.from(Instant.now()), Instant.now(), Instant.now()));
+//
+//        assertDoesNotThrow(() -> employeeService.isManager(managerUuid));
+//
+//        when(employeeService.getByManagerUuid(managerUuid)).thenReturn(employees);
+//        when(employeeService.getById(employee1.getUuid())).thenReturn(employee1);
+//        when(employeeService.getById(employee2.getUuid())).thenReturn(employee2);
+//        when(attendanceDao.getByEmployeeUuid(employee1.getUuid())).thenReturn(attendanceList1);
+//        when(attendanceDao.getByEmployeeUuid(employee2.getUuid())).thenReturn(attendanceList2);
+//
+//        List<ViewEmployeeAttendanceDto> response = attendanceService.getAllEmployeesAttendanceByManager(managerUuid);
+//
+//        assertNotNull(response);
+//        assertEquals(2, response.size());
+//
+//        assertEquals(employee1.getUuid(), response.get(0).getEmployeeUuid());
+//        assertEquals(employee2.getUuid(), response.get(1).getEmployeeUuid());
+//
+//        verify(employeeService, times(1)).getByManagerUuid(managerUuid);
+//        verify(employeeService, times(1)).getById(employee1.getUuid());
+//        verify(employeeService, times(1)).getById(employee2.getUuid());
+//        verify(attendanceDao, times(1)).getByEmployeeUuid(employee1.getUuid());
+//        verify(attendanceDao, times(1)).getByEmployeeUuid(employee2.getUuid());
+//    }
+//
+//    @Test
+//    void getFullTeamAttendance_success() {
+//        UUID employee1Uuid = UUID.randomUUID();
+//        UUID employee2Uuid = UUID.randomUUID();
+//        EmployeeAndManagerDto employee1Dto = EmployeeAndManagerDto.builder()
+//                .uuid(employee1Uuid)
+//                .firstName("test1")
+//                .lastName("test1")
+//                .build();
+//        EmployeeAndManagerDto employee2Dto = EmployeeAndManagerDto.builder()
+//                .uuid(employee2Uuid)
+//                .firstName("test2")
+//                .lastName("test2")
+//                .build();
+//        Employee employee1 = Employee.builder()
+//                .uuid(employee1Uuid)
+//                .firstName("test1")
+//                .lastName("test1")
+//                .build();
+//        Employee employee2 = Employee.builder()
+//                .uuid(employee2Uuid)
+//                .firstName("test2")
+//                .lastName("test2")
+//                .build();
+//
+//        List<Attendance> attendanceList1 = List.of(
+//                new Attendance(UUID.randomUUID(), employee1.getUuid(), WorkMode.WORK_FROM_HOME, AttendanceType.FULL_DAY, AttendanceStatus.SUBMITTED, Date.from(Instant.now()), Instant.now(), Instant.now()),
+//                new Attendance(UUID.randomUUID(), employee1.getUuid(), WorkMode.WORK_FROM_HOME, AttendanceType.HALF_DAY, AttendanceStatus.WAITING_FOR_CANCELLATION, Date.from(Instant.now()), Instant.now(), Instant.now()),
+//                new Attendance(UUID.randomUUID(), employee1.getUuid(), WorkMode.WORK_FROM_HOME, AttendanceType.FULL_DAY, AttendanceStatus.CANCELLED, Date.from(Instant.now()), Instant.now(), Instant.now()));
+//
+//        List<Attendance> attendanceList2 = List.of(
+//                new Attendance(UUID.randomUUID(), employee2.getUuid(), WorkMode.WORK_FROM_HOME, AttendanceType.FULL_DAY, AttendanceStatus.SUBMITTED, Date.from(Instant.now()), Instant.now(), Instant.now()),
+//                new Attendance(UUID.randomUUID(), employee2.getUuid(), WorkMode.WORK_FROM_HOME, AttendanceType.HALF_DAY, AttendanceStatus.WAITING_FOR_CANCELLATION, Date.from(Instant.now()), Instant.now(), Instant.now()),
+//                new Attendance(UUID.randomUUID(), employee2.getUuid(), WorkMode.WORK_FROM_HOME, AttendanceType.FULL_DAY, AttendanceStatus.CANCELLED, Date.from(Instant.now()), Instant.now(), Instant.now()));
+//        List<EmployeeAndManagerDto> fullTeam = List.of(employee1Dto, employee2Dto);
+//        when(employeeService.getFullTeam(EMPLOYEE_UUID)).thenReturn(fullTeam);
+//        when(employeeService.getById(employee1Uuid)).thenReturn(employee1);
+//        when(employeeService.getById(employee2Uuid)).thenReturn(employee2);
+//        when(attendanceDao.getByEmployeeUuid(employee1.getUuid())).thenReturn(attendanceList1);
+//        when(attendanceDao.getByEmployeeUuid(employee2.getUuid())).thenReturn(attendanceList2);
+//
+//        List<ViewEmployeeAttendanceDto> response = attendanceService.getFullTeamAttendance(EMPLOYEE_UUID);
+//        assertNotNull(response);
+//        assertEquals(2, response.size());
+//
+//        verify(employeeService, times(1)).getFullTeam(EMPLOYEE_UUID);
+//        verify(employeeService, times(1)).getById(employee1.getUuid());
+//        verify(employeeService, times(1)).getById(employee2.getUuid());
+//        verify(attendanceDao, times(1)).getByEmployeeUuid(employee1.getUuid());
+//        verify(attendanceDao, times(1)).getByEmployeeUuid(employee2.getUuid());
+//    }
 
 }

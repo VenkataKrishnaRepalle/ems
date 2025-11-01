@@ -17,17 +17,24 @@ import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import static com.learning.emsmybatisliquibase.config.CacheConfig.*;
 import static com.learning.emsmybatisliquibase.exception.errorcodes.EmployeeErrorCodes.*;
 
 import java.io.UnsupportedEncodingException;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @Service
@@ -53,6 +60,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     private final NotificationService notificationService;
 
     private final Random random = new Random();
+
     private final EmployeeRoleService employeeRoleService;
 
     @Override
@@ -71,7 +79,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         boolean isManager = "T".equalsIgnoreCase(employeeDto.getIsManager());
         var employee = employeeMapper.addEmployeeDtoToEmployee(employeeDto);
         employee.setUuid(UUID.randomUUID());
-        if(null == employee.getUsername()) {
+        if (null == employee.getUsername()) {
             employee.setUsername(employee.getEmail());
         }
         employee.setIsManager(isManager);
@@ -154,6 +162,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         return StringUtils.isNotEmpty(password) && StringUtils.isNotEmpty(confirmPassword);
     }
 
+    @Cacheable(value = GET_EMPLOYEE_BY_ID_CACHE, key = "#id")
     @Override
     public Employee getById(UUID id) {
         var employee = employeeDao.get(id);
@@ -201,11 +210,19 @@ public class EmployeeServiceImpl implements EmployeeService {
 
 
     @Override
+    @Cacheable(value = GET_ALL_EMPLOYEES_CACHE, key = "'getAllEmployees'")
     public List<Employee> getAll() {
         return employeeDao.getAll();
     }
 
 
+    @Caching(put = {
+            @CachePut(value = GET_EMPLOYEE_BY_ID_CACHE, key = "#employee.uuid"),
+            @CachePut(value = GET_EMPLOYEE_BY_EMAIL, key = "#employee.email")
+    }, evict = {
+            @CacheEvict(value = GET_ALL_EMPLOYEES_CACHE, allEntries = true),
+            @CacheEvict(value = GET_EMPLOYEE_BY_USERNAME, allEntries = true),
+    })
     public void update(Employee employee) {
         try {
             if (0 == employeeDao.update(employee)) {
@@ -216,6 +233,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         }
     }
 
+    @Cacheable(value = GET_EMPLOYEE_BY_EMAIL, key = "#email")
     public Employee getByEmail(String email) {
         var employee = employeeDao.getByEmail(email.trim());
         if (employee == null) {
@@ -229,13 +247,14 @@ public class EmployeeServiceImpl implements EmployeeService {
         return Optional.ofNullable(employeeDao.getByEmail(email));
     }
 
+    @Cacheable(value = GET_EMPLOYEE_BY_USERNAME, key = "#username")
     @Override
     public Optional<Employee> findByUsername(String username) {
         return Optional.ofNullable(employeeDao.getByUsername(username));
     }
 
     @Override
-    public List<Employee> getByManagerUuid(UUID managerId) {
+    public List<EmployeeResponseDto> getByManagerUuid(UUID managerId) {
         var employee = getById(managerId);
         if (employee.getIsManager().equals(Boolean.TRUE)) {
             return getAllByManagerUuid(managerId);
@@ -244,8 +263,8 @@ public class EmployeeServiceImpl implements EmployeeService {
         }
     }
 
-    private List<Employee> getAllByManagerUuid(UUID mangerUuid) {
-        return employeeDao.getAllByManagerUuid(mangerUuid);
+    private List<EmployeeResponseDto> getAllByManagerUuid(UUID mangerUuid) {
+        return employeeDao.getEmployeesByManager(mangerUuid);
     }
 
     public void isManager(UUID uuid) {
@@ -256,23 +275,25 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
-    public List<EmployeeAndManagerDto> getFullTeam(UUID employeeId) {
-        getById(employeeId);
+    public HashMap<String, List<EmployeeResponseDto>> getFullTeam(UUID employeeId) {
+        var me = getById(employeeId);
         isManager(employeeId);
+        HashMap<String, List<EmployeeResponseDto>> fullTeam = new HashMap<>();
 
         List<EmployeeAndManagerDto> employees = new ArrayList<>();
-
-        for (var employee : getAllByManagerUuid(employeeId)) {
-            var employee1 = employeeMapper.employeeToEmployeeAndManagerDto(employee);
-            employee1.setManagerUuid(getById(employee1.getManagerUuid()).getUuid());
-            if (employee.getIsManager().equals(Boolean.TRUE)) {
-                employees.add(employee1);
-                employees.addAll(getFullTeam(employee1.getUuid()));
-            } else {
-                employees.add(employee1);
+        var employeesByManager = getAllByManagerUuid(employeeId);
+        List<EmployeeResponseDto> myManagerReportees = new ArrayList<>();
+        List<EmployeeResponseDto> myReportees = new ArrayList<>();
+        for (var employee : employeesByManager) {
+            if (employee.getManagerUuid().equals(me.getManagerUuid())) {
+               myManagerReportees.add(employee);
+            } else if (me.getUuid().equals(employee.getManagerUuid())) {
+                myReportees.add(employee);
             }
         }
-        return employees;
+        fullTeam.put("myManagerReportees", myManagerReportees);
+        fullTeam.put("myReportees", myReportees);
+        return fullTeam;
     }
 
     @Override
@@ -290,12 +311,12 @@ public class EmployeeServiceImpl implements EmployeeService {
         var employeeUuid = UUID.fromString(SecurityContextHolder.getContext()
                 .getAuthentication()
                 .getName());
-        var employee = employeeDao.getMe(employeeUuid);
+        var employee = employeeDao.getEmployee(employeeUuid);
         var roles = employeeRoleService.getRolesByEmployeeUuid(employee.getUuid())
                 .stream()
                 .map(RoleType::toString)
                 .toList();
-        if(!roles.isEmpty()) {
+        if (!roles.isEmpty()) {
             employee.setRoles(roles);
         }
         return employee;

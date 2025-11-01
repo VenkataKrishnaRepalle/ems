@@ -35,16 +35,18 @@
     </select>
 
     <select id="getByUsername" resultMap="employeeResult">
-        SELECT * FROM employee WHERE username = #{username}
+        SELECT *
+        FROM employee
+        WHERE username = #{username}
     </select>
     <insert id="insert" flushCache="true">
         insert into employee (uuid, first_name, last_name, gender, date_of_birth, phone_number, username, email,
-        manager_uuid,
-        is_manager, joining_date, leaving_date, created_time, updated_time)
+                              manager_uuid,
+                              is_manager, joining_date, leaving_date, created_time, updated_time)
         values (#{employee.uuid}, #{employee.firstName}, #{employee.lastName}, #{employee.gender},
-        #{employee.dateOfBirth}, #{employee.phoneNumber}, #{employee.username},
-        #{employee.email}, #{employee.managerUuid}, #{employee.isManager},
-        #{employee.joiningDate}, #{employee.leavingDate}, current_timestamp, current_timestamp)
+                #{employee.dateOfBirth}, #{employee.phoneNumber}, #{employee.username},
+                #{employee.email}, #{employee.managerUuid}, #{employee.isManager},
+                #{employee.joiningDate}, #{employee.leavingDate}, current_timestamp, current_timestamp)
     </insert>
 
     <update id="updateLeavingDate" flushCache="true">
@@ -70,27 +72,27 @@
 
     <update id="update" flushCache="true">
         update employee
-        set first_name = #{employee.firstName},
-        last_name= #{employee.lastName},
-        gender= #{employee.gender},
-        date_of_birth= #{employee.dateOfBirth},
-        phone_number= #{employee.phoneNumber},
-        username= #{employee.username},
-        email= #{employee.email},
-        manager_uuid= #{employee.managerUuid},
-        is_manager= #{employee.isManager},
-        joining_date= #{employee.joiningDate},
-        leaving_date= #{employee.leavingDate},
-        updated_time= current_timestamp
+        set first_name   = #{employee.firstName},
+            last_name= #{employee.lastName},
+            gender= #{employee.gender},
+            date_of_birth= #{employee.dateOfBirth},
+            phone_number= #{employee.phoneNumber},
+            username= #{employee.username},
+            email= #{employee.email},
+            manager_uuid= #{employee.managerUuid},
+            is_manager= #{employee.isManager},
+            joining_date= #{employee.joiningDate},
+            leaving_date= #{employee.leavingDate},
+            updated_time= current_timestamp
         where uuid = #{employee.uuid}
     </update>
 
     <select id="getActiveEmployeesWithPastLeavingDate" resultMap="employeeResult">
         select e.*
         from employee e
-        left join profile p on e.uuid = p.employee_uuid
+                 left join profile p on e.uuid = p.employee_uuid
         where e.leaving_date &lt; current_date
-        and p.profile_status != 'INACTIVE'
+          and p.profile_status != 'INACTIVE'
     </select>
 
     <select id="getAllActiveEmployeeIds" resultMap="uuidResultMap">
@@ -125,29 +127,39 @@
         <result property="status" column="status"/>
     </resultMap>
 
-    <select id="getMe" resultMap="employeeResponseDtoStructure">
-        select e.uuid as "uuid",
-        e.first_name as "first_name",
-        e.last_name as "last_name",
-        e.gender as "gender",
-        e.date_of_birth as "date_of_birth",
-        e.phone_number as "phone_number",
-        e.email as "email",
-        d.name as "department_name",
-        m.uuid as "manager_uuid",
-        m.first_name as "manager_first_name",
-        m.last_name as "manager_last_name",
-        pm.profile_status as "manager_account_status",
-        e.is_manager as is_manager,
-        e.joining_date as joining_date,
-        e.leaving_date as leaving_date,
-        p.profile_status as status
+    <sql id="getEmployeeResponse">
+        select e.uuid            as "uuid",
+               e.first_name      as "first_name",
+               e.last_name       as "last_name",
+               e.gender          as "gender",
+               e.date_of_birth   as "date_of_birth",
+               e.phone_number    as "phone_number",
+               e.email           as "email",
+               d.name            as "department_name",
+               m.uuid            as "manager_uuid",
+               m.first_name      as "manager_first_name",
+               m.last_name       as "manager_last_name",
+               pm.profile_status as "manager_account_status",
+               e.is_manager      as is_manager,
+               e.joining_date    as joining_date,
+               e.leaving_date    as leaving_date,
+               p.profile_status  as status
         from employee e
-        left join employee m on e.manager_uuid = m.uuid
-        left join profile p on e.uuid = p.employee_uuid
-        left join department d on d.uuid = p.department_uuid
-        left join profile pm on m.uuid = pm.employee_uuid
-        where e.uuid = #{employeeUuid}
+                 left join employee m on e.manager_uuid = m.uuid
+                 left join profile p on e.uuid = p.employee_uuid
+                 left join department d on d.uuid = p.department_uuid
+                 left join profile pm on m.uuid = pm.employee_uuid
+        where
+    </sql>
+
+    <select id="getEmployee" resultMap="employeeResponseDtoStructure">
+        <include refid="getEmployeeResponse"/>
+        e.uuid = #{employeeUuid}
+    </select>
+
+    <select id="getEmployeesByManager" resultMap="employeeResponseDtoStructure">
+        <include refid="getEmployeeResponse"/>
+        e.manager_uuid = #{managerUuid}
     </select>
 
     <resultMap id="employeePaginationMap" type="com.learning.emsmybatisliquibase.dto.EmployeePaginationResponseDto">
@@ -210,7 +222,7 @@
         JOIN profile p ON e.uuid = p.employee_uuid
         WHERE
         <if test="profileStatuses != null">
-            <include refid="profileStatus"></include>
+            <include refid="profileStatus"/>
         </if>
     </select>
     <resultMap id="employeeDetailsMap" type="com.learning.emsmybatisliquibase.dto.EmployeeDetailsDto">
@@ -222,22 +234,22 @@
     </resultMap>
     <select id="getAllActiveManagers" resultMap="employeeDetailsMap">
         select e.uuid,
-        e.first_name,
-        e.last_name,
-        e.email
+               e.first_name,
+               e.last_name,
+               e.email
         FROM employee e
         WHERE e.is_manager = true
-        AND (e.leaving_date IS NULL OR e.leaving_date > current_date)
+          AND (e.leaving_date IS NULL OR e.leaving_date > current_date)
     </select>
     <select id="getByNameOrEmail" resultMap="employeeDetailsMap">
         SELECT e.uuid,
-        e.first_name,
-        e.last_name,
-        e.email
+               e.first_name,
+               e.last_name,
+               e.email
         FROM employee e
-        JOIN profile p ON e.uuid = p.employee_uuid AND profile_status in ('ACTIVE', 'PENDING')
+                 JOIN profile p ON e.uuid = p.employee_uuid AND profile_status in ('ACTIVE', 'PENDING')
         WHERE e.first_name LIKE CONCAT('%', #{name}, '%')
-        OR e.last_name LIKE CONCAT('%', #{name}, '%')
-        OR e.email LIKE CONCAT('%', #{name}, '%')
+           OR e.last_name LIKE CONCAT('%', #{name}, '%')
+           OR e.email LIKE CONCAT('%', #{name}, '%')
     </select>
 </mapper>

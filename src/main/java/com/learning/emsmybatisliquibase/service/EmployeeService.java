@@ -6,9 +6,11 @@ import com.learning.emsmybatisliquibase.entity.Employee;
 import jakarta.mail.MessagingException;
 
 import java.io.UnsupportedEncodingException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public interface EmployeeService {
 
@@ -28,11 +30,11 @@ public interface EmployeeService {
 
     void update(Employee employee);
 
-    List<Employee> getByManagerUuid(UUID managerId);
+    List<EmployeeResponseDto> getByManagerUuid(UUID managerId);
 
     void isManager(UUID uuid);
 
-    List<EmployeeAndManagerDto> getFullTeam(UUID employeeId);
+    HashMap<String, List<EmployeeResponseDto>> getFullTeam(UUID employeeId);
 
     EmployeeFullReportingChainDto getEmployeeFullReportingChain(UUID employeeId);
 

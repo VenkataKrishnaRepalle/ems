@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 
 import java.io.UnsupportedEncodingException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
@@ -78,13 +79,13 @@ public class EmployeeController {
 
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'EMPLOYEE')")
     @GetMapping(value = "/getByManagerId/{managerId}")
-    public ResponseEntity<List<Employee>> getByManagerId(@PathVariable UUID managerId) {
+    public ResponseEntity<List<EmployeeResponseDto>> getByManagerId(@PathVariable UUID managerId) {
         return new ResponseEntity<>(employeeService.getByManagerUuid(managerId), HttpStatus.OK);
     }
 
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'EMPLOYEE')")
     @GetMapping(value = "/getFullTeam/{employeeId}")
-    public ResponseEntity<List<EmployeeAndManagerDto>> getFullTeam(@PathVariable UUID employeeId) {
+    public ResponseEntity<HashMap<String, List<EmployeeResponseDto>>> getFullTeam(@PathVariable UUID employeeId) {
         return new ResponseEntity<>(employeeService.getFullTeam(employeeId), HttpStatus.OK);
     }
 

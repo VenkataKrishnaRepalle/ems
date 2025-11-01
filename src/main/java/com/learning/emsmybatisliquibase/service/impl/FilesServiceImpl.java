@@ -220,13 +220,6 @@ public class FilesServiceImpl implements FilesService {
         }
     }
 
-    private LocalDate parseDate(String value) {
-        if (value.isEmpty()) {
-            return null;
-        }
-        return LocalDate.parse(value, DateTimeFormatter.ofPattern(PARSE_DATE));
-    }
-
     public List<List<String>> fileProcess(MultipartFile file, FileType fileType) throws IOException {
         try (XSSFWorkbook workbook = new XSSFWorkbook(file.getInputStream())) {
             XSSFSheet sheet = workbook.getSheetAt(0);

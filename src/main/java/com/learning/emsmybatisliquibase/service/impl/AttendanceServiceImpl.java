@@ -1,6 +1,5 @@
 package com.learning.emsmybatisliquibase.service.impl;
 
-import com.learning.emsmybatisliquibase.config.CacheConfig;
 import com.learning.emsmybatisliquibase.dao.AttendanceDao;
 import com.learning.emsmybatisliquibase.dto.ApplyAttendanceDto;
 import com.learning.emsmybatisliquibase.dto.UpdateAttendanceDto;
@@ -14,9 +13,6 @@ import com.learning.emsmybatisliquibase.mapper.AttendanceMapper;
 import com.learning.emsmybatisliquibase.service.AttendanceService;
 import com.learning.emsmybatisliquibase.service.EmployeeService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.CachePut;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
@@ -26,10 +22,7 @@ import java.util.UUID;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
-import java.util.ArrayList;
 
-
-import static com.learning.emsmybatisliquibase.config.CacheConfig.*;
 import static com.learning.emsmybatisliquibase.exception.errorcodes.AttendanceErrorCodes.*;
 
 @Service
@@ -45,7 +38,6 @@ public class AttendanceServiceImpl implements AttendanceService {
     private static final String DATE_FORMAT = "MM-dd-yyyy";
 
     @Override
-    @CacheEvict(value = GET_ATTENDANCE_BY_EMPLOYEE_CACHE, key = "#employeeUuid")
     public List<Attendance> apply(UUID employeeUuid, List<ApplyAttendanceDto> attendanceDtos) {
         var appliedAttendances = attendanceDao.getByEmployeeUuid(employeeUuid);
 
@@ -81,7 +73,6 @@ public class AttendanceServiceImpl implements AttendanceService {
         return attendances;
     }
 
-    @CacheEvict(value = GET_ATTENDANCE_BY_ID_CACHE, key = "#employeeUuid + #attendanceUuid")
     @Override
     public Attendance update(UUID employeeUuid, UUID attendanceUuid, UpdateAttendanceDto attendanceDto) {
         var attendance = getByUuid(employeeUuid, attendanceUuid);
@@ -101,7 +92,6 @@ public class AttendanceServiceImpl implements AttendanceService {
         return attendance;
     }
 
-    @Cacheable(value = GET_ATTENDANCE_BY_ID_CACHE, key = "#employeeUuid + #attendanceUuid")
     @Override
     public Attendance getByUuid(UUID employeeUuid, UUID attendanceUuid) {
         var attendance = attendanceDao.getById(attendanceUuid);
@@ -112,7 +102,6 @@ public class AttendanceServiceImpl implements AttendanceService {
         return attendance;
     }
 
-    @Cacheable(value = GET_ATTENDANCE_BY_EMPLOYEE_CACHE, key = "#employeeUuid")
     @Override
     public ViewEmployeeAttendanceDto getEmployeeAttendance(UUID employeeUuid) {
         var employee = employeeService.getById(employeeUuid);

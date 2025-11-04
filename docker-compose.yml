@@ -24,23 +24,6 @@ services:
       - "5430:5432"
     networks:
       - mynetwork
-  redis:
-    image: redis:7-alpine
-    container_name: redis-cache
-    restart: unless-stopped
-    stop_grace_period: 1s
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-    networks:
-      - mynetwork
-    command: redis-server
-    healthcheck:
-      test: [ "CMD", "redis-cli", "ping" ]
-      interval: 5s
-      timeout: 3s
-      retries: 5
 
   app:
     build:
@@ -52,11 +35,8 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/ems-docker
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: root
-      SPRING_DATA_REDIS_HOST: redis
-      SPRING_DATA_REDIS_PORT: 6379
     depends_on:
       - db
-      - redis
     ports:
       - "8082:8082"
     networks:
@@ -64,7 +44,6 @@ services:
 
 volumes:
   postgres_data:
-  redis_data:
 
 networks:
   mynetwork:

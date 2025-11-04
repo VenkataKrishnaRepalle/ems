@@ -20,8 +20,6 @@ public class Payroll implements Serializable {
 
     private UUID employeeUuid;
 
-    private UUID profileUuid;
-
     private UUID salaryPaidUuid;
 
     private Date date;

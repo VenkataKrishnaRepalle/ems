@@ -17,24 +17,17 @@ import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.CachePut;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.cache.annotation.Caching;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import static com.learning.emsmybatisliquibase.config.CacheConfig.*;
 import static com.learning.emsmybatisliquibase.exception.errorcodes.EmployeeErrorCodes.*;
 
 import java.io.UnsupportedEncodingException;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @Service
@@ -162,7 +155,6 @@ public class EmployeeServiceImpl implements EmployeeService {
         return StringUtils.isNotEmpty(password) && StringUtils.isNotEmpty(confirmPassword);
     }
 
-    @Cacheable(value = GET_EMPLOYEE_BY_ID_CACHE, key = "#id")
     @Override
     public Employee getById(UUID id) {
         var employee = employeeDao.get(id);
@@ -170,6 +162,11 @@ public class EmployeeServiceImpl implements EmployeeService {
             throw new NotFoundException(EMPLOYEE_NOT_FOUND.code(), "employee not found with id: " + id);
         }
         return employee;
+    }
+
+    @Override
+    public Optional<Employee> findById(UUID id) {
+        return Optional.ofNullable(getById(id));
     }
 
     @Override
@@ -210,19 +207,10 @@ public class EmployeeServiceImpl implements EmployeeService {
 
 
     @Override
-    @Cacheable(value = GET_ALL_EMPLOYEES_CACHE, key = "'getAllEmployees'")
     public List<Employee> getAll() {
         return employeeDao.getAll();
     }
 
-
-    @Caching(put = {
-            @CachePut(value = GET_EMPLOYEE_BY_ID_CACHE, key = "#employee.uuid"),
-            @CachePut(value = GET_EMPLOYEE_BY_EMAIL, key = "#employee.email")
-    }, evict = {
-            @CacheEvict(value = GET_ALL_EMPLOYEES_CACHE, allEntries = true),
-            @CacheEvict(value = GET_EMPLOYEE_BY_USERNAME, allEntries = true),
-    })
     public void update(Employee employee) {
         try {
             if (0 == employeeDao.update(employee)) {
@@ -233,7 +221,6 @@ public class EmployeeServiceImpl implements EmployeeService {
         }
     }
 
-    @Cacheable(value = GET_EMPLOYEE_BY_EMAIL, key = "#email")
     public Employee getByEmail(String email) {
         var employee = employeeDao.getByEmail(email.trim());
         if (employee == null) {
@@ -247,7 +234,6 @@ public class EmployeeServiceImpl implements EmployeeService {
         return Optional.ofNullable(employeeDao.getByEmail(email));
     }
 
-    @Cacheable(value = GET_EMPLOYEE_BY_USERNAME, key = "#username")
     @Override
     public Optional<Employee> findByUsername(String username) {
         return Optional.ofNullable(employeeDao.getByUsername(username));

@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="1" author="Venkata Krishna Repalle">
+        <createTable tableName="employee_salary">
+            <column name="employee_uuid" type="${uuid_type}">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="employee_salary_uuid"/>
+            </column>
+            <column name="total" type="DECIMAL">
+                <constraints nullable="false"/>
+            </column>
+            <column name="fixed" type="DECIMAL">
+                <constraints nullable="false"/>
+            </column>
+            <column name="variable" type="DECIMAL">
+                <constraints nullable="false"/>
+            </column>
+            <column name="joining_bonus" type="DECIMAL"/>
+            <column name="basic" type="DECIMAL">
+                <constraints nullable="false"/>
+            </column>
+            <column name="flex" type="DECIMAL">
+                <constraints nullable="false"/>
+            </column>
+            <column name="hra" type="DECIMAL">
+                <constraints nullable="false"/>
+            </column>
+            <column name="pf" type="DECIMAL">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_by" type="${uuid_type}">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_time" type="TIMESTAMPTZ">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_by" type="${uuid_type}">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_time" type="TIMESTAMPTZ">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint baseTableName="employee_salary" baseColumnNames="employee_uuid"
+                                 constraintName="employee_uuid_fk"
+                                 initiallyDeferred="false" deferrable="false"
+                                 onUpdate="CASCADE" onDelete="CASCADE"
+                                 referencedTableName="employee"
+                                 referencedColumnNames="uuid"/>
+    </changeSet>
+    <changeSet id="2" author="Venkata Krishna Repalle">
+        <createTable tableName="employee_salary_audit">
+            <column name="employee_uuid" type="${uuid_type}">
+                <constraints nullable="false"/>
+            </column>
+            <column name="total" type="DECIMAL">
+                <constraints nullable="false"/>
+            </column>
+            <column name="fixed" type="DECIMAL">
+                <constraints nullable="false"/>
+            </column>
+            <column name="variable" type="DECIMAL">
+                <constraints nullable="false"/>
+            </column>
+            <column name="joining_bonus" type="DECIMAL"/>
+            <column name="basic" type="DECIMAL">
+                <constraints nullable="false"/>
+            </column>
+            <column name="flex" type="DECIMAL">
+                <constraints nullable="false"/>
+            </column>
+            <column name="hra" type="DECIMAL">
+                <constraints nullable="false"/>
+            </column>
+            <column name="pf" type="DECIMAL">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_by" type="${uuid_type}">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_time" type="TIMESTAMPTZ">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+</databaseChangeLog>

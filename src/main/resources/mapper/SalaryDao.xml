@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.learning.emsmybatisliquibase.dao.SalaryDao">
+    <resultMap id="salaryMap" type="com.learning.emsmybatisliquibase.entity.Salary">
+        <id property="employeeUuid" column="employee_uuid" javaType="java.util.UUID" jdbcType="VARCHAR"
+            typeHandler="com.learning.emsmybatisliquibase.handler.UuidTypeHandler"/>
+        <result property="total" column="total"/>
+        <result property="fixed" column="fixed"/>
+        <result property="variable" column="variable"/>
+        <result property="joiningBonus" column="joining_bonus"/>
+        <result property="basic" column="basic"/>
+        <result property="flex" column="flex"/>
+        <result property="hra" column="hra"/>
+        <result property="pf" column="pf"/>
+        <result property="createdBy" column="created_by" jdbcType="VARCHAR" javaType="java.util.UUID"
+                typeHandler="com.learning.emsmybatisliquibase.handler.UuidTypeHandler"/>
+        <result property="createdTime" column="created_time"/>
+        <result property="updatedBy" column="updated_by" jdbcType="VARCHAR" javaType="java.util.UUID"
+                typeHandler="com.learning.emsmybatisliquibase.handler.UuidTypeHandler"/>
+        <result property="updatedTime" column="updated_time"/>
+    </resultMap>
+
+    <insert id="insert" flushCache="true">
+        INSERT INTO employee_salary (employee_uuid, total, fixed, variable, joining_bonus, basic, pf, flex, hra, created_by,
+                            created_time, updated_by, updated_time)
+        VALUES (#{salary.employeeUuid}, #{salary.total}, #{salary.fixed}, #{salary.variable},
+                #{salary.joiningBonus}, #{salary.basic}, #{salary.pf}, #{salary.flex}, #{salary.hra},
+                #{salary.createdBy}, current_timestamp, #{salary.updatedBy}, current_timestamp)
+    </insert>
+
+    <select id="get" resultMap="salaryMap">
+        SELECT * from employee_salary WHERE employee_uuid = #{employeeUuid}
+    </select>
+
+    <update id="update" flushCache="true">
+        UPDATE employee_salary
+        SET total         = #{salary.total},
+            fixed         = #{salary.fixed},
+            variable      = #{salary.variable},
+            joining_bonus = #{salary.joiningBonus},
+            basic         = #{salary.basic},
+            flex          = #{salary.flex},
+            hra           = #{salary.hra},
+            pf            = #{salary.pf},
+            updated_by    = #{salary.updatedBy},
+            updated_time  = current_timestamp
+        WHERE employee_uuid = #{salary.employeeUuid}
+    </update>
+
+    <resultMap id="salaryAuditMap" type="com.learning.emsmybatisliquibase.entity.Salary">
+        <id property="employeeUuid" column="employee_uuid" javaType="java.util.UUID" jdbcType="VARCHAR"
+            typeHandler="com.learning.emsmybatisliquibase.handler.UuidTypeHandler"/>
+        <result property="total" column="total"/>
+        <result property="fixed" column="fixed"/>
+        <result property="variable" column="variable"/>
+        <result property="joiningBonus" column="joining_bonus"/>
+        <result property="basic" column="basic"/>
+        <result property="flex" column="flex"/>
+        <result property="hra" column="hra"/>
+        <result property="pf" column="pf"/>
+        <result property="updatedBy" column="updated_by" jdbcType="VARCHAR" javaType="java.util.UUID"
+                typeHandler="com.learning.emsmybatisliquibase.handler.UuidTypeHandler"/>
+        <result property="updatedTime" column="updated_time"/>
+    </resultMap>
+
+    <insert id="insertAudit" flushCache="true">
+        INSERT INTO employee_salary_audit (employee_uuid, total, fixed, variable, joining_bonus, basic, flex, pf, hra, updated_by,
+                            updated_time)
+        VALUES (#{salaryAudit.employeeUuid}, #{salaryAudit.total}, #{salaryAudit.fixed}, #{salaryAudit.variable},
+                #{salaryAudit.joiningBonus}, #{salaryAudit.basic}, #{salaryAudit.flex}, #{salaryAudit.pf}, #{salaryAudit.hra},
+                #{salaryAudit.updatedBy}, current_timestamp)
+    </insert>
+
+    <select id="getAudit" resultMap="salaryAuditMap">
+        SELECT *
+        FROM employee_salary_audit
+        WHERE employee_uuid = #{employeeUuid}
+    </select>
+</mapper>

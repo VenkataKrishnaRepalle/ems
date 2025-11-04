@@ -8,6 +8,9 @@ api:
     baseUrl: https://api.opencagedata.com/geocode/v1/json
     key: 934ec857525e46cebdd892ef0df233f7
 
+admin:
+  uuid: 019a4b09-c44a-729a-ab56-48d21adb0f80
+
 spring:
   application:
     name: ems-mybatis-liquibase
@@ -41,23 +44,6 @@ spring:
         time_zone: Asia/Kolkata
     hibernate:
       ddl-auto: update
-  data:
-    redis:
-      host: localhost
-      port: 6379
-      timeout: 5000
-      lettuce:
-        pool:
-          max-active: 10
-          max-idle: 8
-          min-idle: 0
-          max-wait: -1
-
-  cache:
-    type: redis
-    redis:
-      time-to-live: 600000 #10 minutes
-      cache-null-values: false
 
   servlet:
     multipart:
@@ -120,10 +106,6 @@ management:
       enabled: true
     prometheus:
       enabled: true
-  metrics:
-    enable:
-      redis: true
-
 
 logging:
   level:
@@ -132,9 +114,6 @@ logging:
         orm:
           jdbc:
             bind: trace
-      springframework:
-        data:
-          redis: DEBUG
 
 maximum:
   login:

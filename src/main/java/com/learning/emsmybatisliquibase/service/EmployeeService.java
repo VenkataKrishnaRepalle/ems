@@ -10,13 +10,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 public interface EmployeeService {
 
     AddEmployeeResponseDto add(AddEmployeeDto employeeDto) throws MessagingException, UnsupportedEncodingException;
 
     Employee getById(UUID id);
+
+    Optional<Employee> findById(UUID id);
 
     Employee getByEmail(String email);
 

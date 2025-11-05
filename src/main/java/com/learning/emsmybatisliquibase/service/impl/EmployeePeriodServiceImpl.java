@@ -211,29 +211,39 @@ public class EmployeePeriodServiceImpl implements EmployeePeriodService {
         }
 
         var timelines = reviewTimelineDao.getByEmployeePeriodId(employeePeriodId);
-        timelines.forEach(timeline -> {
-            if (timeline.getStartTime().isAfter(Instant.now())) {
-                timeline.setStatus(ReviewTimelineStatus.SCHEDULED);
-            } else if (timeline.getStartTime().isBefore(Instant.now()) && timeline.getOverdueTime().isAfter(Instant.now())) {
-                timeline.setStatus(ReviewTimelineStatus.STARTED);
-            } else if (timeline.getOverdueTime().isBefore(Instant.now()) && timeline.getLockTime().isAfter(Instant.now())) {
-                timeline.setStatus(ReviewTimelineStatus.OVERDUE);
-            } else if (timeline.getLockTime().isBefore(Instant.now()) && timeline.getEndTime().isAfter(Instant.now())) {
-                timeline.setStatus(ReviewTimelineStatus.LOCKED);
-            } else {
+        if (status.equals(PeriodStatus.COMPLETED)) {
+            timelines.forEach(timeline -> {
                 timeline.setStatus(ReviewTimelineStatus.COMPLETED);
-            }
-            timeline.setUpdatedTime(Instant.now());
-            try {
-                if (0 == reviewTimelineDao.update(timeline)) {
-                    throw new IntegrityException(TIMELINE_NOT_UPDATED.code(),
-                            "Timeline not updated for id: " + timeline.getUuid());
+                timeline.setUpdatedTime(Instant.now());
+            });
+        } else {
+            timelines.forEach(timeline -> {
+                if (timeline.getStartTime().isAfter(Instant.now())) {
+                    timeline.setStatus(ReviewTimelineStatus.SCHEDULED);
+                } else if (timeline.getStartTime().isBefore(Instant.now()) && timeline.getOverdueTime().isAfter(Instant.now())) {
+                    timeline.setStatus(ReviewTimelineStatus.STARTED);
+                } else if (timeline.getOverdueTime().isBefore(Instant.now()) && timeline.getLockTime().isAfter(Instant.now())) {
+                    timeline.setStatus(ReviewTimelineStatus.OVERDUE);
+                } else if (timeline.getLockTime().isBefore(Instant.now()) && timeline.getEndTime().isAfter(Instant.now())) {
+                    timeline.setStatus(ReviewTimelineStatus.LOCKED);
+                } else {
+                    timeline.setStatus(ReviewTimelineStatus.COMPLETED);
                 }
-            } catch (DataIntegrityViolationException exception) {
-                throw new IntegrityException(TIMELINE_NOT_UPDATED.code(),
-                        exception.getCause().getMessage());
-            }
-        });
+
+                timeline.setUpdatedTime(Instant.now());
+            });
+            timelines.forEach(timeline -> {
+                try {
+                    if (0 == reviewTimelineDao.update(timeline)) {
+                        throw new IntegrityException(TIMELINE_NOT_UPDATED.code(),
+                                "Timeline not updated for id: " + timeline.getUuid());
+                    }
+                } catch (DataIntegrityViolationException exception) {
+                    throw new IntegrityException(TIMELINE_NOT_UPDATED.code(),
+                            exception.getCause().getMessage());
+                }
+            });
+        }
         return successResponse();
     }
 

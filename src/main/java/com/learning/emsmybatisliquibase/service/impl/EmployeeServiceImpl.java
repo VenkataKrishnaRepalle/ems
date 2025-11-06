@@ -272,7 +272,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         List<EmployeeResponseDto> myReportees = new ArrayList<>();
         for (var employee : employeesByManager) {
             if (employee.getManagerUuid().equals(me.getManagerUuid())) {
-               myManagerReportees.add(employee);
+                myManagerReportees.add(employee);
             } else if (me.getUuid().equals(employee.getManagerUuid())) {
                 myReportees.add(employee);
             }
@@ -314,7 +314,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         size = Math.max(size, 1);
         int offSet = (page - 1) * size;
         var profileStatuses = List.of(ProfileStatus.ACTIVE, ProfileStatus.PENDING);
-        var employees = employeeDao.findAll(size, offSet, sortBy, sortOrder, profileStatuses);
+        var employees = employeeDao.findAll(size, offSet, setSortBy(sortBy), sortOrder, profileStatuses);
         var totalItems = employees.getCount();
         return PaginatedResponse.<Employee>builder()
                 .data(employees.getEmployees())
@@ -322,6 +322,30 @@ public class EmployeeServiceImpl implements EmployeeService {
                 .totalPages((long) Math.ceil((double) totalItems / size))
                 .currentPage(page)
                 .build();
+    }
+
+    private String setSortBy(String sortBy) {
+        if (null == sortBy) {
+            return "uuid";
+        } else if (sortBy.equalsIgnoreCase("firstName")) {
+            return "first_name";
+        } else if (sortBy.equalsIgnoreCase("lastName")) {
+            return "last_name";
+        } else if (sortBy.equalsIgnoreCase("email")) {
+            return "email";
+        } else if (sortBy.equalsIgnoreCase("dateOfBirth")) {
+            return "date_of_birth";
+        } else if (sortBy.equalsIgnoreCase("phoneNumber")) {
+            return "phone_number";
+        } else if (sortBy.equalsIgnoreCase("createdTime")) {
+            return "created_time";
+        } else if (sortBy.equalsIgnoreCase("updatedTime")) {
+            return "updated_time";
+        } else if (sortBy.equalsIgnoreCase("joiningDate")) {
+            return "joining_date";
+        } else {
+            return "uuid";
+        }
     }
 
     @Override

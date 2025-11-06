@@ -1,6 +1,6 @@
 package com.learning.emsmybatisliquibase.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.learning.emsmybatisliquibase.entity.enums.JobTitleType;
 import com.learning.emsmybatisliquibase.entity.enums.ProfileStatus;
 import lombok.AllArgsConstructor;
@@ -26,6 +26,6 @@ public class Profile implements Serializable {
 
     private UUID departmentUuid;
 
-    @JsonIgnore
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private Instant updatedTime;
 }

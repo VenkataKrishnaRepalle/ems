@@ -1,6 +1,6 @@
 package com.learning.emsmybatisliquibase.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.learning.emsmybatisliquibase.entity.enums.Gender;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -43,9 +43,9 @@ public class Employee implements Serializable {
 
     private LocalDate leavingDate;
 
-    @JsonIgnore
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private Instant createdTime;
 
-    @JsonIgnore
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private Instant updatedTime;
 }

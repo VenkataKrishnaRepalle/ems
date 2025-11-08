@@ -136,7 +136,9 @@ public class LeaveServiceImpl implements LeaveService {
 
     @Override
     public List<ViewEmployeeLeavesDto> getAllEmployeesLeavesByManager(UUID managerUuid) {
-        employeeService.isManager(managerUuid);
+        if(!employeeService.isManager(managerUuid)) {
+            throw new NotFoundException(MANAGER_ACCESS_NOT_FOUND.code(), "User don't have manager access");
+        }
 
         return employeeService.getByManagerUuid(managerUuid)
                 .stream()
@@ -147,7 +149,9 @@ public class LeaveServiceImpl implements LeaveService {
     @Override
     public SuccessResponseDto updateLeavesByManager(UUID managerUuid, LeaveStatus status,
                                                     List<UpdateLeaveByManagerDto> leavesDto) {
-        employeeService.isManager(managerUuid);
+        if(!employeeService.isManager(managerUuid)) {
+            throw new NotFoundException(MANAGER_ACCESS_NOT_FOUND.code(), "User don't have manager access");
+        }
 
         var leaves = leavesDto.stream()
                 .filter(leaveDto -> isLeaveEligibleForManager(leaveDto.getLeaveUuid(), managerUuid))

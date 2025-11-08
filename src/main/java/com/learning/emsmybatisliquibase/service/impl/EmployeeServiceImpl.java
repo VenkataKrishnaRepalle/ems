@@ -61,7 +61,20 @@ public class EmployeeServiceImpl implements EmployeeService {
     public AddEmployeeResponseDto add(AddEmployeeDto employeeDto) throws MessagingException,
             UnsupportedEncodingException {
         if (employeeDto.getManagerUuid() != null) {
-            isManager(employeeDto.getManagerUuid());
+            if (!isManager(employeeDto.getManagerUuid())) {
+                employeeDto.setManagerUuid(null);
+            }
+        }
+
+        if (employeeDto.getManagerEmail() != null) {
+            var manager = getByEmail(employeeDto.getManagerEmail().trim());
+            if (manager != null) {
+                if (!manager.getIsManager()) {
+                    manager.setIsManager(true);
+                    update(manager);
+                }
+                employeeDto.setManagerUuid(manager.getUuid());
+            }
         }
 
         var employeeByEmail = employeeDao.getByEmail(employeeDto.getEmail());
@@ -69,7 +82,7 @@ public class EmployeeServiceImpl implements EmployeeService {
             throw new FoundException(EMPLOYEE_ALREADY_EXISTS.code(), "Employee with given email already exists");
         }
 
-        boolean isManager = "T".equalsIgnoreCase(employeeDto.getIsManager());
+        boolean isManager = "T".equalsIgnoreCase(employeeDto.getIsManager().trim()) || "true".equalsIgnoreCase(employeeDto.getIsManager().trim());
         var employee = employeeMapper.addEmployeeDtoToEmployee(employeeDto);
         employee.setUuid(UUID.randomUUID());
         if (null == employee.getUsername()) {
@@ -253,17 +266,18 @@ public class EmployeeServiceImpl implements EmployeeService {
         return employeeDao.getEmployeesByManager(mangerUuid);
     }
 
-    public void isManager(UUID uuid) {
+    public Boolean isManager(UUID uuid) {
         var manager = getById(uuid);
-        if (manager.getIsManager().equals(Boolean.FALSE)) {
-            throw new NotFoundException(MANAGER_ACCESS_NOT_FOUND.code(), "User is not a Manager");
-        }
+        return manager.getIsManager();
     }
 
     @Override
     public HashMap<String, List<EmployeeResponseDto>> getFullTeam(UUID employeeId) {
         var me = getById(employeeId);
-        isManager(employeeId);
+        var isManager = isManager(employeeId);
+        if (!isManager) {
+            throw new NotFoundException(MANAGER_ACCESS_NOT_FOUND.code(), "User don't have manager access");
+        }
         HashMap<String, List<EmployeeResponseDto>> fullTeam = new HashMap<>();
 
         List<EmployeeAndManagerDto> employees = new ArrayList<>();

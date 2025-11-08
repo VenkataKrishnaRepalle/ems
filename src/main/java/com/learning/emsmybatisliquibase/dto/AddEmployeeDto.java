@@ -40,6 +40,8 @@ public class AddEmployeeDto {
 
     private UUID managerUuid;
 
+    private String managerEmail;
+
     private String jobTitle;
 
     private String password;

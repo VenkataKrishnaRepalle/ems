@@ -295,9 +295,10 @@ public class FilesServiceImpl implements FilesService {
                         !columnHeadings.get(8).equals("department_name") &&
                         !columnHeadings.get(9).equals("is_manager") &&
                         !columnHeadings.get(10).equals("manager_uuid") &&
-                        !columnHeadings.get(11).equals("job_title") &&
-                        !columnHeadings.get(12).equals("password") &&
-                        !columnHeadings.get(13).equals("confirm_password")) {
+                        !columnHeadings.get(11).equals("manager_email") &&
+                        !columnHeadings.get(12).equals("job_title") &&
+                        !columnHeadings.get(13).equals("password") &&
+                        !columnHeadings.get(14).equals("confirm_password")) {
                     throw new InvalidInputException(INVALID_COLUMN_HEADINGS.code(),
                             "Please correct column headings");
                 }

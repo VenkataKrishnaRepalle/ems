@@ -9,6 +9,8 @@ import com.learning.emsmybatisliquibase.entity.enums.AttendanceStatus;
 import com.learning.emsmybatisliquibase.exception.FoundException;
 import com.learning.emsmybatisliquibase.exception.IntegrityException;
 import com.learning.emsmybatisliquibase.exception.InvalidInputException;
+import com.learning.emsmybatisliquibase.exception.NotFoundException;
+import com.learning.emsmybatisliquibase.exception.errorcodes.EmployeeErrorCodes;
 import com.learning.emsmybatisliquibase.mapper.AttendanceMapper;
 import com.learning.emsmybatisliquibase.service.AttendanceService;
 import com.learning.emsmybatisliquibase.service.EmployeeService;
@@ -24,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 
 import static com.learning.emsmybatisliquibase.exception.errorcodes.AttendanceErrorCodes.*;
+import static com.learning.emsmybatisliquibase.exception.errorcodes.EmployeeErrorCodes.MANAGER_ACCESS_NOT_FOUND;
 
 @Service
 @RequiredArgsConstructor
@@ -133,7 +136,9 @@ public class AttendanceServiceImpl implements AttendanceService {
 
     @Override
     public List<ViewEmployeeAttendanceDto> getAllEmployeesAttendanceByManager(UUID managerUuid) {
-        employeeService.isManager(managerUuid);
+        if (!employeeService.isManager(managerUuid)) {
+            throw new NotFoundException(MANAGER_ACCESS_NOT_FOUND.code(), "User is not a Manager");
+        }
 
         return employeeService.getByManagerUuid(managerUuid)
                 .stream()

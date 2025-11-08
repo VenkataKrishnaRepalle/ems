@@ -33,7 +33,7 @@ public interface EmployeeService {
 
     List<EmployeeResponseDto> getByManagerUuid(UUID managerId);
 
-    void isManager(UUID uuid);
+    Boolean isManager(UUID uuid);
 
     HashMap<String, List<EmployeeResponseDto>> getFullTeam(UUID employeeId);
 

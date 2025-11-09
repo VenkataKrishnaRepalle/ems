@@ -4,7 +4,7 @@ import com.learning.emsmybatisliquibase.dao.ReviewTimelineDao;
 import com.learning.emsmybatisliquibase.dto.NotificationDto;
 import com.learning.emsmybatisliquibase.entity.Employee;
 import com.learning.emsmybatisliquibase.entity.enums.ReviewType;
-import com.learning.emsmybatisliquibase.service.NotificationService;
+import com.learning.emsmybatisliquibase.service.CommunicationService;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +21,7 @@ import java.util.List;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class NotificationServiceImpl implements NotificationService {
+public class CommunicationServiceImpl implements CommunicationService {
 
     private final JavaMailSender mailSender;
 

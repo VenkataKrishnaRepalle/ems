@@ -50,7 +50,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     private final EmployeePeriodDao employeePeriodDao;
 
-    private final NotificationService notificationService;
+    private final CommunicationService communicationService;
 
     private final Random random = new Random();
 
@@ -132,9 +132,9 @@ public class EmployeeServiceImpl implements EmployeeService {
         employeePeriodService.periodAssignment(List.of(employee.getUuid()));
 
         if (!validatePasswords(employeeDto.getPassword(), employeeDto.getConfirmPassword())) {
-            notificationService.sendSuccessfulEmployeeOnBoard(employee, password, 0);
+            communicationService.sendSuccessfulEmployeeOnBoard(employee, password, 0);
         } else {
-            notificationService.sendSuccessfulEmployeeOnBoard(employee, password, 1);
+            communicationService.sendSuccessfulEmployeeOnBoard(employee, password, 1);
         }
 
 

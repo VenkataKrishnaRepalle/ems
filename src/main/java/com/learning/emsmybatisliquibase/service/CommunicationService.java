@@ -6,7 +6,7 @@ import com.learning.emsmybatisliquibase.entity.enums.ReviewType;
 
 import java.util.List;
 
-public interface NotificationService {
+public interface CommunicationService {
 
     void sendSuccessfulEmployeeOnBoard(Employee employee, String password, int capacity);
 

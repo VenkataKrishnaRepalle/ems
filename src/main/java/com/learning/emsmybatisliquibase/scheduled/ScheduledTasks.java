@@ -34,7 +34,7 @@ public class ScheduledTasks {
 
     private final PeriodService periodService;
 
-    private final NotificationService notificationService;
+    private final CommunicationService communicationService;
 
     private final ReviewTimelineDao reviewTimelineDao;
 
@@ -162,7 +162,7 @@ public class ScheduledTasks {
 
         if (reviewType != null) {
             var notifications = reviewTimelineDao.getTimelineIdsByReviewType(reviewType);
-            notificationService.sendNotificationBeforeStart(notifications, reviewType);
+            communicationService.sendNotificationBeforeStart(notifications, reviewType);
         }
     }
 

@@ -1,4 +1,4 @@
-FROM eclipse-temurin:17-jre-alpine
+FROM eclipse-temurin:21-jre-alpine
 LABEL authors="rvenkata"
 
 # Copy the application jar file

@@ -10,7 +10,6 @@ import com.learning.emsmybatisliquibase.exception.FoundException;
 import com.learning.emsmybatisliquibase.exception.IntegrityException;
 import com.learning.emsmybatisliquibase.exception.InvalidInputException;
 import com.learning.emsmybatisliquibase.exception.NotFoundException;
-import com.learning.emsmybatisliquibase.exception.errorcodes.EmployeeErrorCodes;
 import com.learning.emsmybatisliquibase.mapper.AttendanceMapper;
 import com.learning.emsmybatisliquibase.service.AttendanceService;
 import com.learning.emsmybatisliquibase.service.EmployeeService;

@@ -107,7 +107,7 @@ public class AuthServiceImpl implements AuthService {
         if (passwords.size() != 1) {
             throw new InvalidInputException("ACCOUNT_LOCKED", "Account Locked, Please reset password");
         }
-        var password = passwords.get(0);
+        var password = passwords.getFirst();
 
         if (!passwordEncoder.matches(loginDto.getPassword(), password.getPassword())) {
             password.setNoOfIncorrectEntries(password.getNoOfIncorrectEntries() + 1);
@@ -247,7 +247,7 @@ public class AuthServiceImpl implements AuthService {
             String token = jwtTokenProvider.generateToken(
                     new UsernamePasswordAuthenticationToken(
                             String.valueOf(employee.getUuid()),
-                            passwords.get(0).getPassword()));
+                            passwords.getFirst().getPassword()));
 
             addAuthCookie(response, "token", token, jwtExpiryTime);
             var employeeResponse = employeeDao.getEmployee(employeeId);

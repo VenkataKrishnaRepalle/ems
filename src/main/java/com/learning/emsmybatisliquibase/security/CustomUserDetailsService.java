@@ -41,7 +41,7 @@ public class CustomUserDetailsService implements UserDetailsService {
         }
 
         var password = passwordDao.getByEmployeeUuidAndStatus(employee.getUuid(),
-                PasswordStatus.ACTIVE).get(0);
+                PasswordStatus.ACTIVE).getFirst();
         var employeeRoles = employeeRoleDao.getByEmployeeUuid(employee.getUuid());
 
         Set<GrantedAuthority> authorities = employeeRoles.stream().map(role ->

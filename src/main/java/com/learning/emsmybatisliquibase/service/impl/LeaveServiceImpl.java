@@ -188,7 +188,7 @@ public class LeaveServiceImpl implements LeaveService {
         var employee = employeeService.getById(leave.getEmployeeUuid());
         if (employee.getManagerUuid() == null) {
             throw new NotFoundException(MANAGER_ACCESS_NOT_FOUND.code(), "Manager Not found for this colleague to approve leave");
-        } else if (Boolean.FALSE.equals(employee.getManagerUuid().equals(managerUuid))) {
+        } else if (!employee.getManagerUuid().equals(managerUuid)) {
             throw new NotFoundException(INVALID_MANGER_ACCESS.code(), "Invalid manager trying to approve the request");
         }
         return Boolean.TRUE;

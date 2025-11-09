@@ -3,11 +3,9 @@ package com.learning.emsmybatisliquibase.service.impl;
 import com.learning.emsmybatisliquibase.dao.DepartmentDao;
 import com.learning.emsmybatisliquibase.dao.ProfileDao;
 import com.learning.emsmybatisliquibase.dto.AddDepartmentDto;
-import com.learning.emsmybatisliquibase.dto.AddEmployeeDto;
 import com.learning.emsmybatisliquibase.dto.FileType;
 import com.learning.emsmybatisliquibase.dto.SuccessResponseDto;
 import com.learning.emsmybatisliquibase.entity.Employee;
-import com.learning.emsmybatisliquibase.entity.enums.Gender;
 import com.learning.emsmybatisliquibase.entity.Profile;
 import com.learning.emsmybatisliquibase.exception.IntegrityException;
 import com.learning.emsmybatisliquibase.exception.InvalidInputException;
@@ -15,7 +13,6 @@ import com.learning.emsmybatisliquibase.exception.NotFoundException;
 import com.learning.emsmybatisliquibase.service.DepartmentService;
 import com.learning.emsmybatisliquibase.service.EmployeeService;
 import com.learning.emsmybatisliquibase.service.FilesService;
-import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -30,14 +27,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.text.DecimalFormat;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.locks.ReentrantLock;
 
 import static com.learning.emsmybatisliquibase.exception.errorcodes.DepartmentErrorCodes.PROFILE_NOT_UPDATED;
 import static com.learning.emsmybatisliquibase.exception.errorcodes.EmployeeErrorCodes.*;
@@ -59,15 +51,11 @@ public class FilesServiceImpl implements FilesService {
     
     private final com.learning.emsmybatisliquibase.batch.EmployeeBatchService employeeBatchService;
 
-    private final ReentrantLock lock = new ReentrantLock();
-
     private static final String ACTION = "action";
 
     private static final String ADD = "add";
 
     private static final String REMOVE = "remove";
-
-    private static final String PARSE_DATE = "dd/MM/yyyy";
 
     @Override
     public SuccessResponseDto colleagueOnboard(MultipartFile file) throws IOException {
@@ -191,7 +179,7 @@ public class FilesServiceImpl implements FilesService {
 
             var employee = employeeService.getByEmail(value.get(1));
             if (department == null) {
-                department = departmentService.add(new AddDepartmentDto(value.get(0).trim()));
+                department = departmentService.add(new AddDepartmentDto(value.getFirst().trim()));
             }
 
             var action = value.get(2);

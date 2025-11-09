@@ -42,7 +42,7 @@ public class OtpServiceImpl implements OtpService {
             log.error(ErrorMessageUtil.getMessage(OTP_NOT_FOUND.code(), uuid));
             throw new NotFoundException(OTP_NOT_FOUND.code(), ErrorMessageUtil.getMessage(OTP_NOT_FOUND.code(), uuid));
         }
-        return otp.get(0);
+        return otp.getFirst();
     }
 
     @Override
@@ -55,7 +55,7 @@ public class OtpServiceImpl implements OtpService {
                     ErrorMessageUtil.getMessage(OTP_INVALID_SIZED.code(),
                             requestQuery.getPropertyAsString("employeeUuid"), otpList.size()));
         }
-        return otpList.get(0);
+        return otpList.getFirst();
     }
 
     @Override
@@ -121,7 +121,7 @@ public class OtpServiceImpl implements OtpService {
                     ErrorMessageUtil.getMessage(OTP_REGENERATE.code()));
         }
 
-        var otpAuth = existingOtpList.get(0);
+        var otpAuth = existingOtpList.getFirst();
 
         if (!otp.equals(otpAuth.getOtp().toString())) {
             log.error(ErrorMessageUtil.getMessage(OTP_VERIFICATION_FAILED.code(), employeeUuid));

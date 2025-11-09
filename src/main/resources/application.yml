@@ -103,9 +103,9 @@ management:
     health:
       show-details: always
     metrics:
-      enabled: true
+      access: unrestricted
     prometheus:
-      enabled: true
+      access: unrestricted
 
 logging:
   level:

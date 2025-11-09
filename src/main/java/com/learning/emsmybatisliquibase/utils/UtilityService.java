@@ -42,7 +42,7 @@ public class UtilityService {
         if (results.isEmpty()) {
             return null;
         }
-        var result = results.get(0);
+        var result = results.getFirst();
         if (!(result instanceof Map<?, ?> resultMap)) {
             return null;
         }

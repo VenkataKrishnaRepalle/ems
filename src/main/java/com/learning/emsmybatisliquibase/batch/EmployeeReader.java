@@ -32,7 +32,7 @@ public class EmployeeReader implements ItemReader<AddEmployeeDto> {
         while (iterator.hasNext()) {
             List<String> row = iterator.next();
             
-            if (row.size() != 15) {
+            if (row.size() != 14) {
                 log.warn("Skipping invalid row with {} columns", row.size());
                 continue;
             }
@@ -44,16 +44,15 @@ public class EmployeeReader implements ItemReader<AddEmployeeDto> {
                         .email(row.get(2))
                         .gender(getGender(row.get(3)))
                         .dateOfBirth(parseDate(row.get(4)))
-                        .phoneNumber(formatPhoneNumber(row.get(5)))
+                        .phoneNumber(row.get(5).trim())
                         .joiningDate(parseDate(row.get(6)))
                         .leavingDate(parseDate(row.get(7)))
                         .departmentName(row.get(8).trim())
                         .isManager(row.get(9).trim())
                         .managerUuid(row.get(10).trim().isEmpty() ? null : UUID.fromString(row.get(10).trim()))
-                        .managerEmail(row.get(11).trim().isEmpty() ? null : row.get(11).trim())
-                        .jobTitle(row.get(12))
-                        .password(row.get(13).trim())
-                        .confirmPassword(row.get(14).trim())
+                        .jobTitle(row.get(11))
+                        .password(row.get(12).trim())
+                        .confirmPassword(row.get(13).trim())
                         .build();
             } catch (Exception e) {
                 log.error("Error parsing employee: {}", e.getMessage());
@@ -70,28 +69,13 @@ public class EmployeeReader implements ItemReader<AddEmployeeDto> {
         return LocalDate.parse(dateString, DATE_FORMATTER);
     }
 
-    private String formatPhoneNumber(String phoneNumber) {
-        if (phoneNumber == null || phoneNumber.trim().isEmpty()) {
-            return null;
-        }
-        try {
-            // Remove any non-digit characters and trim
-            String cleanNumber = phoneNumber.trim().replaceAll("[^\\d.]", "");
-            // Parse and format to remove any decimal part
-            return DECIMAL_FORMAT.format(Double.parseDouble(cleanNumber));
-        } catch (NumberFormatException e) {
-            log.error("Error parsing phone number: {}", phoneNumber, e);
-            return null;
-        }
-    }
-
     private Gender getGender(String value) {
         if("M".equalsIgnoreCase(value) || "male".equalsIgnoreCase(value)) {
             return Gender.MALE;
         } else if("F".equalsIgnoreCase(value) || "female".equalsIgnoreCase(value)) {
             return Gender.FEMALE;
         } else {
-            return null;
+            return Gender.OTHERS;
         }
     }
 }

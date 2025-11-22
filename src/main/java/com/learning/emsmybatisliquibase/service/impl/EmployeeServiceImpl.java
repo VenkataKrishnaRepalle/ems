@@ -28,7 +28,6 @@ import java.io.UnsupportedEncodingException;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 
 @Slf4j
 @Service
@@ -66,17 +65,6 @@ public class EmployeeServiceImpl implements EmployeeService {
         if (employeeDto.getManagerUuid() != null) {
             if (!isManager(employeeDto.getManagerUuid())) {
                 employeeDto.setManagerUuid(null);
-            }
-        }
-
-        if (employeeDto.getManagerEmail() != null) {
-            var manager = getByEmail(employeeDto.getManagerEmail().trim());
-            if (manager != null) {
-                if (!manager.getIsManager()) {
-                    manager.setIsManager(true);
-                    update(manager);
-                }
-                employeeDto.setManagerUuid(manager.getUuid());
             }
         }
 

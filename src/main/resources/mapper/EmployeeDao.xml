@@ -164,23 +164,7 @@
 
     <resultMap id="employeePaginationMap" type="com.learning.emsmybatisliquibase.dto.EmployeePaginationResponseDto">
         <result property="count" column="total_count"/>
-        <collection property="employees" column="employees" ofType="com.learning.emsmybatisliquibase.entity.Employee">
-            <id property="uuid" column="uuid" jdbcType="VARCHAR" javaType="java.util.UUID"
-                typeHandler="com.learning.emsmybatisliquibase.handler.UuidTypeHandler"/>
-            <result property="firstName" column="first_name"/>
-            <result property="lastName" column="last_name"/>
-            <result property="gender" column="gender"/>
-            <result property="dateOfBirth" column="date_of_birth"/>
-            <result property="phoneNumber" column="phone_number"/>
-            <result property="email" column="email"/>
-            <result property="managerUuid" column="manager_uuid" jdbcType="VARCHAR" javaType="java.util.UUID"
-                    typeHandler="com.learning.emsmybatisliquibase.handler.UuidTypeHandler"/>
-            <result property="isManager" column="is_manager"/>
-            <result property="joiningDate" column="joining_date"/>
-            <result property="leavingDate" column="leaving_date"/>
-            <result property="createdTime" column="created_time"/>
-            <result property="updatedTime" column="updated_time"/>
-        </collection>
+        <collection property="employees" ofType="com.learning.emsmybatisliquibase.entity.Employee" resultMap="employeeResult"/>
     </resultMap>
 
     <select id="findAll" resultMap="employeePaginationMap">

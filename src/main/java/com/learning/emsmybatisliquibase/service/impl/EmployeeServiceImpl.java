@@ -358,11 +358,12 @@ public class EmployeeServiceImpl implements EmployeeService {
         page = Math.max(page, 1);
         size = Math.max(size, 1);
         int offSet = (page - 1) * size;
+        var totalCount = employeeDao.employeesCount(profileStatuses);
         var employees = employeeDao.findAll(size, offSet, setSortBy(sortBy), sortOrder, profileStatuses);
         return PaginatedResponse.<Employee>builder()
-                .data(employees.getEmployees())
-                .totalItems(employees.getTotalCount())
-                .totalPages(employees.getTotalCount()/size)
+                .data(totalCount > 0 ? employees.getEmployees() : Collections.emptyList())
+                .totalItems(totalCount > 0 ? totalCount : 0)
+                .totalPages(totalCount > 0 ? totalCount/size : 0)
                 .currentPage(page)
                 .build();
     }

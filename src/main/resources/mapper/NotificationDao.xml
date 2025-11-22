@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.learning.emsmybatisliquibase.dao.NotificationDao">
+    <resultMap id="notificationMap" type="com.learning.emsmybatisliquibase.entity.Notification">
+        <id property="uuid" column="uuid" jdbcType="VARCHAR" javaType="java.util.UUID"
+        typeHandler="com.learning.emsmybatisliquibase.handler.UuidTypeHandler"/>
+        <result property="employeeUuid" column="employee_uuid" jdbcType="VARCHAR" javaType="java.util.UUID"
+                typeHandler="com.learning.emsmybatisliquibase.handler.UuidTypeHandler"/>
+        <result property="title" column="title"/>
+        <result property="message" column="message"/>
+        <result property="link" column="link"/>
+        <result property="status" column="status"/>
+        <result property="createdTime" column="created_time"/>
+        <result property="updatedTime" column="updated_time"/>
+    </resultMap>
+    <select id="getById" resultMap="notificationMap">
+        SELECT *
+        from notification
+        WHERE uuid = #{id}
+    </select>
+
+    <select id="getByEmployee" resultMap="notificationMap">
+        SELECT *
+        FROM notification
+        WHERE employee_uuid = #{employeeUuid}
+        <if test="statuses != null">
+            AND status IN
+            <foreach collection="statuses" item="status" open="(" separator="," close=")">
+                #{status}
+            </foreach>
+        </if>
+    </select>
+
+    <insert id="save" flushCache="true">
+        INSERT INTO notification (uuid, employee_uuid, title, message, link, status, created_time, updated_time)
+        VALUES (#{notification.uuid}, #{notification.employeeUuid}, #{notification.title}, #{notification.message},
+                #{notification.link}, #{notification.status}, current_timestamp, current_timestamp)
+    </insert>
+
+    <update id="updateById" flushCache="true">
+        UPDATE notification
+        SET status       = #{newStatus},
+            updated_time = current_timestamp
+        WHERE uuid = #{id}
+          and status = #{oldStatus}
+    </update>
+
+    <update id="updateByEmployee" flushCache="true">
+        UPDATE notification
+        SET status       = #{newStatus},
+            updated_time = current_timestamp
+        WHERE employee_uuid = #{employeeUuid} and status = #{oldStatus}
+    </update>
+
+    <delete id="deleteById" flushCache="true">
+        DELETE from notification
+        WHERE uuid = #{uuid}
+    </delete>
+
+    <delete id="deleteByEmployee" flushCache="true">
+        DELETE from notification
+        WHERE employee_uuid = #{employeeUuid}
+    </delete>
+</mapper>

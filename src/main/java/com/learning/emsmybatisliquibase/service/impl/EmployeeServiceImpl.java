@@ -28,6 +28,7 @@ import java.io.UnsupportedEncodingException;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 
 @Slf4j
 @Service
@@ -55,6 +56,8 @@ public class EmployeeServiceImpl implements EmployeeService {
     private final Random random = new Random();
 
     private final EmployeeRoleService employeeRoleService;
+
+    private final NotificationService notificationService;
 
     @Override
     @Transactional
@@ -143,6 +146,19 @@ public class EmployeeServiceImpl implements EmployeeService {
         response.setDepartment(department);
         response.setIsManager(isManager);
 
+        var welcomeTitle = "Welcome to the team";
+        var welcomeMessage = "Welcome to the team " + employee.getFirstName() + " " + employee.getLastName() +
+                "! Please complete necessary onboarding details";
+        notificationService.send(createNotification(employee.getUuid(), welcomeTitle, welcomeMessage, null));
+
+        if (employee.getManagerUuid() != null) {
+            var managerTitle = "New employee onboarded Name: " + employee.getFirstName() + " " + employee.getLastName();
+            var managerMessage = "New employee onboarded successfully on " + employee.getJoiningDate() +
+                    " and reporting to you. Please complete necessary onboarding details";
+            var link = "view/" + employee.getUuid();
+            notificationService.send(createNotification(employee.getManagerUuid(), managerTitle, managerMessage, link));
+        }
+
         return response;
     }
 
@@ -167,6 +183,21 @@ public class EmployeeServiceImpl implements EmployeeService {
     private boolean validatePasswords(String password, String confirmPassword) {
         return StringUtils.isNotEmpty(password) && StringUtils.isNotEmpty(confirmPassword);
     }
+
+
+    private Notification createNotification(UUID toEmployeeUuid, String title, String message, String link) {
+        return Notification.builder()
+                .uuid(UUID.randomUUID())
+                .employeeUuid(toEmployeeUuid)
+                .status(Notification.Status.UNREAD)
+                .title(title)
+                .message(message)
+                .link(link)
+                .createdTime(Instant.now())
+                .updatedTime(Instant.now())
+                .build();
+    }
+
 
     @Override
     public Employee getById(UUID id) {
@@ -323,17 +354,15 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
-    public PaginatedResponse<Employee> getAllByPagination(int page, int size, String sortBy, String sortOrder) {
+    public PaginatedResponse<Employee> getAllByPagination(int page, int size, String sortBy, String sortOrder, List<ProfileStatus> profileStatuses) {
         page = Math.max(page, 1);
         size = Math.max(size, 1);
         int offSet = (page - 1) * size;
-        var profileStatuses = List.of(ProfileStatus.ACTIVE, ProfileStatus.PENDING);
         var employees = employeeDao.findAll(size, offSet, setSortBy(sortBy), sortOrder, profileStatuses);
-        var totalItems = employees.getCount();
         return PaginatedResponse.<Employee>builder()
                 .data(employees.getEmployees())
-                .totalItems(totalItems)
-                .totalPages((long) Math.ceil((double) totalItems / size))
+                .totalItems(employees.getTotalCount())
+                .totalPages(employees.getTotalCount()/size)
                 .currentPage(page)
                 .build();
     }

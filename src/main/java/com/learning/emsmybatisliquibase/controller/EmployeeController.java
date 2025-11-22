@@ -1,8 +1,8 @@
 package com.learning.emsmybatisliquibase.controller;
 
-
 import com.learning.emsmybatisliquibase.dto.*;
 import com.learning.emsmybatisliquibase.entity.Employee;
+import com.learning.emsmybatisliquibase.entity.enums.ProfileStatus;
 import com.learning.emsmybatisliquibase.service.EmployeeService;
 import jakarta.mail.MessagingException;
 import jakarta.validation.Valid;
@@ -64,8 +64,9 @@ public class EmployeeController {
             @RequestParam(name = "page", defaultValue = "1") int page,
             @RequestParam(name = "size", defaultValue = "3") int size,
             @RequestParam(name = "sortBy", defaultValue = "uuid") String sortBy,
-            @RequestParam(name = "sortOrder", defaultValue = "asc") String sortOrder) {
-        return new ResponseEntity<>(employeeService.getAllByPagination(page, size, sortBy, sortOrder),
+            @RequestParam(name = "sortOrder", defaultValue = "asc") String sortOrder,
+            @RequestParam(name = "profileStatuses", defaultValue = "ACTIVE,PENDING") List<ProfileStatus> profileStatuses) {
+        return new ResponseEntity<>(employeeService.getAllByPagination(page, size, sortBy, sortOrder, profileStatuses),
                 HttpStatus.OK);
     }
 
@@ -105,5 +106,4 @@ public class EmployeeController {
     public ResponseEntity<List<EmployeeDetailsDto>> getByNameOrEmail(@RequestParam(name = "name") String name) {
         return ResponseEntity.ok(employeeService.getByNameOrEmail(name));
     }
-
 }

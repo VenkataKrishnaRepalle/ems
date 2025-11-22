@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet id="1" author="Venkata Krishna Repalle">
+        <createTable tableName="notification">
+            <column name="uuid" type="${uuid_type}">
+                <constraints nullable="false" primaryKeyName="notification_pk" primaryKey="true"/>
+            </column>
+            <column name="employee_uuid" type="${uuid_type}">
+                <constraints nullable="false"/>
+            </column>
+            <column name="title" type="VARCHAR">
+                <constraints nullable="false"/>
+            </column>
+            <column name="message" type="VARCHAR">
+                <constraints nullable="false"/>
+            </column>
+            <column name="link" type="VARCHAR"/>
+            <column name="status" type="VARCHAR">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_time" type="TIMESTAMPTZ">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_time" type="TIMESTAMPTZ">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="notification" baseColumnNames="employee_uuid"
+                                 constraintName="notification_employee_fk" initiallyDeferred="false"
+                                 deferrable="false" onDelete="CASCADE" onUpdate="CASCADE"
+                                 referencedTableName="employee" referencedColumnNames="uuid"/>
+    </changeSet>
+</databaseChangeLog>

@@ -3,6 +3,7 @@ package com.learning.emsmybatisliquibase.service;
 
 import com.learning.emsmybatisliquibase.dto.*;
 import com.learning.emsmybatisliquibase.entity.Employee;
+import com.learning.emsmybatisliquibase.entity.enums.ProfileStatus;
 import jakarta.mail.MessagingException;
 
 import java.io.UnsupportedEncodingException;
@@ -41,7 +42,7 @@ public interface EmployeeService {
 
     EmployeeResponseDto getMe();
 
-    PaginatedResponse<Employee> getAllByPagination(int page, int size, String sortBy, String sortOrder);
+    PaginatedResponse<Employee> getAllByPagination(int page, int size, String sortBy, String sortOrder, List<ProfileStatus> profileStatuses);
 
     List<EmployeeDetailsDto> getAllActiveManagers();
 

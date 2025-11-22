@@ -267,9 +267,12 @@ public class AuthServiceImpl implements AuthService {
 
     private void removeAuthCookie(HttpServletResponse response, String name) {
         Cookie cookie = new Cookie(name, "");
-        cookie.setMaxAge(0);
+        cookie.setMaxAge(3600);
         cookie.setHttpOnly(true);
+        cookie.setSecure(true);
         cookie.setPath("/");
+        cookie.setDomain("ems-frontend-beryl.vercel.app");
+        cookie.setAttribute("SameSite", "None");
         response.addCookie(cookie);
     }
 

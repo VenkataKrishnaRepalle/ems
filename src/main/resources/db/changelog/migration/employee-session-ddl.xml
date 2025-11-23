@@ -25,7 +25,7 @@
             <column name="is_active" type="BOOLEAN">
                 <constraints nullable="false"/>
             </column>
-            <column name="login_timestamp" type="TIMESTAMPTZ">
+            <column name="login_timestamp" type="TIMESTAMP">
                 <constraints nullable="false"/>
             </column>
         </createTable>

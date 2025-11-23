@@ -15,7 +15,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -68,8 +68,8 @@ public class FeedbackServiceImpl implements FeedbackService {
     @Override
     public Feedback send(Feedback feedback) {
         feedback.setUuid(UUID.randomUUID());
-        feedback.setCreatedTime(Instant.now());
-        feedback.setUpdatedTime(Instant.now());
+        feedback.setCreatedTime(LocalDateTime.now());
+        feedback.setUpdatedTime(LocalDateTime.now());
 
         try {
             if (0 == feedbackDao.insert(feedback)) {

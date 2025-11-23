@@ -13,7 +13,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
@@ -51,8 +51,8 @@ public class EducationServiceImpl implements EducationService {
             }
         }
         educationDto.setUuid(UUID.randomUUID());
-        educationDto.setCreatedTime(Instant.now());
-        educationDto.setUpdatedTime(Instant.now());
+        educationDto.setCreatedTime(LocalDateTime.now());
+        educationDto.setUpdatedTime(LocalDateTime.now());
 
         try {
             if (0 == educationDao.insert(educationDto)) {
@@ -81,7 +81,7 @@ public class EducationServiceImpl implements EducationService {
     public Education update(Education educationDto, UUID id) {
         getById(educationDto.getUuid());
         validateEducation(educationDto);
-        educationDto.setUpdatedTime(Instant.now());
+        educationDto.setUpdatedTime(LocalDateTime.now());
 
         try {
             if (0 == educationDao.update(educationDto)) {

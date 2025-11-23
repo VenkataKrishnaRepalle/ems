@@ -1,31 +1,33 @@
-package com.learning.emsmybatisliquibase.entity;
+package com.learning.emsmybatisliquibase.entity.audit;
 
-import com.learning.emsmybatisliquibase.entity.enums.PasswordStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.Map;
 import java.util.UUID;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class Password {
+public class Audit {
 
     private UUID uuid;
 
     private UUID employeeUuid;
 
-    private String password;
+    private String entityType;
 
-    private int noOfIncorrectEntries;
+    private String action;
 
-    private PasswordStatus status;
+    private Map<String, Map<String, String>> changes;
+
+    private String changesMessage;
 
     private LocalDateTime createdTime;
 
-    private LocalDateTime updatedTime;
+    private UUID createdBy;
 }

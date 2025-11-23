@@ -25,7 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 import static com.learning.emsmybatisliquibase.exception.errorcodes.EmployeeErrorCodes.*;
 
 import java.io.UnsupportedEncodingException;
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.LocalDate;
 import java.util.*;
 
@@ -81,8 +81,8 @@ public class EmployeeServiceImpl implements EmployeeService {
         }
         employee.setIsManager(isManager);
         employee.setManagerUuid(employeeDto.getManagerUuid());
-        employee.setCreatedTime(Instant.now());
-        employee.setUpdatedTime(Instant.now());
+        employee.setCreatedTime(LocalDateTime.now());
+        employee.setUpdatedTime(LocalDateTime.now());
 
         try {
             if (0 == employeeDao.insert(employee)) {
@@ -115,7 +115,7 @@ public class EmployeeServiceImpl implements EmployeeService {
                 .jobTitle(JobTitleType.valueOf(employeeDto.getJobTitle()))
                 .employeeUuid(employee.getUuid())
                 .departmentUuid(department == null ? null : department.getUuid())
-                .updatedTime(Instant.now())
+                .updatedTime(LocalDateTime.now())
                 .build();
 
         profileService.insert(profile);
@@ -181,8 +181,8 @@ public class EmployeeServiceImpl implements EmployeeService {
                 .title(title)
                 .message(message)
                 .link(link)
-                .createdTime(Instant.now())
-                .updatedTime(Instant.now())
+                .createdTime(LocalDateTime.now())
+                .updatedTime(LocalDateTime.now())
                 .build();
     }
 

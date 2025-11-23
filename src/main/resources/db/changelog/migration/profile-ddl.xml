@@ -22,7 +22,7 @@
             </column>
             <column name="department_uuid" type="${uuid_type}">
             </column>
-            <column name="updated_time" type="timestamptz">
+            <column name="updated_time" type="TIMESTAMP">
                 <constraints nullable="false"/>
             </column>
         </createTable>

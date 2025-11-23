@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -53,7 +54,7 @@ public class NotificationServiceImpl implements NotificationService {
     public void updateById(UUID uuid, Notification.Status status) {
         var notification = getById(uuid);
         try {
-            if (0 == notificationDao.updateById(uuid, findReverseStatus(status), status)) {
+            if (0 == notificationDao.updateById(uuid, findReverseStatus(status), status, LocalDateTime.now())) {
                 throw new IntegrityException("NOTIFICATION_UPDATE_FAILED", "Failed to update notification for employee: " + notification.getEmployeeUuid());
             }
         } catch (DataIntegrityViolationException ex) {
@@ -86,7 +87,7 @@ public class NotificationServiceImpl implements NotificationService {
     @Override
     public void updateByEmployee(UUID employeeId, Notification.Status status) {
         try {
-            if (0 == notificationDao.updateByEmployee(employeeId, findReverseStatus(status), status)) {
+            if (0 == notificationDao.updateByEmployee(employeeId, findReverseStatus(status), status, LocalDateTime.now())) {
                 throw new IntegrityException("NOTIFICATION_UPDATE_FAILED", "Failed to update notification for employee: " + employeeId);
             }
         } catch (DataIntegrityViolationException ex) {

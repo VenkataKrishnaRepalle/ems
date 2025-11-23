@@ -15,7 +15,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Service
@@ -57,8 +57,8 @@ public class CertificationServiceImpl implements CertificationService {
         certification.setUuid(UUID.randomUUID());
         certification.setName(certification.getName().strip());
         certification.setCertificationCategoryUuid(certificationCategory.getUuid());
-        certification.setCreationTime(Instant.now());
-        certification.setUpdatedTime(Instant.now());
+        certification.setCreationTime(LocalDateTime.now());
+        certification.setUpdatedTime(LocalDateTime.now());
 
         insert(certification);
 
@@ -86,7 +86,7 @@ public class CertificationServiceImpl implements CertificationService {
         certification.setCertifiedDate(updateCertificationDto.getCertifiedDate());
         certification.setExpiryDate(updateCertificationDto.getExpiryDate());
         certification.setLevel(updateCertificationDto.getLevel());
-        certification.setUpdatedTime(Instant.now());
+        certification.setUpdatedTime(LocalDateTime.now());
 
         try {
             if (0 == certificationDao.update(certification)) {

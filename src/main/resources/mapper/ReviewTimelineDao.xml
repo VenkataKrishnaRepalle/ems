@@ -31,7 +31,7 @@
                 #{reviewTimeline.startTime},
                 #{reviewTimeline.overdueTime}, #{reviewTimeline.lockTime}, #{reviewTimeline.endTime},
                 #{reviewTimeline.status}, #{reviewTimeline.summaryStatus},
-                current_timestamp, current_timestamp)
+                #{reviewTimeline.createdTime}, #{reviewTimeline.updatedTime})
     </insert>
 
     <update id="update" flushCache="true">
@@ -44,7 +44,7 @@
             end_time             = #{reviewTimeline.endTime},
             status               = #{reviewTimeline.status},
             summary_status       = #{reviewTimeline.summaryStatus},
-            updated_time         = current_timestamp
+            updated_time         = #{reviewTimeline.updatedTime}
         where uuid = #{reviewTimeline.uuid}
     </update>
 

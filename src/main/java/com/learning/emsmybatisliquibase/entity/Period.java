@@ -7,7 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Data
@@ -22,15 +22,15 @@ public class Period implements Serializable {
 
     private String description;
 
-    private Instant startTime;
+    private LocalDateTime startTime;
 
-    private Instant endTime;
+    private LocalDateTime endTime;
 
     private PeriodStatus status;
 
     private UUID createdBy;
 
-    private Instant createdTime;
+    private LocalDateTime createdTime;
 
-    private Instant updatedTime;
+    private LocalDateTime updatedTime;
 }

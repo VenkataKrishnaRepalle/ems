@@ -12,10 +12,10 @@
             <column name="description" type="VARCHAR">
                 <constraints nullable="false"/>
             </column>
-            <column name="start_time" type="timestamptz">
+            <column name="start_time" type="timestamp">
                 <constraints nullable="false"/>
             </column>
-            <column name="end_time" type="timestamptz">
+            <column name="end_time" type="timestamp">
                 <constraints nullable="false"/>
             </column>
             <column name="status" type="VARCHAR">
@@ -24,10 +24,10 @@
             <column name="created_by" type="${uuid_type}">
                 <constraints nullable="false"/>
             </column>
-            <column name="created_time" type="timestamptz">
+            <column name="created_time" type="TIMESTAMP">
                 <constraints nullable="false"/>
             </column>
-            <column name="updated_time" type="timestamptz">
+            <column name="updated_time" type="TIMESTAMP">
                 <constraints nullable="false"/>
             </column>
         </createTable>
@@ -57,10 +57,10 @@
             <column name="status" type="VARCHAR">
                 <constraints nullable="false"/>
             </column>
-            <column name="created_time" type="timestamptz">
+            <column name="created_time" type="TIMESTAMP">
                 <constraints nullable="false"/>
             </column>
-            <column name="updated_time" type="timestamptz">
+            <column name="updated_time" type="TIMESTAMP">
                 <constraints nullable="false"/>
             </column>
         </createTable>
@@ -96,16 +96,16 @@
             <column name="type" type="VARCHAR">
                 <constraints nullable="false"/>
             </column>
-            <column name="start_time" type="timestamptz">
+            <column name="start_time" type="TIMESTAMP">
                 <constraints nullable="false"/>
             </column>
-            <column name="overdue_time" type="timestamptz">
+            <column name="overdue_time" type="TIMESTAMP">
                 <constraints nullable="false"/>
             </column>
-            <column name="lock_time" type="timestamptz">
+            <column name="lock_time" type="TIMESTAMP">
                 <constraints nullable="false"/>
             </column>
-            <column name="end_time" type="timestamptz">
+            <column name="end_time" type="TIMESTAMP">
                 <constraints nullable="false"/>
             </column>
             <column name="status" type="VARCHAR">
@@ -114,10 +114,10 @@
             <column name="summary_status" type="VARCHAR">
                 <constraints nullable="false"/>
             </column>
-            <column name="created_time" type="timestamptz">
+            <column name="created_time" type="TIMESTAMP">
                 <constraints nullable="false"/>
             </column>
-            <column name="updated_time" type="timestamptz">
+            <column name="updated_time" type="TIMESTAMP">
                 <constraints nullable="false"/>
             </column>
         </createTable>
@@ -197,10 +197,10 @@
             <column name="status" type="VARCHAR">
                 <constraints nullable="false"/>
             </column>
-            <column name="created_time" type="timestamptz">
+            <column name="created_time" type="TIMESTAMP">
                 <constraints nullable="false"/>
             </column>
-            <column name="updated_time" type="timestamptz">
+            <column name="updated_time" type="TIMESTAMP">
                 <constraints nullable="false"/>
             </column>
         </createTable>

@@ -18,7 +18,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 import static com.learning.emsmybatisliquibase.exception.errorcodes.ReviewErrorCodes.REVIEW_NOT_EXISTS;
@@ -166,7 +166,7 @@ public class ReviewServiceImpl implements ReviewService {
         existingReview.setWayForward(updatedReview.getWayForward());
         existingReview.setOverallComments(updatedReview.getOverallComments());
         existingReview.setType(updatedReview.getType());
-        existingReview.setUpdatedTime(Instant.now());
+        existingReview.setUpdatedTime(LocalDateTime.now());
     }
 
     private void setManagerReview(Review existingReview, Review updatedReview) {
@@ -181,7 +181,7 @@ public class ReviewServiceImpl implements ReviewService {
         existingReview.setManagerWayForward(updatedReview.getManagerWayForward());
         existingReview.setManagerOverallComments(updatedReview.getManagerOverallComments());
         existingReview.setRating(updatedReview.getRating());
-        existingReview.setUpdatedTime(Instant.now());
+        existingReview.setUpdatedTime(LocalDateTime.now());
     }
 
     private void validateTimeline(UUID employeeUuid, ReviewTimeline reviewTimeline) {

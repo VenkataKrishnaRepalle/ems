@@ -26,7 +26,7 @@ import static com.learning.emsmybatisliquibase.exception.errorcodes.EmployeeErro
 import static com.learning.emsmybatisliquibase.exception.errorcodes.LeaveErrorCodes.*;
 
 import java.text.SimpleDateFormat;
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.UUID;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -90,8 +90,8 @@ public class LeaveServiceImpl implements LeaveService {
             leave.setUuid(UUID.randomUUID());
             leave.setEmployeeUuid(employeeId);
             leave.setStatus(LeaveStatus.WAITING_FOR_APPROVAL);
-            leave.setCreatedTime(Instant.now());
-            leave.setUpdatedTime(Instant.now());
+            leave.setCreatedTime(LocalDateTime.now());
+            leave.setUpdatedTime(LocalDateTime.now());
         });
 
         leaves.forEach(leave -> {

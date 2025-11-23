@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serial;
 import java.io.Serializable;
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Data
@@ -31,7 +31,7 @@ public class OtpAuth implements Serializable {
 
     private OtpAuthType type;
 
-    private Instant createdTime;
+    private LocalDateTime createdTime;
 
-    private Instant updatedTime;
+    private LocalDateTime updatedTime;
 }

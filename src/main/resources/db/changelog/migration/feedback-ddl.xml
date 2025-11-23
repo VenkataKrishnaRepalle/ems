@@ -18,10 +18,10 @@
             <column name="look_back" type="VARCHAR"/>
             <column name="look_forward" type="VARCHAR"/>
             <column name="other_comments" type="VARCHAR"/>
-            <column name="created_time" type="TIMESTAMPTZ">
+            <column name="created_time" type="TIMESTAMP">
                 <constraints nullable="false"/>
             </column>
-            <column name="updated_time" type="TIMESTAMPTZ">
+            <column name="updated_time" type="TIMESTAMP">
                 <constraints nullable="false"/>
             </column>
         </createTable>

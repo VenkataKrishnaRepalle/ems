@@ -21,10 +21,10 @@
             <column name="status" type="VARCHAR">
                 <constraints nullable="false"/>
             </column>
-            <column name="created_time" type="TIMESTAMPTZ">
+            <column name="created_time" type="TIMESTAMP">
                 <constraints nullable="false"/>
             </column>
-            <column name="updated_time" type="TIMESTAMPTZ">
+            <column name="updated_time" type="TIMESTAMP">
                 <constraints nullable="false"/>
             </column>
         </createTable>

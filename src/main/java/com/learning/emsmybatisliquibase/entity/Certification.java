@@ -6,7 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.UUID;
 
@@ -32,7 +32,7 @@ public class Certification {
 
     private Date expiryDate;
 
-    private Instant creationTime;
+    private LocalDateTime creationTime;
 
-    private Instant updatedTime;
+    private LocalDateTime updatedTime;
 }

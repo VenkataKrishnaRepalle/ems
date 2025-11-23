@@ -34,13 +34,13 @@
     <insert id="save" flushCache="true">
         INSERT INTO notification (uuid, employee_uuid, title, message, link, status, created_time, updated_time)
         VALUES (#{notification.uuid}, #{notification.employeeUuid}, #{notification.title}, #{notification.message},
-                #{notification.link}, #{notification.status}, current_timestamp, current_timestamp)
+                #{notification.link}, #{notification.status}, #{notification.createdTime}, #{notification.updatedTime})
     </insert>
 
     <update id="updateById" flushCache="true">
         UPDATE notification
         SET status       = #{newStatus},
-            updated_time = current_timestamp
+            updated_time = #{updatedTime}
         WHERE uuid = #{id}
           and status = #{oldStatus}
     </update>
@@ -48,7 +48,7 @@
     <update id="updateByEmployee" flushCache="true">
         UPDATE notification
         SET status       = #{newStatus},
-            updated_time = current_timestamp
+            updated_time = #{updatedTime}
         WHERE employee_uuid = #{employeeUuid} and status = #{oldStatus}
     </update>
 

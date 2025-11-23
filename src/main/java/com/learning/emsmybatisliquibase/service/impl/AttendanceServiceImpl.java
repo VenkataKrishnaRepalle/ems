@@ -18,7 +18,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import java.text.SimpleDateFormat;
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.UUID;
 import java.util.EnumMap;
 import java.util.List;
@@ -60,8 +60,8 @@ public class AttendanceServiceImpl implements AttendanceService {
             attendance.setUuid(UUID.randomUUID());
             attendance.setEmployeeUuid(employeeUuid);
             attendance.setStatus(AttendanceStatus.SUBMITTED);
-            attendance.setCreatedTime(Instant.now());
-            attendance.setUpdatedTime(Instant.now());
+            attendance.setCreatedTime(LocalDateTime.now());
+            attendance.setUpdatedTime(LocalDateTime.now());
         });
         attendances.forEach(attendance -> {
             try {

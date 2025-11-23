@@ -14,7 +14,7 @@
     <insert id="insert" flushCache="true">
         insert into profile (employee_uuid, job_title, profile_status, department_uuid, updated_time)
         values (#{profile.employeeUuid}, #{profile.jobTitle}, #{profile.profileStatus}, #{profile.departmentUuid},
-                current_timestamp)
+                #{profile.updatedTime})
     </insert>
 
     <select id="get" resultMap="profileResult">
@@ -33,7 +33,7 @@
         set job_title       = #{profile.jobTitle},
             profile_status  = #{profile.profileStatus},
             department_uuid = #{profile.departmentUuid},
-            updated_time    = current_timestamp
+            updated_time    = #{profile.updatedTime}
         where employee_uuid = #{profile.employeeUuid}
     </update>
 </mapper>

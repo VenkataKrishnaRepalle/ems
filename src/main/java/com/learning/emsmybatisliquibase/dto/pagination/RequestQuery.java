@@ -27,7 +27,7 @@ public class RequestQuery {
     }
 
     public Object getPropertyValue(String propertyName) {
-        return (Object) properties.get(propertyName);
+        return properties.get(propertyName);
     }
 
     public String getPropertyAsString(String propertyName) {
@@ -45,6 +45,15 @@ public class RequestQuery {
         }
         return null;
     }
+
+    public Map<?, ?> getPropertyAsMap(String propertyName) {
+        var map = properties.get(propertyName);
+        if (map instanceof Map<?, ?>) {
+            return (Map<?, ?>) map;
+        }
+        return null;
+    }
+
     public RequestQuery() {
         properties = new ConcurrentHashMap<>();
     }

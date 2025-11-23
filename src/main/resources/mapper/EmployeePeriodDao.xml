@@ -22,7 +22,7 @@
     <insert id="insert" flushCache="true">
         INSERT INTO employee_period (uuid, employee_uuid, period_uuid, status, created_time, updated_time)
         VALUES (#{employeePeriod.uuid}, #{employeePeriod.employeeUuid}, #{employeePeriod.periodUuid},
-                #{employeePeriod.status}, current_timestamp, current_timestamp)
+                #{employeePeriod.status}, #{employeePeriod.createdTime}, #{employeePeriod.updatedTime})
     </insert>
 
     <update id="update" flushCache="true">
@@ -30,7 +30,7 @@
         SET employee_uuid = #{employeePeriod.employeeUuid},
             period_uuid   = #{employeePeriod.periodUuid},
             status        = #{employeePeriod.status},
-            updated_time  = current_timestamp
+            updated_time  = #{employeePeriod.updatedTime}
         where uuid = #{employeePeriod.uuid}
     </update>
 

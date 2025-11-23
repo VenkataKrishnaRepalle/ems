@@ -20,8 +20,8 @@
         INSERT INTO feedback(uuid, employee_uuid, target_employee_uuid, type, look_back, look_forward, other_comments,
                              created_time, updated_time)
         VALUES (#{feedback.uuid}, #{feedback.employeeUuid}, #{feedback.targetEmployeeUuid}, #{feedback.type},
-                #{feedback.lookBack}, #{feedback.lookForward}, #{feedback.otherComments}, CURRENT_TIMESTAMP,
-                CURRENT_TIMESTAMP)
+                #{feedback.lookBack}, #{feedback.lookForward}, #{feedback.otherComments}, #{feedback.createdTime},
+                #{feedback.updatedTime})
     </insert>
 
     <update id="update" flushCache="true">
@@ -32,7 +32,7 @@
             look_back            = #{feedback.lookBack},
             look_forward         = #{feedback.lookForward},
             other_comments       = #{feedback.otherComments},
-            updated_time         = CURRENT_TIMESTAMP
+            updated_time         = #{feedback.updatedTime}
         WHERE uuid = #{feedback.uuid}
     </update>
 

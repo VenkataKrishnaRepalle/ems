@@ -11,7 +11,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Calendar;
 import java.util.List;
@@ -52,7 +52,7 @@ public class ScheduledTasks {
             var profile = profileDao.get(employee.getUuid());
             if (employee.getLeavingDate() != null && profile.getProfileStatus() != ProfileStatus.INACTIVE) {
                 profile.setProfileStatus(ProfileStatus.INACTIVE);
-                profile.setUpdatedTime(Instant.now());
+                profile.setUpdatedTime(LocalDateTime.now());
                 try {
                     if (0 == profileDao.update(profile)) {
                         throw new IntegrityException("PROFILE_UPDATE_FAILED", "Profile not updated for uuid: " + profile.getEmployeeUuid());
@@ -72,7 +72,7 @@ public class ScheduledTasks {
 
     @Scheduled(cron = "0 0 0 25 12 *")
     public void schedulePeriod() {
-        var year = Instant.now().atZone(ZoneId.systemDefault()).getYear() + 1;
+        var year = LocalDateTime.now().atZone(ZoneId.systemDefault()).getYear() + 1;
         periodService.createPeriod(year);
     }
 
@@ -86,7 +86,7 @@ public class ScheduledTasks {
     public void startPeriod1() {
         var oldPeriod = periodDao.getByStatus(PeriodStatus.STARTED);
         oldPeriod.setStatus(PeriodStatus.INACTIVE);
-        oldPeriod.setUpdatedTime(Instant.now());
+        oldPeriod.setUpdatedTime(LocalDateTime.now());
 
         var employeePeriods = employeePeriodDao.getByStatusAndPeriodId(PeriodStatus.STARTED,
                 oldPeriod.getUuid());
@@ -97,7 +97,7 @@ public class ScheduledTasks {
         var period = periodDao.getByStatus(PeriodStatus.SCHEDULED);
         if (period != null) {
             period.setStatus(PeriodStatus.STARTED);
-            period.setUpdatedTime(Instant.now());
+            period.setUpdatedTime(LocalDateTime.now());
             try {
                 if (0 == periodDao.update(period)) {
                     throw new IntegrityException("PERIOD_NOT_UPDATED", "Period not updated");

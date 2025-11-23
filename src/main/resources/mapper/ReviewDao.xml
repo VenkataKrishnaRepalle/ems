@@ -26,7 +26,7 @@
                             overall_comments, status, created_time, updated_time)
         VALUES (#{review.uuid}, #{review.timelineUuid}, #{review.type}, #{review.whatWentWell},
                 #{review.whatDoneBetter}, #{review.wayForward}, #{review.overallComments}, #{review.status},
-                current_timestamp, current_timestamp)
+                #{review.createdTime}, #{review.updatedTime})
     </insert>
 
     <update id="update" flushCache="true">
@@ -43,7 +43,7 @@
             manager_overall_comments = #{review.managerOverallComments},
             rating                   = #{review.rating},
             status                   = #{review.status},
-            updated_time             = current_timestamp
+            updated_time             = #{review.updatedTime}
         where uuid = #{review.uuid}
     </update>
 

@@ -16,7 +16,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.Year;
 import java.time.ZoneId;
 import java.util.UUID;
@@ -41,13 +41,13 @@ public class PeriodServiceImpl implements PeriodService {
     public Period createPeriod(int year) {
         var startDateTime = Year.of(year).atDay(1)
                 .atStartOfDay(ZoneId.systemDefault())
-                .toInstant();
+                .toLocalDateTime();
 
         var endDateTime = Year.of(year).atDay(1)
                 .plusYears(1)
                 .atStartOfDay(ZoneId.systemDefault())
                 .minusSeconds(1)
-                .toInstant();
+                .toLocalDateTime();
 
         var periods = periodDao.getAll();
         for (var period : periods) {
@@ -73,8 +73,8 @@ public class PeriodServiceImpl implements PeriodService {
                 .status(PeriodStatus.SCHEDULED)
                 .createdBy(SecurityContextHolder.getContext().getAuthentication() == null ? ADMIN_UUID :
                         UUID.fromString(SecurityContextHolder.getContext().getAuthentication().getName()))
-                .createdTime(Instant.now())
-                .updatedTime(Instant.now())
+                .createdTime(LocalDateTime.now())
+                .updatedTime(LocalDateTime.now())
                 .build();
 
         try {
@@ -107,14 +107,14 @@ public class PeriodServiceImpl implements PeriodService {
                 activePeriod.getStartTime().atZone(ZoneId.systemDefault()).getYear() == periodStartTime &&
                 activePeriod.getEndTime().atZone(ZoneId.systemDefault()).getYear() == periodEndTime) {
             activePeriod.setStatus(PeriodStatus.INACTIVE);
-            activePeriod.setUpdatedTime(Instant.now());
+            activePeriod.setUpdatedTime(LocalDateTime.now());
             update(activePeriod);
             employeePeriodService.updateEmployeePeriodsByPeriodId(activePeriod.getUuid(),
                     PeriodStatus.INACTIVE);
         } else if (activePeriod != null && activePeriod.getStartTime().atZone(
                 ZoneId.systemDefault()).getYear() < periodStartTime) {
             activePeriod.setStatus(PeriodStatus.COMPLETED);
-            activePeriod.setUpdatedTime(Instant.now());
+            activePeriod.setUpdatedTime(LocalDateTime.now());
             update(activePeriod);
             employeePeriodService.updateEmployeePeriodsByPeriodId(activePeriod.getUuid(),
                     PeriodStatus.COMPLETED);
@@ -149,7 +149,7 @@ public class PeriodServiceImpl implements PeriodService {
     public SuccessResponseDto updateStatus(UUID periodId, PeriodStatus status) {
         var period = getById(periodId);
         period.setStatus(status);
-        period.setUpdatedTime(Instant.now());
+        period.setUpdatedTime(LocalDateTime.now());
         update(period);
 
         if (PeriodStatus.COMPLETED.equals(status) || PeriodStatus.INACTIVE.equals(status)) {

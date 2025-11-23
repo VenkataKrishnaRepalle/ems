@@ -22,7 +22,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 import static com.learning.emsmybatisliquibase.exception.errorcodes.EmployeeErrorCodes.*;
@@ -60,8 +60,8 @@ public class PasswordServiceImpl implements PasswordService {
                 .employeeUuid(employeeUuid)
                 .password(passwordEncoder.encode(passwordInput))
                 .status(PasswordStatus.ACTIVE)
-                .createdTime(Instant.now())
-                .updatedTime(Instant.now())
+                .createdTime(LocalDateTime.now())
+                .updatedTime(LocalDateTime.now())
                 .build();
 
         try {

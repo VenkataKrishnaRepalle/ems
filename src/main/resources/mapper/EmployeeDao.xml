@@ -46,7 +46,7 @@
         values (#{employee.uuid}, #{employee.firstName}, #{employee.lastName}, #{employee.gender},
                 #{employee.dateOfBirth}, #{employee.phoneNumber}, #{employee.username},
                 #{employee.email}, #{employee.managerUuid}, #{employee.isManager},
-                #{employee.joiningDate}, #{employee.leavingDate}, current_timestamp, current_timestamp)
+                #{employee.joiningDate}, #{employee.leavingDate}, #{employee.createdTime}, #{employee.updatedTime})
     </insert>
 
     <update id="updateLeavingDate" flushCache="true">
@@ -83,7 +83,7 @@
             is_manager= #{employee.isManager},
             joining_date= #{employee.joiningDate},
             leaving_date= #{employee.leavingDate},
-            updated_time= current_timestamp
+            updated_time= #{employee.updatedTime}
         where uuid = #{employee.uuid}
     </update>
 

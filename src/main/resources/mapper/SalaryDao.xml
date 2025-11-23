@@ -25,7 +25,7 @@
                             created_time, updated_by, updated_time)
         VALUES (#{salary.employeeUuid}, #{salary.total}, #{salary.fixed}, #{salary.variable},
                 #{salary.joiningBonus}, #{salary.basic}, #{salary.pf}, #{salary.flex}, #{salary.hra},
-                #{salary.createdBy}, current_timestamp, #{salary.updatedBy}, current_timestamp)
+                #{salary.createdBy}, #{salary.createdTime}, #{salary.updatedBy}, #{salary.updatedTime})
     </insert>
 
     <select id="get" resultMap="salaryMap">
@@ -43,7 +43,7 @@
             hra           = #{salary.hra},
             pf            = #{salary.pf},
             updated_by    = #{salary.updatedBy},
-            updated_time  = current_timestamp
+            updated_time  = #{salary.updatedTime}
         WHERE employee_uuid = #{salary.employeeUuid}
     </update>
 
@@ -68,7 +68,7 @@
                             updated_time)
         VALUES (#{salaryAudit.employeeUuid}, #{salaryAudit.total}, #{salaryAudit.fixed}, #{salaryAudit.variable},
                 #{salaryAudit.joiningBonus}, #{salaryAudit.basic}, #{salaryAudit.flex}, #{salaryAudit.pf}, #{salaryAudit.hra},
-                #{salaryAudit.updatedBy}, current_timestamp)
+                #{salaryAudit.updatedBy}, #{salaryAudit.updatedTime})
     </insert>
 
     <select id="getAudit" resultMap="salaryAuditMap">

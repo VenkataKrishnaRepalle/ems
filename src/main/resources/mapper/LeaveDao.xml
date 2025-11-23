@@ -24,7 +24,7 @@
     <insert id="insert" flushCache="true">
         insert into leave (uuid, employee_uuid, date, type, status, reason, comments, created_time, updated_time)
         VALUES (#{leave.uuid}, #{leave.employeeUuid}, #{leave.date}, #{leave.type}, #{leave.status}, #{leave.reason},
-                #{leave.comments}, current_timestamp, current_timestamp);
+                #{leave.comments}, #{leave.createdTime}, #{leave.updatedTime});
     </insert>
 
     <update id="update" flushCache="true">
@@ -35,7 +35,7 @@
             status        = #{leave.status},
             reason        = #{leave.reason},
             comments      = #{leave.comments},
-            updated_time  = current_timestamp
+            updated_time  = #{leave.updatedTime}
         where uuid = #{leave.uuid}
     </update>
 

@@ -8,7 +8,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Data
@@ -21,13 +21,13 @@ public class TimelineAndReviewResponseDto {
 
     private ReviewType type;
 
-    private Instant startTime;
+    private LocalDateTime startTime;
 
-    private Instant overdueTime;
+    private LocalDateTime overdueTime;
 
-    private Instant lockTime;
+    private LocalDateTime lockTime;
 
-    private Instant endTime;
+    private LocalDateTime endTime;
 
     private ReviewTimelineStatus status;
 
@@ -35,7 +35,7 @@ public class TimelineAndReviewResponseDto {
 
     private Review review;
 
-    private Instant createdTime;
+    private LocalDateTime createdTime;
 
-    private Instant updatedTime;
+    private LocalDateTime updatedTime;
 }

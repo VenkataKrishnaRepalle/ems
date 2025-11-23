@@ -16,7 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.UUID;
 
@@ -85,9 +85,9 @@ public class SalaryServiceImpl implements SalaryService {
     public Salary insert(Salary salary) {
         employeeService.getById(salary.getEmployeeUuid());
         salary.setCreatedBy(getAuthentication());
-        salary.setCreatedTime(Instant.now());
+        salary.setCreatedTime(LocalDateTime.now());
         salary.setUpdatedBy(getAuthentication());
-        salary.setUpdatedTime(Instant.now());
+        salary.setUpdatedTime(LocalDateTime.now());
 
         var salaryAudit = salaryMapper.salaryToSalaryAudit(salary);
         insertSalary(salary);
@@ -143,7 +143,7 @@ public class SalaryServiceImpl implements SalaryService {
         var newSalary = process("total", String.valueOf(newTotal), "");
         newSalary.setEmployeeUuid(employeeUuid);
         newSalary.setUpdatedBy(getAuthentication());
-        newSalary.setUpdatedTime(Instant.now());
+        newSalary.setUpdatedTime(LocalDateTime.now());
         updateSalary(newSalary);
 
         var auditSalary = salaryMapper.salaryToSalaryAudit(newSalary);

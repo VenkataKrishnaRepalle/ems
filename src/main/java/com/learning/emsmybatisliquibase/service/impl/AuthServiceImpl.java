@@ -45,7 +45,7 @@ import reactor.core.publisher.Mono;
 
 import static com.learning.emsmybatisliquibase.exception.errorcodes.EmployeeErrorCodes.PASSWORD_NOT_MATCHED;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -188,7 +188,7 @@ public class AuthServiceImpl implements AuthService {
                 .osName(os.getName())
                 .isActive(true)
                 .location(UtilityService.extractAddressInfo(location))
-                .loginTime(Instant.now())
+                .loginTime(LocalDateTime.now())
                 .build();
         try {
             if (0 == employeeSessionDao.insert(session)) {

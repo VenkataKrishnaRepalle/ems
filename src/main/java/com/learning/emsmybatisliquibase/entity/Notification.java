@@ -5,7 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Data
@@ -26,9 +26,9 @@ public class Notification {
 
     private Status status;
 
-    private Instant createdTime;
+    private LocalDateTime createdTime;
 
-    private Instant updatedTime;
+    private LocalDateTime updatedTime;
 
     public enum Status {
         READ, UNREAD

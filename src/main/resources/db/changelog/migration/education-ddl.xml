@@ -23,10 +23,10 @@
             </column>
             <column name="end_date" type="DATE">
             </column>
-            <column name="created_time" type="timestamptz">
+            <column name="created_time" type="TIMESTAMP">
                 <constraints nullable="false"/>
             </column>
-            <column name="updated_time" type="timestamptz">
+            <column name="updated_time" type="TIMESTAMP">
                 <constraints nullable="false"/>
             </column>
         </createTable>

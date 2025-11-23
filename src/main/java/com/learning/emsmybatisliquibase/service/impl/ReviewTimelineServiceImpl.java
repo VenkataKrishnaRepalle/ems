@@ -20,7 +20,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -89,7 +89,7 @@ public class ReviewTimelineServiceImpl implements ReviewTimelineService {
                 completedReviewType);
         completedReviewTimelines.forEach(timeline -> {
             timeline.setStatus(ReviewTimelineStatus.COMPLETED);
-            timeline.setUpdatedTime(Instant.now());
+            timeline.setUpdatedTime(LocalDateTime.now());
             update(timeline);
         });
 
@@ -98,7 +98,7 @@ public class ReviewTimelineServiceImpl implements ReviewTimelineService {
 
         startedReviewTimelines.forEach(timeline -> {
             timeline.setStatus(ReviewTimelineStatus.STARTED);
-            timeline.setUpdatedTime(Instant.now());
+            timeline.setUpdatedTime(LocalDateTime.now());
             update(timeline);
         });
 

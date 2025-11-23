@@ -52,7 +52,7 @@
     <insert id="insert" flushCache="true">
         INSERT INTO otp (uuid, employee_uuid, otp, status, type, created_time, updated_time)
         VALUES (#{otp.uuid}, #{otp.employeeUuid}, #{otp.otp}, #{otp.status},
-        #{otp.type}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+        #{otp.type}, #{otp.createdTime}, #{otp.updatedTime});
     </insert>
 
     <update id="update" flushCache="true">
@@ -61,7 +61,7 @@
         otp = #{otp.otp},
         status = #{otp.status},
         type = #{otp.type},
-        updated_time = CURRENT_TIMESTAMP
+        updated_time = #{otp.updatedTime}
         WHERE uuid = #{otp.uuid}
     </update>
 

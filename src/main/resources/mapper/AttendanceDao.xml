@@ -17,7 +17,7 @@
     <insert id="insert" flushCache="true">
         insert into attendance (uuid, employee_uuid, work_mode, type, status, date, created_time, updated_time)
         VALUES (#{attendance.uuid}, #{attendance.employeeUuid}, #{attendance.workMode}, #{attendance.type},
-                #{attendance.status}, #{attendance.date}, current_timestamp, current_timestamp)
+                #{attendance.status}, #{attendance.date}, #{attendance.createdTime}, #{attendance.updatedTime})
     </insert>
 
     <update id="update" flushCache="true">
@@ -27,7 +27,7 @@
             type          = #{attendance.type},
             status        = #{attendance.status},
             date          = #{attendance.date},
-            updated_time  = current_timestamp
+            updated_time  = #{attendance.updatedTime}
         where uuid = #{attendance.uuid}
     </update>
 

@@ -17,7 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -67,7 +67,7 @@ public class OtpServiceImpl implements OtpService {
         if (!existingOtpList.isEmpty()) {
             existingOtpList.forEach(otp -> {
                 otp.setStatus(OtpAuthStatus.EXPIRED);
-                otp.setUpdatedTime(Instant.now());
+                otp.setUpdatedTime(LocalDateTime.now());
                 update(otp);
             });
         }
@@ -77,8 +77,8 @@ public class OtpServiceImpl implements OtpService {
                 .otp(generateOtp())
                 .status(OtpAuthStatus.PENDING)
                 .type(type)
-                .createdTime(Instant.now())
-                .updatedTime(Instant.now())
+                .createdTime(LocalDateTime.now())
+                .updatedTime(LocalDateTime.now())
                 .build();
 
         try {
@@ -129,7 +129,7 @@ public class OtpServiceImpl implements OtpService {
         }
 
         otpAuth.setStatus(OtpAuthStatus.VERIFIED);
-        otpAuth.setUpdatedTime(Instant.now());
+        otpAuth.setUpdatedTime(LocalDateTime.now());
         update(otpAuth);
         log.info(ErrorMessageUtil.getMessage(OTP_SUCCESSFUL_VERIFICATION.code(), employeeUuid));
 

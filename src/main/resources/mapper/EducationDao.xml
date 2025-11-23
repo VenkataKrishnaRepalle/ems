@@ -19,7 +19,7 @@
         INSERT INTO education (uuid, employee_uuid, degree, school_name, grade, start_date, end_date, created_time,
                                updated_time)
         VALUES (#{education.uuid}, #{education.employeeUuid}, #{education.degree}, #{education.schoolName},
-                #{education.grade}, #{education.startDate}, #{education.endDate}, current_timestamp, current_timestamp)
+                #{education.grade}, #{education.startDate}, #{education.endDate}, #{education.createdTime}, #{education.updatedTime})
     </insert>
 
     <select id="getAllByEmployeeUuid" resultMap="educationStructure">
@@ -48,7 +48,7 @@
             grade         = #{education.grade},
             start_date    = #{education.startDate},
             end_date      = #{education.endDate},
-            updated_time  = current_timestamp
+            updated_time  = #{education.updatedTime}
         where uuid = #{education.uuid}
     </update>
 </mapper>

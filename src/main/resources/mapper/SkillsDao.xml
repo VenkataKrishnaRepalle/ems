@@ -32,14 +32,14 @@
     <insert id="insert" flushCache="true">
         insert into skills (uuid, employee_uuid, name, rating, created_time, updated_time)
         VALUES (#{skills.uuid}, #{skills.employeeUuid}, #{skills.name},
-                #{skills.rating}, current_timestamp, current_timestamp)
+                #{skills.rating}, #{skills.createdTime}, #{skills.updatedTime})
     </insert>
 
     <update id="update" flushCache="true">
         update skills set employee_uuid = #{skills.employeeUuid},
                           name = #{skills.name},
                           rating = #{skills.rating},
-                          updated_time = current_timestamp
+                          updated_time = #{skills.updatedTime}
         where uuid = #{skills.uuid}
     </update>
 

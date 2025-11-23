@@ -7,7 +7,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -27,7 +27,7 @@ public class FullEmployeePeriodDto {
 
     private List<ReviewTimeline> reviewTimelines;
 
-    private Instant createdTime;
+    private LocalDateTime createdTime;
 
-    private Instant updatedTime;
+    private LocalDateTime updatedTime;
 }

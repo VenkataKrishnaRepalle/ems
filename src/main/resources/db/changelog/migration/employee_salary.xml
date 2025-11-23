@@ -34,13 +34,13 @@
             <column name="created_by" type="${uuid_type}">
                 <constraints nullable="false"/>
             </column>
-            <column name="created_time" type="TIMESTAMPTZ">
+            <column name="created_time" type="TIMESTAMP">
                 <constraints nullable="false"/>
             </column>
             <column name="updated_by" type="${uuid_type}">
                 <constraints nullable="false"/>
             </column>
-            <column name="updated_time" type="TIMESTAMPTZ">
+            <column name="updated_time" type="TIMESTAMP">
                 <constraints nullable="false"/>
             </column>
         </createTable>
@@ -82,7 +82,7 @@
             <column name="updated_by" type="${uuid_type}">
                 <constraints nullable="false"/>
             </column>
-            <column name="updated_time" type="TIMESTAMPTZ">
+            <column name="updated_time" type="TIMESTAMP">
                 <constraints nullable="false"/>
             </column>
         </createTable>

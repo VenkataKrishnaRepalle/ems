@@ -11,7 +11,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
@@ -142,22 +144,28 @@ public class ExperienceServiceImpl implements ExperienceService {
     }
 
     private boolean isOverlapping(Experience newExperience, Experience existingExperience) {
-        Instant newStart = newExperience.getStartDate().toInstant();
-        Instant newEnd;
+        LocalDateTime newStart = convertToLocalDateTime(newExperience.getStartDate());
+        LocalDateTime newEnd;
         if (Boolean.TRUE.equals(newExperience.getIsCurrentJob())) {
-            newEnd = Instant.now();
+            newEnd = LocalDateTime.now();
         } else {
-            newEnd = newExperience.getEndDate().toInstant();
+            newEnd = convertToLocalDateTime(newExperience.getEndDate());
         }
-        Instant existingStart = existingExperience.getStartDate().toInstant();
-        Instant existingEnd;
+        LocalDateTime existingStart = convertToLocalDateTime(existingExperience.getStartDate());
+        LocalDateTime existingEnd;
 
         if (Boolean.TRUE.equals(existingExperience.getIsCurrentJob())) {
-            existingEnd = Instant.now();
+            existingEnd = LocalDateTime.now();
         } else {
-            existingEnd = existingExperience.getEndDate().toInstant();
+            existingEnd = convertToLocalDateTime(existingExperience.getEndDate());
         }
 
         return (newStart.isBefore(existingEnd) && newEnd.isAfter(existingStart));
+    }
+
+    private LocalDateTime convertToLocalDateTime(Date date) {
+        return date.toInstant()
+                .atZone(ZoneId.systemDefault())
+                .toLocalDateTime();
     }
 }

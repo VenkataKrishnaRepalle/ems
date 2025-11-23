@@ -36,10 +36,10 @@
             <column name="expiry_date" type="DATE">
                 <constraints nullable="false"/>
             </column>
-            <column name="created_time" type="TIMESTAMPTZ">
+            <column name="created_time" type="TIMESTAMP">
                 <constraints nullable="false"/>
             </column>
-            <column name="last_updated_time" type="TIMESTAMPTZ">
+            <column name="last_updated_time" type="TIMESTAMP">
                 <constraints nullable="false"/>
             </column>
         </createTable>

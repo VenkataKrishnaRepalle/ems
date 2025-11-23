@@ -21,7 +21,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -57,13 +57,13 @@ class AttendanceControllerTest {
     @Test
     void testApply() throws Exception {
         List<ApplyAttendanceDto> attendanceDtos = List.of(
-                new ApplyAttendanceDto(WorkMode.WORK_FROM_OFFICE, AttendanceType.FULL_DAY, AttendanceStatus.SUBMITTED, Date.from(Instant.now())),
-                new ApplyAttendanceDto(WorkMode.WORK_FROM_OFFICE, AttendanceType.FULL_DAY, AttendanceStatus.SUBMITTED, Date.from(Instant.now()))
+                new ApplyAttendanceDto(WorkMode.WORK_FROM_OFFICE, AttendanceType.FULL_DAY, AttendanceStatus.SUBMITTED, Date.from(LocalDateTime.now())),
+                new ApplyAttendanceDto(WorkMode.WORK_FROM_OFFICE, AttendanceType.FULL_DAY, AttendanceStatus.SUBMITTED, Date.from(LocalDateTime.now()))
         );
 
         List<Attendance> attendances = List.of(
-                new Attendance(UUID.randomUUID(), EMPLOYEE_UUID, WorkMode.WORK_FROM_OFFICE, AttendanceType.FULL_DAY, AttendanceStatus.SUBMITTED, Date.from(Instant.now()), Instant.now(), Instant.now()),
-                new Attendance(UUID.randomUUID(), EMPLOYEE_UUID, WorkMode.WORK_FROM_OFFICE, AttendanceType.FULL_DAY, AttendanceStatus.SUBMITTED, Date.from(Instant.now()), Instant.now(), Instant.now())
+                new Attendance(UUID.randomUUID(), EMPLOYEE_UUID, WorkMode.WORK_FROM_OFFICE, AttendanceType.FULL_DAY, AttendanceStatus.SUBMITTED, Date.from(LocalDateTime.now()), LocalDateTime.now(), LocalDateTime.now()),
+                new Attendance(UUID.randomUUID(), EMPLOYEE_UUID, WorkMode.WORK_FROM_OFFICE, AttendanceType.FULL_DAY, AttendanceStatus.SUBMITTED, Date.from(LocalDateTime.now()), LocalDateTime.now(), LocalDateTime.now())
         );
 
         when(attendanceService.apply(EMPLOYEE_UUID, attendanceDtos)).thenReturn(attendances);
@@ -83,7 +83,7 @@ class AttendanceControllerTest {
         UUID attendanceUuid = UUID.randomUUID();
         UpdateAttendanceDto attendanceDto = new UpdateAttendanceDto(attendanceUuid, WorkMode.WORK_FROM_OFFICE, AttendanceType.FULL_DAY, AttendanceStatus.SUBMITTED);
 
-        Attendance attendance = new Attendance(attendanceUuid, EMPLOYEE_UUID, WorkMode.WORK_FROM_OFFICE, AttendanceType.FULL_DAY, AttendanceStatus.SUBMITTED, Date.from(Instant.now()), Instant.now(), Instant.now());
+        Attendance attendance = new Attendance(attendanceUuid, EMPLOYEE_UUID, WorkMode.WORK_FROM_OFFICE, AttendanceType.FULL_DAY, AttendanceStatus.SUBMITTED, Date.from(LocalDateTime.now()), LocalDateTime.now(), LocalDateTime.now());
 
         when(attendanceService.update(EMPLOYEE_UUID, attendanceUuid, attendanceDto)).thenReturn(attendance);
 
@@ -100,7 +100,7 @@ class AttendanceControllerTest {
     void testGet() throws Exception {
         UUID attendanceUuid = UUID.randomUUID();
 
-        Attendance attendance = new Attendance(attendanceUuid, EMPLOYEE_UUID, WorkMode.WORK_FROM_OFFICE, AttendanceType.FULL_DAY, AttendanceStatus.SUBMITTED, Date.from(Instant.now()), Instant.now(), Instant.now());
+        Attendance attendance = new Attendance(attendanceUuid, EMPLOYEE_UUID, WorkMode.WORK_FROM_OFFICE, AttendanceType.FULL_DAY, AttendanceStatus.SUBMITTED, Date.from(LocalDateTime.now()), LocalDateTime.now(), LocalDateTime.now());
 
         when(attendanceService.getByUuid(EMPLOYEE_UUID, attendanceUuid)).thenReturn(attendance);
 

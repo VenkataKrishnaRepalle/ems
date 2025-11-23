@@ -13,7 +13,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -41,8 +41,8 @@ public class SkillsServiceImpl implements SkillsService {
         var skills = skillsMapper.skillsDtoToSkills(skillsDto);
         skills.setName(skills.getName().trim());
         skills.setUuid(UUID.randomUUID());
-        skills.setCreatedTime(Instant.now());
-        skills.setUpdatedTime(Instant.now());
+        skills.setCreatedTime(LocalDateTime.now());
+        skills.setUpdatedTime(LocalDateTime.now());
 
         try {
             if (0 == skillsDao.insert(skills)) {
@@ -62,7 +62,7 @@ public class SkillsServiceImpl implements SkillsService {
         var skills = getById(skillsUuid);
         skills.setName(skillsDto.getName());
         skills.setRating(skillsDto.getRating());
-        skills.setUpdatedTime(Instant.now());
+        skills.setUpdatedTime(LocalDateTime.now());
         try {
             if (0 == skillsDao.update(skills)) {
                 throw new IntegrityException(SKILLS_NOT_UPDATED.code(),

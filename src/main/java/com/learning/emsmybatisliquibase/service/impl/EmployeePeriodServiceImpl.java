@@ -29,7 +29,7 @@ import static com.learning.emsmybatisliquibase.exception.errorcodes.EmployeePeri
 import static com.learning.emsmybatisliquibase.exception.errorcodes.TimelineErrorCodes.TIMELINE_NOT_UPDATED;
 import static com.learning.emsmybatisliquibase.exception.errorcodes.TimelineErrorCodes.TIMELINE_NOT_ASSIGNED;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.LocalDateTime;
 import java.time.Month;
@@ -116,8 +116,8 @@ public class EmployeePeriodServiceImpl implements EmployeePeriodService {
                 .employeeUuid(employeeId)
                 .periodUuid(period.getUuid())
                 .status(periodStatus)
-                .createdTime(Instant.now())
-                .updatedTime(Instant.now())
+                .createdTime(LocalDateTime.now())
+                .updatedTime(LocalDateTime.now())
                 .build();
 
         try {
@@ -147,17 +147,17 @@ public class EmployeePeriodServiceImpl implements EmployeePeriodService {
             }
             var startTime = LocalDateTime.of(year, quarter * 3 - 2, 1, 0, 0, 0)
                     .atZone(ZoneId.systemDefault())
-                    .toInstant();
+                    .toLocalDateTime();
             var overdueTime = LocalDateTime.of(year, quarter * 3 - 1, 15, 0, 0, 0)
                     .atZone(ZoneId.systemDefault())
-                    .toInstant();
+                    .toLocalDateTime();
             var lockTime = LocalDateTime.of(year, quarter * 3, 15, 0, 0, 0)
                     .atZone(ZoneId.systemDefault())
-                    .toInstant();
+                    .toLocalDateTime();
             var endDayOfMonth = YearMonth.of(year, quarter * 3).lengthOfMonth();
             var endTime = LocalDateTime.of(year, quarter * 3, endDayOfMonth, 23, 59, 59)
                     .atZone(ZoneId.systemDefault())
-                    .toInstant();
+                    .toLocalDateTime();
 
             var timeline = ReviewTimeline.builder()
                     .uuid(UUID.randomUUID())
@@ -169,8 +169,8 @@ public class EmployeePeriodServiceImpl implements EmployeePeriodService {
                     .overdueTime(overdueTime)
                     .lockTime(lockTime)
                     .endTime(endTime)
-                    .createdTime(Instant.now())
-                    .updatedTime(Instant.now())
+                    .createdTime(LocalDateTime.now())
+                    .updatedTime(LocalDateTime.now())
                     .build();
 
             timelines.add(timeline);
@@ -214,23 +214,23 @@ public class EmployeePeriodServiceImpl implements EmployeePeriodService {
         if (status.equals(PeriodStatus.COMPLETED)) {
             timelines.forEach(timeline -> {
                 timeline.setStatus(ReviewTimelineStatus.COMPLETED);
-                timeline.setUpdatedTime(Instant.now());
+                timeline.setUpdatedTime(LocalDateTime.now());
             });
         } else {
             timelines.forEach(timeline -> {
-                if (timeline.getStartTime().isAfter(Instant.now())) {
+                if (timeline.getStartTime().isAfter(LocalDateTime.now())) {
                     timeline.setStatus(ReviewTimelineStatus.SCHEDULED);
-                } else if (timeline.getStartTime().isBefore(Instant.now()) && timeline.getOverdueTime().isAfter(Instant.now())) {
+                } else if (timeline.getStartTime().isBefore(LocalDateTime.now()) && timeline.getOverdueTime().isAfter(LocalDateTime.now())) {
                     timeline.setStatus(ReviewTimelineStatus.STARTED);
-                } else if (timeline.getOverdueTime().isBefore(Instant.now()) && timeline.getLockTime().isAfter(Instant.now())) {
+                } else if (timeline.getOverdueTime().isBefore(LocalDateTime.now()) && timeline.getLockTime().isAfter(LocalDateTime.now())) {
                     timeline.setStatus(ReviewTimelineStatus.OVERDUE);
-                } else if (timeline.getLockTime().isBefore(Instant.now()) && timeline.getEndTime().isAfter(Instant.now())) {
+                } else if (timeline.getLockTime().isBefore(LocalDateTime.now()) && timeline.getEndTime().isAfter(LocalDateTime.now())) {
                     timeline.setStatus(ReviewTimelineStatus.LOCKED);
                 } else {
                     timeline.setStatus(ReviewTimelineStatus.COMPLETED);
                 }
 
-                timeline.setUpdatedTime(Instant.now());
+                timeline.setUpdatedTime(LocalDateTime.now());
             });
             timelines.forEach(timeline -> {
                 try {

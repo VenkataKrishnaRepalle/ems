@@ -44,7 +44,7 @@
         INSERT INTO period (uuid, name, description, start_time, end_time, status, created_by, created_time,
                            updated_time)
         VALUES (#{period.uuid}, #{period.name}, #{period.description}, #{period.startTime}, #{period.endTime},
-                #{period.status}, #{period.createdBy}, current_timestamp, current_timestamp)
+                #{period.status}, #{period.createdBy}, #{period.createdTime}, #{period.updatedTime})
     </insert>
 
     <update id="update" flushCache="true">
@@ -55,7 +55,7 @@
             end_time     = #{period.endTime},
             status       = #{period.status},
             created_by   = #{period.createdBy},
-            updated_time = current_timestamp
+            updated_time = #{period.updatedTime}
         where uuid = #{period.uuid}
     </update>
 </mapper>

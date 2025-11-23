@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 import org.apache.poi.hpsf.Decimal;
 
 import java.math.BigDecimal;
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Data
@@ -36,5 +36,5 @@ public class SalaryAudit {
 
     private UUID updatedBy;
 
-    private Instant updatedTime;
+    private LocalDateTime updatedTime;
 }

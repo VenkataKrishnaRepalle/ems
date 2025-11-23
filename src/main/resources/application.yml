@@ -5,8 +5,8 @@ server:
 
 api:
   location:
-    baseUrl: https://api.opencagedata.com/geocode/v1/json
-    key: 934ec857525e46cebdd892ef0df233f7
+    baseUrl: ${API_LOCATION_URL}
+    key: ${API_LOCATION_KEY}
 
 admin:
   uuid: 019a4b09-c44a-729a-ab56-48d21adb0f80
@@ -70,10 +70,10 @@ spring:
       initialize-schema: always
 
   mail:
-    host: smtp.gmail.com
-    username: v4431365@gmail.com
-    password: iponuhntztqltauh
-    port: 587
+    host: ${MAIL_HOST}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    port: ${MAIL_PORT}
     properties:
       mail:
         smtp:
@@ -121,14 +121,14 @@ maximum:
 
 app:
   jwt:
-    secret: 8ae2a6ebc0cd16aecb0e94e85c1eed0a1b1d8a668f65c3838b341a99197ff370
-    refresh-secret: 9ae2a6ebc0cd16aecb0e94e85c1eed0a1b1d8a668f65c3838b341a99197ff371
+    secret: ${JWT_SECRET}
+    refresh-secret: ${REFRESH_TOKEN_SECRET}
   jwt-expiration-milliseconds: 1800000
   refresh-token-expiration-milliseconds: 3600000
 
 default:
   send:
-    email: v4431365@gmail.com
+    email: ${MAIL_USERNAME}
 
 email:
   template:

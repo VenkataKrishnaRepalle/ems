@@ -18,7 +18,7 @@ import org.mockito.Mock;
 
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -79,7 +79,7 @@ class FeedbackServiceImplTest {
         receiverDetails.setUuid(receiverEmployeeUuid);
         var type = FeedbackType.SEND;
         var feedbackList = List.of(
-                new Feedback(UUID.randomUUID(), employeeUuid, receiverEmployeeUuid, type, "", "", "", Instant.now(), Instant.now())
+                new Feedback(UUID.randomUUID(), employeeUuid, receiverEmployeeUuid, type, "", "", "", LocalDateTime.now(), LocalDateTime.now())
         );
         var feedbackResponse = new FeedbackResponseDto();
         feedbackResponse.setUuid(feedbackList.get(0).getUuid());

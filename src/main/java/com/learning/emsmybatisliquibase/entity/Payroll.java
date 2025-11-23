@@ -6,7 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.UUID;
 
@@ -24,5 +24,5 @@ public class Payroll implements Serializable {
 
     private Date date;
 
-    private Instant totalAmount;
+    private LocalDateTime totalAmount;
 }

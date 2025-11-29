@@ -21,6 +21,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -49,7 +50,7 @@ class AttendanceServiceImplTest {
     @Test
     void testApply_AttendanceAlreadyExists() {
         var attendanceDto = new ApplyAttendanceDto();
-        attendanceDto.setDate(Date.from(LocalDateTime.now()));
+        attendanceDto.setDate(Date.from(Instant.from(LocalDateTime.now())));
         List<ApplyAttendanceDto> attendanceDtos = List.of(attendanceDto);
 
         var existingAttendance = new Attendance();
@@ -65,7 +66,7 @@ class AttendanceServiceImplTest {
 
     @Test
     void testApplyAttendanceNotCreated() {
-        ApplyAttendanceDto attendanceDto = new ApplyAttendanceDto(WorkMode.WORK_FROM_HOME, AttendanceType.FULL_DAY, AttendanceStatus.SUBMITTED, Date.from(LocalDateTime.now()));
+        ApplyAttendanceDto attendanceDto = new ApplyAttendanceDto(WorkMode.WORK_FROM_HOME, AttendanceType.FULL_DAY, AttendanceStatus.SUBMITTED, Date.from(Instant.from(LocalDateTime.now())));
         List<ApplyAttendanceDto> attendanceDtos = List.of(attendanceDto);
         when(attendanceDao.getByEmployeeUuid(EMPLOYEE_UUID)).thenReturn(Collections.emptyList());
         when(attendanceMapper.applyAttendanceDtoToAttendance(attendanceDto)).thenReturn(new Attendance());
@@ -84,8 +85,8 @@ class AttendanceServiceImplTest {
     void testApply_success() {
         UUID employeeUuid = UUID.randomUUID();
         List<ApplyAttendanceDto> attendanceDtos = List.of(
-                new ApplyAttendanceDto(WorkMode.WORK_FROM_HOME, AttendanceType.FULL_DAY, AttendanceStatus.SUBMITTED, Date.from(LocalDateTime.now())),
-                new ApplyAttendanceDto(WorkMode.WORK_FROM_HOME, AttendanceType.HALF_DAY, AttendanceStatus.SUBMITTED, Date.from(LocalDateTime.now()))
+                new ApplyAttendanceDto(WorkMode.WORK_FROM_HOME, AttendanceType.FULL_DAY, AttendanceStatus.SUBMITTED, Date.from(Instant.from(LocalDateTime.now()))),
+                new ApplyAttendanceDto(WorkMode.WORK_FROM_HOME, AttendanceType.HALF_DAY, AttendanceStatus.SUBMITTED, Date.from(Instant.from(LocalDateTime.now())))
         );
 
         when(attendanceDao.getByEmployeeUuid(employeeUuid)).thenReturn(List.of());
@@ -110,7 +111,7 @@ class AttendanceServiceImplTest {
     @Test
     void testGetByUuid_success() {
         UUID uuid = UUID.randomUUID();
-        Attendance attendance = new Attendance(uuid, EMPLOYEE_UUID, WorkMode.WORK_FROM_HOME, AttendanceType.FULL_DAY, AttendanceStatus.SUBMITTED, Date.from(LocalDateTime.now()), LocalDateTime.now(), LocalDateTime.now());
+        Attendance attendance = new Attendance(uuid, EMPLOYEE_UUID, WorkMode.WORK_FROM_HOME, AttendanceType.FULL_DAY, AttendanceStatus.SUBMITTED, Date.from(Instant.from(LocalDateTime.now())), LocalDateTime.now(), LocalDateTime.now());
 
         when(attendanceDao.getById(uuid)).thenReturn(attendance);
         assertEquals(EMPLOYEE_UUID, attendance.getEmployeeUuid());
@@ -133,7 +134,7 @@ class AttendanceServiceImplTest {
     @Test
     void testGetByUuid_attendanceNotMatchWithEmployee() {
         UUID uuid = UUID.randomUUID();
-        Attendance attendance = new Attendance(uuid, UUID.randomUUID(), WorkMode.WORK_FROM_HOME, AttendanceType.FULL_DAY, AttendanceStatus.SUBMITTED, Date.from(LocalDateTime.now()), LocalDateTime.now(), LocalDateTime.now());
+        Attendance attendance = new Attendance(uuid, UUID.randomUUID(), WorkMode.WORK_FROM_HOME, AttendanceType.FULL_DAY, AttendanceStatus.SUBMITTED, Date.from(Instant.from(LocalDateTime.now())), LocalDateTime.now(), LocalDateTime.now());
 
         when(attendanceDao.getById(uuid)).thenReturn(attendance);
         assertNotEquals(EMPLOYEE_UUID, attendance.getEmployeeUuid());
@@ -147,7 +148,7 @@ class AttendanceServiceImplTest {
     @Test
     void testUpdate_success() {
         UUID uuid = UUID.randomUUID();
-        Attendance attendance = new Attendance(uuid, EMPLOYEE_UUID, WorkMode.WORK_FROM_HOME, AttendanceType.FULL_DAY, AttendanceStatus.SUBMITTED, Date.from(LocalDateTime.now()), LocalDateTime.now(), LocalDateTime.now());
+        Attendance attendance = new Attendance(uuid, EMPLOYEE_UUID, WorkMode.WORK_FROM_HOME, AttendanceType.FULL_DAY, AttendanceStatus.SUBMITTED, Date.from(Instant.from(LocalDateTime.now())), LocalDateTime.now(), LocalDateTime.now());
         UpdateAttendanceDto attendanceDto = new UpdateAttendanceDto(uuid, WorkMode.WORK_FROM_HOME, AttendanceType.FULL_DAY, AttendanceStatus.SUBMITTED);
 
         when(attendanceDao.getById(uuid)).thenReturn(attendance);
@@ -162,7 +163,7 @@ class AttendanceServiceImplTest {
     @Test
     void testUpdate_notUpdated() {
         UUID uuid = UUID.randomUUID();
-        Attendance attendance = new Attendance(uuid, EMPLOYEE_UUID, WorkMode.WORK_FROM_HOME, AttendanceType.FULL_DAY, AttendanceStatus.SUBMITTED, Date.from(LocalDateTime.now()), LocalDateTime.now(), LocalDateTime.now());
+        Attendance attendance = new Attendance(uuid, EMPLOYEE_UUID, WorkMode.WORK_FROM_HOME, AttendanceType.FULL_DAY, AttendanceStatus.SUBMITTED, Date.from(Instant.from(LocalDateTime.now())), LocalDateTime.now(), LocalDateTime.now());
         UpdateAttendanceDto attendanceDto = new UpdateAttendanceDto(uuid, WorkMode.WORK_FROM_HOME, AttendanceType.FULL_DAY, AttendanceStatus.SUBMITTED);
 
         when(attendanceDao.getById(uuid)).thenReturn(attendance);
@@ -182,9 +183,9 @@ class AttendanceServiceImplTest {
         employee.setFirstName("test");
         employee.setLastName("test last");
         List<Attendance> attendanceList = List.of(
-                new Attendance(UUID.randomUUID(), EMPLOYEE_UUID, WorkMode.WORK_FROM_HOME, AttendanceType.FULL_DAY, AttendanceStatus.SUBMITTED, Date.from(LocalDateTime.now()), LocalDateTime.now(), LocalDateTime.now()),
-                new Attendance(UUID.randomUUID(), EMPLOYEE_UUID, WorkMode.WORK_FROM_HOME, AttendanceType.HALF_DAY, AttendanceStatus.WAITING_FOR_CANCELLATION, Date.from(LocalDateTime.now()), LocalDateTime.now(), LocalDateTime.now()),
-                new Attendance(UUID.randomUUID(), EMPLOYEE_UUID, WorkMode.WORK_FROM_HOME, AttendanceType.FULL_DAY, AttendanceStatus.CANCELLED, Date.from(LocalDateTime.now()), LocalDateTime.now(), LocalDateTime.now()));
+                new Attendance(UUID.randomUUID(), EMPLOYEE_UUID, WorkMode.WORK_FROM_HOME, AttendanceType.FULL_DAY, AttendanceStatus.SUBMITTED, Date.from(Instant.from(LocalDateTime.now())), LocalDateTime.now(), LocalDateTime.now()),
+                new Attendance(UUID.randomUUID(), EMPLOYEE_UUID, WorkMode.WORK_FROM_HOME, AttendanceType.HALF_DAY, AttendanceStatus.WAITING_FOR_CANCELLATION, Date.from(Instant.from(LocalDateTime.now())), LocalDateTime.now(), LocalDateTime.now()),
+                new Attendance(UUID.randomUUID(), EMPLOYEE_UUID, WorkMode.WORK_FROM_HOME, AttendanceType.FULL_DAY, AttendanceStatus.CANCELLED, Date.from(Instant.from(LocalDateTime.now())), LocalDateTime.now(), LocalDateTime.now()));
 
         when(employeeService.getById(EMPLOYEE_UUID)).thenReturn(employee);
         when(attendanceDao.getByEmployeeUuid(EMPLOYEE_UUID)).thenReturn(attendanceList);

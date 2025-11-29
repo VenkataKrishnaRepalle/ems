@@ -9,4 +9,4 @@ COPY ${JAR_FILE} ems-mybatis-liquibase.jar
 EXPOSE 8082
 
 # Run the application
-ENTRYPOINT ["java", "-jar", "/ems-mybatis-liquibase.jar"]
+ENTRYPOINT ["java", "--add-opens", "java.base/sun.nio.ch=ALL-UNNAMED", "-jar", "/ems-mybatis-liquibase.jar"]

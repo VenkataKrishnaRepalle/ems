@@ -52,6 +52,7 @@ spring:
       max-file-size: 500MB
       max-request-size: 550MB
 
+
   liquibase:
     enabled: true
     change-log: classpath:db/changelog/db.changelog-master.xml
@@ -62,6 +63,7 @@ spring:
 
   main:
     allow-circular-references: true
+    allow-bean-definition-overriding: true
 
   batch:
     job:

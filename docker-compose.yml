@@ -4,6 +4,8 @@ services:
   db:
     image: postgres:16
     container_name: postgres-db
+    env_file:
+      - .env
     restart: unless-stopped
     stop_grace_period: 1s
     stop_signal: SIGINT
@@ -31,6 +33,8 @@ services:
       dockerfile: Dockerfile
     image: ems-mybatis-liquibase:latest
     container_name: ems-mybatis-liquibase
+    env_file:
+      - .env
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/ems-docker
       SPRING_DATASOURCE_USERNAME: postgres

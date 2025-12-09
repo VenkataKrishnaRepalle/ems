@@ -1,29 +1,30 @@
 package com.learning.emsmybatisliquibase.controller;
 
-import com.learning.emsmybatisliquibase.exception.NotFoundException;
-import jakarta.annotation.PostConstruct;
-import jakarta.annotation.PreDestroy;
+import com.learning.emsmybatisliquibase.service.SparkService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.spark.SparkConf;
 import org.apache.spark.sql.SparkSession;
-import org.springframework.context.annotation.Lazy;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 @RestController
 @RequestMapping("/api/spark")
 @Slf4j
 @RequiredArgsConstructor
 public class SparkController {
+
+    private final SparkService sparkService;
 
     private final SparkSession sparkSession;
 
@@ -50,5 +51,16 @@ public class SparkController {
             }
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
+    }
+
+    @GetMapping("/employees")
+    public ResponseEntity<byte[]> printEmployees() throws IOException {
+        byte[] csvData = sparkService.readData();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.parseMediaType("text/csv"));
+        headers.setContentDispositionFormData("attachment", "employees-" + LocalDateTime.now() + ".csv");
+
+        return new ResponseEntity<>(csvData, headers, HttpStatus.OK);
     }
 }

@@ -1,7 +1,9 @@
 package com.learning.emsmybatisliquibase.controller;
 
 import com.learning.emsmybatisliquibase.service.SparkService;
+import com.learning.emsmybatisliquibase.service.impl.AzureBlobServiceImpl;
 import lombok.RequiredArgsConstructor;
+import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.spark.sql.SparkSession;
 import org.springframework.http.HttpHeaders;
@@ -27,6 +29,8 @@ public class SparkController {
     private final SparkService sparkService;
 
     private final SparkSession sparkSession;
+
+    private final AzureBlobServiceImpl azureBlobService;
 
     @GetMapping
     public ResponseEntity<Map<String, String>> testSpark() {
@@ -54,13 +58,20 @@ public class SparkController {
     }
 
     @GetMapping("/employees")
-    public ResponseEntity<byte[]> printEmployees() throws IOException {
-        byte[] csvData = sparkService.readData();
+    public ResponseEntity<HttpStatus> processEmployeeReport(){
+        sparkService.processAndStoreData();
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.parseMediaType("text/csv"));
-        headers.setContentDispositionFormData("attachment", "employees-" + LocalDateTime.now() + ".csv");
-
-        return new ResponseEntity<>(csvData, headers, HttpStatus.OK);
+    @GetMapping("/download/employees")
+    public ResponseEntity<byte[]> downloadEmployeeReport() {
+        byte[] report = azureBlobService.downloadFile("employees", "employees");
+        if (report == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"employee_report.csv\"")
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .body(report);
     }
 }

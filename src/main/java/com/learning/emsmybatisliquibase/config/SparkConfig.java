@@ -21,13 +21,22 @@ public class SparkConfig {
 
     @Bean(destroyMethod = "stop")
     public SparkSession sparkSession() {
-        return SparkSession.builder()
+        SparkSession spark = SparkSession.builder()
                 .appName("spring-boot-spark-starter")
                 .master("local[*]")
                 .config("spark.driver.bindAddress", "0.0.0.0")
                 .config("spark.nio.buffer.max", "268435456")
                 .config("spark.ui.enabled", "false")
                 .getOrCreate();
+
+        String accountName = "devstoreaccount1";
+        String accountKey = "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==";
+
+        spark.sparkContext().hadoopConfiguration().set(String.format("fs.azure.account.key.%s.blob.core.windows.net", accountName), accountKey);
+        spark.sparkContext().hadoopConfiguration().set("fs.azure.always.use.https", "false");
+        spark.sparkContext().hadoopConfiguration().set(String.format("fs.azure.account.blob.endpoint.%s.blob.core.windows.net", accountName), "http://127.0.0.1:10000/" + accountName);
+
+        return spark;
     }
 
     @Bean(name = "dbProperties")

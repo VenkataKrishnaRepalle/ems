@@ -1,22 +1,19 @@
 version: '3.8'
 
 services:
-  # --- Primary Read-Write Database ---
   db:
     image: postgres:16
     container_name: postgres-db
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
       interval: 5s
       timeout: 5s
       retries: 5
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      # This script now creates the user AND configures access
       - ./init/init-primary.sh:/docker-entrypoint-initdb.d/init-primary.sh
     environment:
-      # REMOVED the unsupported POSTGRES_REPLICATION_* variables
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=root
       - POSTGRES_DB=ems-docker
@@ -30,7 +27,6 @@ services:
     networks:
       - mynetwork
 
-  # --- Replica Read-Only Database ---
   db-replica:
     image: postgres:16
     container_name: postgres-replica
@@ -44,7 +40,6 @@ services:
       - "5431:5432"
     networks:
       - mynetwork
-    # This entrypoint now uses the correct user, which will be created by the init script
     entrypoint: >
       bash -c "
         rm -rf /var/lib/postgresql/data/* &&
@@ -55,6 +50,22 @@ services:
         echo 'Clone complete. Starting replica...' &&
         exec docker-entrypoint.sh postgres
       "
+
+  azurite:
+    image: mcr.microsoft.com/azure-storage/azurite
+    container_name: azurite
+    restart: always
+    ports:
+      - "10000:10000"  # Blob service
+      - "10001:10001"  # Queue service
+    volumes:
+      - azurite_data:/data
+    command: >
+      azurite
+      --blobHost 0.0.0.0
+      --queueHost 0.0.0.0
+      --location /data
+      --debug /data/debug.log
 
   app:
     build:
@@ -68,9 +79,14 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/ems-docker
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: root
+      AZURE_STORAGE_CONNECTION_STRING: "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite:10000/devstoreaccount1;"
     depends_on:
       db:
         condition: service_healthy
+      db-replica:
+        condition: service_started
+      azurite:
+        condition: service_started
     ports:
       - "8082:8082"
     networks:
@@ -79,6 +95,7 @@ services:
 volumes:
   postgres_data:
   postgres_replica_data:
+  azurite_data:
 
 networks:
   mynetwork:

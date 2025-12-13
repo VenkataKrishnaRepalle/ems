@@ -52,7 +52,6 @@ spring:
       max-file-size: 500MB
       max-request-size: 550MB
 
-
   liquibase:
     enabled: true
     change-log: classpath:db/changelog/db.changelog-master.xml
@@ -82,7 +81,6 @@ spring:
           auth: true
           starttls:
             enable: true
-
 
 mybatis:
   mapper-locations: classpath:mapper/**/*.xml
@@ -116,7 +114,6 @@ logging:
         orm:
           jdbc:
             bind: trace
-
 maximum:
   login:
     count: 5
@@ -152,3 +149,8 @@ resilience4j.circuitbreaker:
     locationService:
       record-exceptions:
         - org.springframework.web.reactive.function.client.WebClientResponseException
+
+azure:
+  storage:
+    connection-string: ${AZURE_STORAGE_CONNECTION_STRING}
+    container-name: my-container

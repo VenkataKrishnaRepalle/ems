@@ -15,6 +15,9 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Calendar;
 import java.util.List;
+import java.util.Map;
+
+import static com.learning.emsmybatisliquibase.utils.UtilityService.*;
 
 @Service
 @AllArgsConstructor
@@ -61,8 +64,8 @@ public class ScheduledTasks {
                     throw new IntegrityException("PROFILE_UPDATE_FAILED", exception.getMessage());
                 }
 
-                var employeeCycles = employeePeriodDao.getByEmployeeIdAndStatus(
-                        employee.getUuid(), List.of(PeriodStatus.STARTED));
+                var employeeCycles = employeePeriodDao.get(new RequestQuery(
+                        Map.of(EMPLOYEE_UUID, employee.getUuid(), STATUS, PeriodStatus.STARTED)));
                 employeeCycles.forEach(employeeCycle ->
                         employeePeriodService.updateEmployeePeriodStatus(employeeCycle.getUuid(),
                                 PeriodStatus.INACTIVE));
@@ -88,8 +91,8 @@ public class ScheduledTasks {
         oldPeriod.setStatus(PeriodStatus.INACTIVE);
         oldPeriod.setUpdatedTime(LocalDateTime.now());
 
-        var employeePeriods = employeePeriodDao.getByStatusAndPeriodId(PeriodStatus.STARTED,
-                oldPeriod.getUuid());
+        var employeePeriods = employeePeriodDao.get(new RequestQuery(
+                Map.of(STATUS, PeriodStatus.STARTED, PERIOD_UUID, oldPeriod.getUuid())));
         employeePeriods.forEach(employeePeriod ->
                 employeePeriodService.updateEmployeePeriodStatus(employeePeriod.getUuid(),
                         PeriodStatus.COMPLETED));

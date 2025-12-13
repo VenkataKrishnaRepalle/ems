@@ -13,12 +13,6 @@
         <result property="updatedTime" column="updated_time"/>
     </resultMap>
 
-    <select id="getById" resultMap="employeePeriodStructure">
-        select *
-        from employee_period
-        where uuid = #{uuid}
-    </select>
-
     <insert id="insert" flushCache="true">
         INSERT INTO employee_period (uuid, employee_uuid, period_uuid, status, created_time, updated_time)
         VALUES (#{employeePeriod.uuid}, #{employeePeriod.employeeUuid}, #{employeePeriod.periodUuid},
@@ -34,40 +28,33 @@
         where uuid = #{employeePeriod.uuid}
     </update>
 
-    <select id="getByEmployeeIdAndPeriodId" resultMap="employeePeriodStructure">
-        select *
-        from employee_period
-        where employee_uuid = #{employeeUuid}
-          and period_uuid = #{periodUuid}
+
+    <select id="get" resultMap="employeePeriodStructure">
+        SELECT *
+        FROM employee_period
+        <trim prefix="WHERE" prefixOverrides="AND|OR" suffixOverrides="AND|OR">
+            <include refid="applyFilter"/>
+        </trim>
     </select>
 
-    <select id="getByStatusAndPeriodId" resultMap="employeePeriodStructure">
-        select *
-        from employee_period
-        where status = #{status}
-          and period_uuid = #{periodUuid}
-    </select>
-
-    <select id="getByEmployeeIdAndStatus" resultMap="employeePeriodStructure">
-        select *
-        from employee_period
-        where employee_uuid = #{employeeUuid}
-        and status in
-        <foreach collection="statuses" open="(" separator="," close=")" item="status">
-            #{status}
-        </foreach>
-    </select>
-
-    <select id="getByEmployeeId" resultMap="employeePeriodStructure">
-        select *
-        from employee_period
-        where employee_uuid = #{employeeUuid}
-    </select>
-
-    <select id="getActivePeriodByEmployeeId" resultMap="employeePeriodStructure">
-        select *
-        from employee_period
-        where status = 'STARTED'
-          and employee_uuid = #{employeeUuid}
-    </select>
+    <sql id="applyFilter">
+        <if test="request.properties.uuid != null">
+            AND uuid = #{request.properties.uuid}
+        </if>
+        <if test="request.properties.employeeUuid != null">
+            AND employee_uuid = #{request.properties.employeeUuid}
+        </if>
+        <if test="request.properties.periodUuid != null">
+            AND period_uuid = #{request.properties.periodUuid}
+        </if>
+        <if test="request.properties.status != null">
+            AND status = #{request.properties.status}
+        </if>
+        <if test="request.properties.statuses != null and request.properties.statuses.size() > 0">
+            <foreach collection="request.properties.statuses" item="status" open="AND status IN (" separator=","
+                     close=")">
+                #{status}
+            </foreach>
+        </if>
+    </sql>
 </mapper>

@@ -10,7 +10,17 @@ import java.util.stream.Stream;
 @Slf4j
 public class UtilityService {
 
-    private static final String LOCATION = "location";
+    public static final String LOCATION = "location";
+
+    public static final String EMPLOYEE_UUID = "employeeUuid";
+
+    public static final String PERIOD_UUID = "periodUuid";
+
+    public static final String UUID_NAME = "uuid";
+
+    public static final String STATUSES = "statuses";
+
+    public static final String STATUS = "status";
 
     public static Map<String, String> getLocationInfo(RequestQuery requestQuery) {
         var location = requestQuery.getPropertyValue(LOCATION);

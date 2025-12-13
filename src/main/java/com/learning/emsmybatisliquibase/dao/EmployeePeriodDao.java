@@ -1,5 +1,6 @@
 package com.learning.emsmybatisliquibase.dao;
 
+import com.learning.emsmybatisliquibase.dto.pagination.RequestQuery;
 import com.learning.emsmybatisliquibase.entity.EmployeePeriod;
 import com.learning.emsmybatisliquibase.entity.enums.PeriodStatus;
 import org.apache.ibatis.annotations.Param;
@@ -9,20 +10,9 @@ import java.util.UUID;
 
 public interface EmployeePeriodDao {
 
-    EmployeePeriod getById(@Param("uuid") UUID uuid);
-
     int insert(@Param("employeePeriod") EmployeePeriod employeePeriod);
 
     int update(@Param("employeePeriod") EmployeePeriod employeePeriod);
 
-    EmployeePeriod getByEmployeeIdAndPeriodId(@Param("employeeUuid") UUID employeeUuid, @Param("periodUuid") UUID cycleUuid);
-
-    List<EmployeePeriod> getByStatusAndPeriodId(@Param("status") PeriodStatus status, @Param("periodUuid") UUID cycleUuid);
-
-    List<EmployeePeriod> getByEmployeeIdAndStatus(@Param("employeeUuid") UUID employeeUuid, @Param("statuses") List<PeriodStatus> status);
-
-    List<EmployeePeriod> getByEmployeeId(@Param("employeeUuid") UUID employeeUuid);
-
-    EmployeePeriod getActivePeriodByEmployeeId(@Param("employeeUuid") UUID employeeUuid);
-
+    List<EmployeePeriod> get(@Param("request") RequestQuery requestQuery);
 }

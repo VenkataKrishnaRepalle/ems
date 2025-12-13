@@ -26,4 +26,6 @@ public interface EmployeePeriodService {
     EmployeeCycleAndTimelineResponseDto getByYear(UUID employeeId, Optional<Long> year);
 
     List<Integer> getAllEligibleYears(UUID employeeId);
+
+    SuccessResponseDto reprocess(List<UUID> employeeIds, Optional<Long> year);
 }

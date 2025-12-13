@@ -6,6 +6,7 @@ import com.learning.emsmybatisliquibase.dao.ReviewTimelineDao;
 import com.learning.emsmybatisliquibase.dto.FullEmployeePeriodDto;
 import com.learning.emsmybatisliquibase.dto.SuccessResponseDto;
 import com.learning.emsmybatisliquibase.dto.TimelineAndReviewResponseDto;
+import com.learning.emsmybatisliquibase.dto.pagination.RequestQuery;
 import com.learning.emsmybatisliquibase.entity.enums.PeriodStatus;
 import com.learning.emsmybatisliquibase.entity.ReviewTimeline;
 import com.learning.emsmybatisliquibase.entity.enums.ReviewType;
@@ -22,11 +23,14 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static com.learning.emsmybatisliquibase.exception.errorcodes.EmployeePeriodErrorCodes.EMPLOYEE_PERIOD_NOT_FOUND;
 import static com.learning.emsmybatisliquibase.exception.errorcodes.TimelineErrorCodes.TIMELINE_NOT_FOUND;
 import static com.learning.emsmybatisliquibase.exception.errorcodes.TimelineErrorCodes.TIMELINE_NOT_UPDATED;
+import static com.learning.emsmybatisliquibase.utils.UtilityService.EMPLOYEE_UUID;
+import static com.learning.emsmybatisliquibase.utils.UtilityService.STATUS;
 
 @Service
 @RequiredArgsConstructor
@@ -54,15 +58,17 @@ public class ReviewTimelineServiceImpl implements ReviewTimelineService {
 
     @Override
     public FullEmployeePeriodDto getActiveTimelineDetails(UUID employeeId) {
-        var employeeCycle = employeePeriodDao.getActivePeriodByEmployeeId(employeeId);
+        var employeeCycle = employeePeriodDao.get(new RequestQuery(
+                Map.of(EMPLOYEE_UUID, employeeId, STATUS, PeriodStatus.STARTED)
+        ));
         if (employeeCycle == null) {
             throw new NotFoundException(EMPLOYEE_PERIOD_NOT_FOUND.code(),
                     "Active Employee Cycle not found for employeeId: " + employeeId);
         }
         var fullTimeline = employeePeriodMapper
-                .employeePeriodToFullEmployeePeriodDto(employeeCycle);
+                .employeePeriodToFullEmployeePeriodDto(employeeCycle.getFirst());
         fullTimeline.setReviewTimelines(reviewTimelineDao
-                .getByEmployeePeriodId(employeeCycle.getUuid()));
+                .getByEmployeePeriodId(employeeCycle.getFirst().getUuid()));
         return fullTimeline;
     }
 

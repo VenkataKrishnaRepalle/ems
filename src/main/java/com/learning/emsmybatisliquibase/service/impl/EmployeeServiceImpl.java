@@ -2,6 +2,7 @@ package com.learning.emsmybatisliquibase.service.impl;
 
 import com.learning.emsmybatisliquibase.dao.*;
 import com.learning.emsmybatisliquibase.dto.*;
+import com.learning.emsmybatisliquibase.dto.pagination.RequestQuery;
 import com.learning.emsmybatisliquibase.entity.*;
 import com.learning.emsmybatisliquibase.entity.enums.JobTitleType;
 import com.learning.emsmybatisliquibase.entity.enums.PeriodStatus;
@@ -23,6 +24,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import static com.learning.emsmybatisliquibase.exception.errorcodes.EmployeeErrorCodes.*;
+import static com.learning.emsmybatisliquibase.utils.UtilityService.*;
 
 import java.io.UnsupportedEncodingException;
 import java.time.LocalDateTime;
@@ -218,18 +220,20 @@ public class EmployeeServiceImpl implements EmployeeService {
 
         if (updateLeavingDate.getLeavingDate() == null && profile.getProfileStatus().equals(ProfileStatus.INACTIVE)) {
             var currentActiveCycle = periodService.getCurrentActivePeriod();
-            var employeeCycle = employeePeriodDao.getByEmployeeIdAndPeriodId(employee.getUuid(),
-                    currentActiveCycle.getUuid());
+            var employeeCycle = employeePeriodDao.get(new RequestQuery(
+                    Map.of(EMPLOYEE_UUID, employee.getUuid(), PERIOD_UUID, currentActiveCycle.getUuid())
+            ));
             if (employeeCycle != null) {
-                employeePeriodService.updateEmployeePeriodStatus(employeeCycle.getUuid(),
+                employeePeriodService.updateEmployeePeriodStatus(employeeCycle.getFirst().getUuid(),
                         PeriodStatus.STARTED);
             }
             profile.setProfileStatus(ProfileStatus.ACTIVE);
         } else if (updateLeavingDate.getLeavingDate() != null &&
                 updateLeavingDate.getLeavingDate().before(new Date())) {
             profile.setProfileStatus(ProfileStatus.INACTIVE);
-            var empStartedCycles = employeePeriodDao.getByEmployeeIdAndStatus(employee.getUuid(),
-                    List.of(PeriodStatus.STARTED));
+            var empStartedCycles = employeePeriodDao.get(new RequestQuery(
+                    Map.of(EMPLOYEE_UUID, employee.getUuid(), STATUS, PeriodStatus.STARTED)
+            ));
             empStartedCycles.forEach(employeeCycle ->
                     employeePeriodService.updateEmployeePeriodStatus(employeeCycle.getUuid(),
                             PeriodStatus.INACTIVE));

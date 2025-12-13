@@ -29,6 +29,12 @@ public class EmployeePeriodController {
         return new ResponseEntity<>(employeePeriodService.periodAssignment(employeeIds), HttpStatus.CREATED);
     }
 
+    @PostMapping("reprocess/employee-period")
+    public ResponseEntity<SuccessResponseDto> reprocess(@RequestBody(required = false) List<UUID> employeeIds,
+                                                        @RequestParam(name = "year", required = false) Optional<Long> year) {
+        return new ResponseEntity<>(employeePeriodService.reprocess(employeeIds, year), HttpStatus.CREATED);
+    }
+
     @PutMapping("update-employee-period/{employeePeriodId}/status/{status}")
     public ResponseEntity<SuccessResponseDto> updateEmployeeCycleStatus(@PathVariable UUID employeePeriodId,
                                                                         @PathVariable PeriodStatus status) {

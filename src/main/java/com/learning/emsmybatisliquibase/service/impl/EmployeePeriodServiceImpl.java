@@ -6,6 +6,7 @@ import com.learning.emsmybatisliquibase.dao.ReviewTimelineDao;
 import com.learning.emsmybatisliquibase.dto.EmployeeCycleAndTimelineResponseDto;
 import com.learning.emsmybatisliquibase.dto.FullEmployeePeriodDto;
 import com.learning.emsmybatisliquibase.dto.SuccessResponseDto;
+import com.learning.emsmybatisliquibase.dto.pagination.RequestQuery;
 import com.learning.emsmybatisliquibase.entity.*;
 import com.learning.emsmybatisliquibase.entity.enums.PeriodStatus;
 import com.learning.emsmybatisliquibase.entity.enums.ReviewStatus;
@@ -28,10 +29,10 @@ import static com.learning.emsmybatisliquibase.exception.errorcodes.EmployeePeri
 import static com.learning.emsmybatisliquibase.exception.errorcodes.EmployeePeriodErrorCodes.EMPLOYEE_PERIOD_NOT_UPDATED;
 import static com.learning.emsmybatisliquibase.exception.errorcodes.TimelineErrorCodes.TIMELINE_NOT_UPDATED;
 import static com.learning.emsmybatisliquibase.exception.errorcodes.TimelineErrorCodes.TIMELINE_NOT_ASSIGNED;
+import static com.learning.emsmybatisliquibase.utils.UtilityService.*;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.time.LocalDateTime;
 import java.time.Month;
 import java.time.YearMonth;
 import java.util.*;
@@ -79,9 +80,10 @@ public class EmployeePeriodServiceImpl implements EmployeePeriodService {
 
     private void handleEmployeePeriodAssignment(UUID employeeId, Period period) {
         System.out.println("Assign Employee Period");
-        var isEmployeePeriodExists = employeePeriodDao.getByEmployeeIdAndPeriodId(employeeId, period.getUuid());
-        if (isEmployeePeriodExists != null) {
-            updateEmployeePeriodStatus(isEmployeePeriodExists.getUuid(), PeriodStatus.STARTED);
+        var isEmployeePeriodExists = employeePeriodDao.get(new RequestQuery(
+                Map.of(EMPLOYEE_UUID, employeeId, PERIOD_UUID, period.getUuid())));
+        if (!isEmployeePeriodExists.isEmpty()) {
+            updateEmployeePeriodStatus(isEmployeePeriodExists.getFirst().getUuid(), PeriodStatus.STARTED);
             return;
         }
 
@@ -181,7 +183,8 @@ public class EmployeePeriodServiceImpl implements EmployeePeriodService {
     @Override
     @Async
     public void updateEmployeePeriodsByPeriodId(UUID periodId, PeriodStatus status) {
-        List<EmployeePeriod> employeePeriods = employeePeriodDao.getByStatusAndPeriodId(PeriodStatus.STARTED, periodId);
+        List<EmployeePeriod> employeePeriods = employeePeriodDao.get(new RequestQuery(
+                Map.of(STATUS, PeriodStatus.STARTED, PERIOD_UUID, periodId)));
 
         List<CompletableFuture<Void>> futures = employeePeriods.stream()
                 .map(employeePeriod -> CompletableFuture.runAsync(() ->
@@ -261,19 +264,20 @@ public class EmployeePeriodServiceImpl implements EmployeePeriodService {
     @Override
     public EmployeeCycleAndTimelineResponseDto getByEmployeeIdAndPeriodId(UUID employeeId, UUID periodId) {
         var period = getPeriod(periodId);
-        var employeePeriod = employeePeriodDao.getByEmployeeIdAndPeriodId(employeeId,
-                periodId);
-        if (employeePeriod == null) {
+        var employeePeriod = employeePeriodDao.get(new RequestQuery(
+                Map.of(EMPLOYEE_UUID, employeeId, PERIOD_UUID, periodId)));
+        if (employeePeriod.isEmpty()) {
             throw new NotFoundException("EMPLOYEE_PERIOD_NOT_FOUND", "Employee period not found for employee");
         }
 
-        return toEmployeeCycleAndTimelineResponseDtoMap(employeeId, employeePeriod, period);
+        return toEmployeeCycleAndTimelineResponseDtoMap(employeeId, employeePeriod.getFirst(), period);
     }
 
     @Override
     public Map<String, EmployeeCycleAndTimelineResponseDto> getAll(UUID employeeId) {
-        var employeePeriods = employeePeriodDao.getByEmployeeId(employeeId);
-        if (employeePeriods == null) {
+        var employeePeriods = employeePeriodDao.get(new RequestQuery(
+                Map.of(EMPLOYEE_UUID, employeeId)));
+        if (employeePeriods.isEmpty()) {
             throw new NotFoundException("PERIOD_NOT_EXISTS", "Employee is not assigned with period");
         }
         employeePeriods = employeePeriods.stream()
@@ -305,17 +309,21 @@ public class EmployeePeriodServiceImpl implements EmployeePeriodService {
     public EmployeeCycleAndTimelineResponseDto getByYear(UUID employeeId, Optional<Long> optionalYear) {
         var year = optionalYear.isEmpty() ? LocalDateTime.now().getYear() : optionalYear.get();
         var period = getPeriodByYear(year);
-        var employeePeriod = employeePeriodDao.getByEmployeeIdAndPeriodId(employeeId, period.getUuid());
-        if (employeePeriod == null) {
+        var employeePeriod = employeePeriodDao.get(new RequestQuery(
+                Map.of(EMPLOYEE_UUID, employeeId, PERIOD_UUID, period.getUuid())));
+        if (employeePeriod.isEmpty()) {
             throw new NotFoundException("EMPLOYEE_PERIOD_NOT_FOUND", "Employee period not found for employee: " + employeeId);
         }
 
-        return toEmployeeCycleAndTimelineResponseDtoMap(employeeId, employeePeriod, period);
+        return toEmployeeCycleAndTimelineResponseDtoMap(employeeId, employeePeriod.getFirst(), period);
     }
 
     @Override
     public List<Integer> getAllEligibleYears(UUID employeeId) {
-        var employeePeriods = employeePeriodDao.getByEmployeeIdAndStatus(employeeId, List.of(PeriodStatus.STARTED, PeriodStatus.COMPLETED));
+        RequestQuery request = new RequestQuery();
+        request.setProperty(EMPLOYEE_UUID, employeeId);
+        request.setProperty(STATUSES, List.of(PeriodStatus.STARTED, PeriodStatus.COMPLETED));
+        var employeePeriods = employeePeriodDao.get(request);
 
         return employeePeriods.stream()
                 .map(EmployeePeriod::getPeriodUuid)
@@ -328,13 +336,20 @@ public class EmployeePeriodServiceImpl implements EmployeePeriodService {
                 .toList();
     }
 
+    @Override
+    public SuccessResponseDto reprocess(List<UUID> employeeIds, Optional<Long> optionalYear) {
+        int year = optionalYear.map(Long::intValue).orElseGet(() -> LocalDateTime.now().getYear());
+        return new SuccessResponseDto();
+    }
+
 
     private EmployeePeriod getById(UUID employeePeriodId) {
-        var employeePeriod = employeePeriodDao.getById(employeePeriodId);
-        if (employeePeriod == null) {
+        var employeePeriod = employeePeriodDao.get(new RequestQuery(
+                Map.of(UUID_NAME, employeePeriodId)));
+        if (employeePeriod.isEmpty()) {
             throw new NotFoundException("", "Employee Period not found with id " + employeePeriodId);
         }
-        return employeePeriod;
+        return employeePeriod.getFirst();
     }
 
     private SuccessResponseDto successResponse() {

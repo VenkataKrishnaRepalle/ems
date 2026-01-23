@@ -13,22 +13,25 @@
         <result property="createdTime" column="created_time"/>
         <result property="updatedTime" column="updated_time"/>
     </resultMap>
-    <select id="getById" resultMap="notificationMap">
-        SELECT *
-        from notification
-        WHERE uuid = #{id}
+
+    <select id="count" resultType="long">
+        SELECT count(*)
+        FROM notification
+        <trim prefix="WHERE" prefixOverrides="AND|OR" suffixOverrides="AND|OR">
+            <if test="request != null">
+                <include refid="applyFilter"/>
+            </if>
+        </trim>
     </select>
 
-    <select id="getByEmployee" resultMap="notificationMap">
+    <select id="get" resultMap="notificationMap">
         SELECT *
         FROM notification
-        WHERE employee_uuid = #{employeeUuid}
-        <if test="statuses != null">
-            AND status IN
-            <foreach collection="statuses" item="status" open="(" separator="," close=")">
-                #{status}
-            </foreach>
-        </if>
+        <trim prefix="WHERE" prefixOverrides="AND|OR" suffixOverrides="AND|OR">
+            <if test="request != null">
+                <include refid="applyFilter"/>
+            </if>
+        </trim>
     </select>
 
     <insert id="save" flushCache="true">
@@ -37,28 +40,42 @@
                 #{notification.link}, #{notification.status}, #{notification.createdTime}, #{notification.updatedTime})
     </insert>
 
-    <update id="updateById" flushCache="true">
+    <update id="update" flushCache="true">
         UPDATE notification
         SET status       = #{newStatus},
             updated_time = #{updatedTime}
-        WHERE uuid = #{id}
-          and status = #{oldStatus}
+       <trim prefix="WHERE" prefixOverrides="AND|OR" suffixOverrides="AND|OR">
+           <if test="request.properties != null">
+               <include refid="applyFilter"/>
+           </if>
+       </trim>
     </update>
 
-    <update id="updateByEmployee" flushCache="true">
-        UPDATE notification
-        SET status       = #{newStatus},
-            updated_time = #{updatedTime}
-        WHERE employee_uuid = #{employeeUuid} and status = #{oldStatus}
-    </update>
-
-    <delete id="deleteById" flushCache="true">
+    <delete id="delete" flushCache="true">
         DELETE from notification
-        WHERE uuid = #{uuid}
+        <trim prefix="WHERE" prefixOverrides="AND|OR" suffixOverrides="AND|OR">
+            <if test="request.properties != null">
+                <include refid="applyFilter"/>
+            </if>
+        </trim>
     </delete>
 
-    <delete id="deleteByEmployee" flushCache="true">
-        DELETE from notification
-        WHERE employee_uuid = #{employeeUuid}
-    </delete>
+    <sql id="applyFilter">
+        <if test="request.properties.uuid != null">
+            AND uuid = #{request.properties.uuid}
+        </if>
+        <if test="request.properties.sortBy != null">
+            ORDER BY ${request.properties.sortBy} ${request.properties.sortOrder}
+            LIMIT #{request.properties.size} OFFSET #{request.properties.offSet}
+        </if>
+        <if test="request.properties.employeeUuid != null">
+            AND employee_uuid = #{request.properties.employeeUuid}
+        </if>
+        <if test="request.properties.statuses != null">
+            AND status IN
+            <foreach collection="request.properties.statuses" item="status" open="(" separator="," close=")">
+                #{status}
+            </foreach>
+        </if>
+    </sql>
 </mapper>

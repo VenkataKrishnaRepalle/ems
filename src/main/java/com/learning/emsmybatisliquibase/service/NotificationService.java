@@ -1,7 +1,7 @@
 package com.learning.emsmybatisliquibase.service;
 
+import com.learning.emsmybatisliquibase.dto.PaginatedResponse;
 import com.learning.emsmybatisliquibase.entity.Notification;
-import org.springframework.web.bind.annotation.PathVariable;
 
 import java.util.List;
 import java.util.UUID;
@@ -9,7 +9,7 @@ import java.util.UUID;
 public interface NotificationService {
     Notification getById(UUID id);
 
-    List<Notification> getByEmployee(UUID employeeUuid, List<Notification.Status> statuses, int page);
+    PaginatedResponse<Notification> getByEmployee(UUID employeeUuid, List<Notification.Status> statuses, int page);
 
     void send(Notification notification);
 

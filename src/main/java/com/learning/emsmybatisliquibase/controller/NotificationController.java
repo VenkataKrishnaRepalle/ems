@@ -1,5 +1,6 @@
 package com.learning.emsmybatisliquibase.controller;
 
+import com.learning.emsmybatisliquibase.dto.PaginatedResponse;
 import com.learning.emsmybatisliquibase.entity.Notification;
 import com.learning.emsmybatisliquibase.service.NotificationService;
 import lombok.RequiredArgsConstructor;
@@ -23,9 +24,9 @@ public class NotificationController {
     }
 
     @GetMapping("/get-by-employee/{employeeUuid}/status")
-    public ResponseEntity<List<Notification>> getNotificationByEmployee(@PathVariable UUID employeeUuid,
-                                                                        @RequestParam(name = "statuses", required = false) List<Notification.Status> statuses,
-                                                                        @RequestParam(name = "page", defaultValue = "1") int page) {
+    public ResponseEntity<PaginatedResponse<Notification>> getNotificationByEmployee(@PathVariable UUID employeeUuid,
+                                                                       @RequestParam(name = "statuses", required = false) List<Notification.Status> statuses,
+                                                                       @RequestParam(name = "page", defaultValue = "0") int page) {
         return new ResponseEntity<>(notificationService.getByEmployee(employeeUuid, statuses, page), HttpStatus.OK);
     }
 

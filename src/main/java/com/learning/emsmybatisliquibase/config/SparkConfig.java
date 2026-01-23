@@ -26,6 +26,7 @@ public class SparkConfig {
                 .master("local[*]")
                 .config("spark.driver.bindAddress", "0.0.0.0")
                 .config("spark.nio.buffer.max", "268435456")
+                .config("spark.driver.extraJavaOptions", "--add-opens java.base/sun.nio.ch=ALL-UNNAMED")
                 .config("spark.ui.enabled", "false")
                 .getOrCreate();
     }

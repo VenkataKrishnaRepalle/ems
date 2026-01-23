@@ -2,6 +2,7 @@ package com.learning.emsmybatisliquibase.dto.pagination;
 
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.ToString;
 
 import java.util.List;
@@ -12,6 +13,18 @@ import java.util.concurrent.ConcurrentHashMap;
 @ToString
 public class RequestQuery {
     private Map<String, Object> properties;
+
+    @Setter
+    private String sortBy;
+
+    @Setter
+    private String sortOrder;
+
+    @Setter
+    private int size;
+
+    @Setter
+    private int offSet;
 
     @JsonAnySetter
     public void setProperty(String key, Object value) {

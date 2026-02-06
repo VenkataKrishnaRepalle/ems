@@ -1,0 +1,55 @@
+{
+  "realm": "ems",
+  "enabled": true,
+  "displayName": "EMS",
+  "clients": [
+    {
+      "clientId": "ems-frontend",
+      "name": "EMS Frontend",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "redirectUris": [
+        "http://localhost:3000/*"
+      ],
+      "webOrigins": [
+        "http://localhost:3000"
+      ]
+    }
+  ],
+  "users": [
+    {
+      "username": "admin",
+      "firstName": "Admin",
+      "lastName": "User",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "admin@gmail.com",
+      "requiredActions": [],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Admin@123",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "username": "venky",
+      "firstName": "Venky",
+      "lastName": "Repalle",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "rvkrishna13052001@gmail.com",
+      "requiredActions": [],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Venky@123",
+          "temporary": false
+        }
+      ]
+    }
+  ]
+}

@@ -75,3 +75,41 @@ podman run --name postgres -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=root -
 ```bash
 podman run --name postgres -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=root -e POSTGRES_MULTIPLE_DATABASES="ems,kyc" -d -p 5432:5432 -v postgres_data:/var/lib/postgresql/data postgres 
 ```
+
+# Keycloak
+
+## Enable Keycloak Login Endpoint
+
+Set the following environment variables:
+
+- `KEYCLOAK_ENABLED=true`
+- `KEYCLOAK_ISSUER_URI=http://<keycloak-host>:<port>/realms/<realm>`
+
+Then call the API with a Keycloak access token:
+
+```bash
+curl -X POST http://localhost:8083/api/login-keycloak \
+  -H "Authorization: Bearer <KEYCLOAK_ACCESS_TOKEN>"
+```
+
+You can also call secured `/api/**` endpoints directly with the Keycloak token (no cookie exchange), as long as `KEYCLOAK_ISSUER_URI` matches the token `iss` claim.
+
+## Run Keycloak via Docker Compose
+
+`docker-compose.yml` starts Keycloak on `http://keycloak:8080` and imports `init/keycloak/realm-ems.json`:
+
+- Realm: `ems`
+- Frontend clientId: `ems-frontend`
+- Test users: `admin` / `Admin@123`, `venky` / `Venky@123`
+- Keycloak admin: `admin` / `admin`
+
+To make `http://keycloak:8080` work from your browser, add this to your hosts file:
+
+- Windows: `C:\Windows\System32\drivers\etc\hosts`
+  - `127.0.0.1 keycloak`
+
+Frontend (example config):
+
+- `url`: `http://keycloak:8080`
+- `realm`: `ems`
+- `clientId`: `ems-frontend`

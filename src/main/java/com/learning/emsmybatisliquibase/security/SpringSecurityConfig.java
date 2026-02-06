@@ -1,6 +1,7 @@
 package com.learning.emsmybatisliquibase.security;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -33,6 +34,20 @@ public class SpringSecurityConfig {
     @Bean
     public static PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    @Order(0)
+    @ConditionalOnProperty(prefix = "app.keycloak", name = "enabled", havingValue = "true")
+    public SecurityFilterChain keycloakLoginSecurityFilterChain(HttpSecurity http) throws Exception {
+        http
+            .securityMatcher("/api/keycloak/login-keycloak")
+            .csrf(AbstractHttpConfigurer::disable)
+            .authorizeHttpRequests(authorize -> authorize.anyRequest().permitAll())
+            .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> {}))
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()));
+
+        return http.build();
     }
 
     @Bean

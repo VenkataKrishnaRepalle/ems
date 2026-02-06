@@ -12,6 +12,11 @@ admin:
   uuid: 019a4b09-c44a-729a-ab56-48d21adb0f80
 
 spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8080/realms/ems}
   application:
     name: ems-mybatis-liquibase
   datasource:
@@ -123,6 +128,8 @@ maximum:
     count: 5
 
 app:
+  keycloak:
+    enabled: ${KEYCLOAK_ENABLED:true}
   jwt:
     secret: ${JWT_SECRET}
     refresh-secret: ${REFRESH_TOKEN_SECRET}

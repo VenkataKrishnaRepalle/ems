@@ -38,7 +38,7 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
         } else {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             errorResponse.put(ERROR_CODE, "TOKEN_NOT_PROVIDED");
-            errorResponse.put(ERROR_MESSAGE, "missing authorization header");
+            errorResponse.put(ERROR_MESSAGE, "Missing Authorization header or token cookie");
         }
 
         response.setContentType("application/json");

@@ -48,6 +48,7 @@ import static com.learning.emsmybatisliquibase.exception.errorcodes.EmployeeErro
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.UUID;
 
 @Service
@@ -84,10 +85,10 @@ public class AuthServiceImpl implements AuthService {
     String key;
 
     @Value("${app.jwt-expiration-milliseconds}")
-    private Integer jwtExpiryTime;
+    private Long jwtExpiryTimeMs;
 
     @Value("${app.refresh-token-expiration-milliseconds}")
-    private Integer refreshTokenExpiryTime;
+    private Long refreshTokenExpiryTimeMs;
 
     @Override
     @Transactional
@@ -137,8 +138,8 @@ public class AuthServiceImpl implements AuthService {
         String token = jwtTokenProvider.generateToken(authentication);
         String refreshToken = jwtTokenProvider.generateRefreshToken(authentication);
 
-        addAuthCookie(response, "token", token, jwtExpiryTime);
-        addAuthCookie(response, "refreshToken", refreshToken, refreshTokenExpiryTime);
+        addAuthCookie(response, "token", token, jwtExpiryTimeMs);
+        addAuthCookie(response, "refreshToken", refreshToken, refreshTokenExpiryTimeMs);
 
         if (null != loginDto.getRequestQuery()) {
             saveSession(request, employee, loginDto.getRequestQuery(), token);
@@ -156,12 +157,23 @@ public class AuthServiceImpl implements AuthService {
                 .toList();
     }
 
-    private void addAuthCookie(HttpServletResponse response, String name, String value, int maxAge) {
+    private void addAuthCookie(HttpServletResponse response, String name, String value, long maxAgeMillis) {
         Cookie cookie = new Cookie(name, value);
         cookie.setHttpOnly(true);
         cookie.setPath("/");
-        cookie.setMaxAge(maxAge);
+        cookie.setMaxAge(toCookieMaxAgeSeconds(maxAgeMillis));
         response.addCookie(cookie);
+    }
+
+    private int toCookieMaxAgeSeconds(long maxAgeMillis) {
+        if (maxAgeMillis <= 0) {
+            return -1;
+        }
+        long seconds = TimeUnit.MILLISECONDS.toSeconds(maxAgeMillis);
+        if (seconds <= 0) {
+            seconds = 1;
+        }
+        return (int) Math.min(Integer.MAX_VALUE, seconds);
     }
 
     private void saveSession(HttpServletRequest request, Employee employee, RequestQuery requestQuery, String token) {
@@ -249,7 +261,7 @@ public class AuthServiceImpl implements AuthService {
                             String.valueOf(employee.getUuid()),
                             passwords.getFirst().getPassword()));
 
-            addAuthCookie(response, "token", token, jwtExpiryTime);
+            addAuthCookie(response, "token", token, jwtExpiryTimeMs);
             var employeeResponse = employeeDao.getEmployee(employeeId);
             employeeResponse.setRoles(getRoles(employeeId));
 
@@ -267,12 +279,9 @@ public class AuthServiceImpl implements AuthService {
 
     private void removeAuthCookie(HttpServletResponse response, String name) {
         Cookie cookie = new Cookie(name, "");
-        cookie.setMaxAge(3600);
+        cookie.setMaxAge(0);
         cookie.setHttpOnly(true);
-        cookie.setSecure(true);
         cookie.setPath("/");
-        cookie.setDomain("ems-frontend-beryl.vercel.app");
-        cookie.setAttribute("SameSite", "None");
         response.addCookie(cookie);
     }
 

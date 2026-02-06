@@ -34,6 +34,13 @@
         </trim>
     </select>
 
+    <select id="getCount" resultType="map">
+        SELECT status, count(*) AS count
+        FROM notification
+        WHERE employee_uuid = #{employeeUuid}
+        GROUP BY status
+    </select>
+
     <insert id="save" flushCache="true">
         INSERT INTO notification (uuid, employee_uuid, title, message, link, status, created_time, updated_time)
         VALUES (#{notification.uuid}, #{notification.employeeUuid}, #{notification.title}, #{notification.message},

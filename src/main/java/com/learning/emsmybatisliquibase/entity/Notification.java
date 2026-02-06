@@ -34,11 +34,22 @@ public class Notification {
         READ, UNREAD
     }
 
-    public void isRead() {
-        this.status = Status.READ;
+    public boolean isRead() {
+        return this.status == Status.READ;
     }
 
-    public void isUnread() {
-        this.status = Status.UNREAD;
+    public boolean isUnread() {
+        return this.status == Status.UNREAD;
+    }
+
+    public Notification(UUID employeeUuid, String title, String message, String link, Status status) {
+        this.uuid = UUID.randomUUID();
+        this.employeeUuid = employeeUuid;
+        this.title = title;
+        this.message = message;
+        this.link = link;
+        this.status = status;
+        this.createdTime = LocalDateTime.now();
+        this.updatedTime = LocalDateTime.now();
     }
 }

@@ -18,8 +18,6 @@ public interface EmployeeService {
 
     Employee getById(UUID id);
 
-    Optional<Employee> findById(UUID id);
-
     Employee getByEmail(String email);
 
     Optional<Employee> findByEmail(String email);

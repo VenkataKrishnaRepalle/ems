@@ -4,6 +4,7 @@ import com.learning.emsmybatisliquibase.dto.PaginatedResponse;
 import com.learning.emsmybatisliquibase.entity.Notification;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 public interface NotificationService {
@@ -20,4 +21,6 @@ public interface NotificationService {
     void deleteByEmployee(UUID employeeUuid);
 
     void updateByEmployee(UUID employeeId, Notification.Status status);
+
+    Map<String, Long> getCount(UUID employeeUuid);
 }

@@ -6,6 +6,7 @@ import com.learning.emsmybatisliquibase.dto.AddDepartmentDto;
 import com.learning.emsmybatisliquibase.dto.FileType;
 import com.learning.emsmybatisliquibase.dto.SuccessResponseDto;
 import com.learning.emsmybatisliquibase.entity.Employee;
+import com.learning.emsmybatisliquibase.entity.Notification;
 import com.learning.emsmybatisliquibase.entity.Profile;
 import com.learning.emsmybatisliquibase.exception.IntegrityException;
 import com.learning.emsmybatisliquibase.exception.InvalidInputException;
@@ -13,6 +14,7 @@ import com.learning.emsmybatisliquibase.exception.NotFoundException;
 import com.learning.emsmybatisliquibase.service.DepartmentService;
 import com.learning.emsmybatisliquibase.service.EmployeeService;
 import com.learning.emsmybatisliquibase.service.FilesService;
+import com.learning.emsmybatisliquibase.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -48,7 +50,9 @@ public class FilesServiceImpl implements FilesService {
     private final DepartmentService departmentService;
 
     private final ProfileDao profileDao;
-    
+
+    private final NotificationService notificationService;
+
     private final com.learning.emsmybatisliquibase.batch.EmployeeBatchService employeeBatchService;
 
     private static final String ACTION = "action";
@@ -60,10 +64,10 @@ public class FilesServiceImpl implements FilesService {
     @Override
     public SuccessResponseDto colleagueOnboard(MultipartFile file) throws IOException {
         var rowDatas = fileProcess(file, FileType.COLLEAGUE_ONBOARD);
-        
+
         try {
             List<UUID> employeeUuids = employeeBatchService.processEmployeeBatch(rowDatas);
-            
+
             return SuccessResponseDto.builder()
                     .success(Boolean.TRUE)
                     .data(String.valueOf(employeeUuids))
@@ -144,13 +148,30 @@ public class FilesServiceImpl implements FilesService {
     }
 
     private void addManager(Employee employee, Employee manager) {
+        boolean isOldEmailNull = false;
+        boolean isOldEmailDifferent = false;
         validateManagerAccess(manager);
+        if (employee.getManagerUuid() == null) {
+            isOldEmailNull = true;
+        } else if (employee.getManagerUuid() != manager.getUuid()) {
+            isOldEmailDifferent = true;
+        }
         employee.setManagerUuid(manager.getUuid());
         employeeService.update(employee);
+        if (isOldEmailNull) {
+            notificationService.send(new Notification(employee.getUuid(), "Add new manager", "New reporting manager have been added to :" + manager.getFirstName() + " " + manager.getLastName(),
+                    null, Notification.Status.UNREAD));
+        }
+        if (isOldEmailDifferent) {
+            notificationService.send(new Notification(employee.getUuid(), "Reporting manager is changed", "Your reporting manager have been changed to :" + manager.getFirstName() + " " + manager.getLastName(),
+                    null, Notification.Status.UNREAD));
+        }
+        notificationService.send(new Notification(manager.getUuid(), "Add new manager", "New reporting manager have been added to :" + manager.getFirstName() + " " + manager.getLastName(),
+                "view/" + employee.getUuid(), Notification.Status.UNREAD));
     }
 
     private void validateManagerAccess(Employee manager) {
-        if (Boolean.FALSE.equals(manager.getIsManager())) {
+        if (!manager.getIsManager()) {
             throw new InvalidInputException(MANAGER_ACCESS_NOT_FOUND.code(),
                     "Manager access not granted for email: " + manager.getEmail());
         }

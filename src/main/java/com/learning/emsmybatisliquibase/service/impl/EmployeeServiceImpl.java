@@ -199,11 +199,6 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
-    public Optional<Employee> findById(UUID id) {
-        return Optional.ofNullable(getById(id));
-    }
-
-    @Override
     public void updateLeavingDate(UUID id, UpdateLeavingDateDto updateLeavingDate) {
         var employee = getById(id);
         try {

@@ -4,15 +4,17 @@ import com.learning.emsmybatisliquibase.dto.PaginatedResponse;
 import com.learning.emsmybatisliquibase.entity.Notification;
 import com.learning.emsmybatisliquibase.service.NotificationService;
 import lombok.RequiredArgsConstructor;
+import org.apache.coyote.Response;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/notification")
+@RequestMapping("/api/notification")
 @RequiredArgsConstructor
 public class NotificationController {
 
@@ -30,19 +32,24 @@ public class NotificationController {
         return new ResponseEntity<>(notificationService.getByEmployee(employeeUuid, statuses, page), HttpStatus.OK);
     }
 
+    @GetMapping("/get-count/{employeeUuid}")
+    public ResponseEntity<Map<String, Long>> getCount(@PathVariable UUID employeeUuid) {
+        return new ResponseEntity<>(notificationService.getCount(employeeUuid), HttpStatus.OK);
+    }
+
     @PostMapping("/send")
     public ResponseEntity<HttpStatus> sendNotification(@RequestBody Notification notification) {
         notificationService.send(notification);
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
-    @PatchMapping("/update/{id}/status/{status}")
+    @PutMapping("/update/{id}/status/{status}")
     public ResponseEntity<HttpStatus> updateById(@PathVariable UUID id, @PathVariable Notification.Status status) {
         notificationService.updateById(id, status);
         return new ResponseEntity<>(HttpStatus.ACCEPTED);
     }
 
-    @PatchMapping("/updateByEmployee/{employeeId}/status/{status}")
+    @PutMapping("/updateByEmployee/{employeeId}/status/{status}")
     public ResponseEntity<HttpStatus> updateByEmployee(@PathVariable UUID employeeId, @PathVariable Notification.Status status) {
         notificationService.updateByEmployee(employeeId, status);
         return new ResponseEntity<>(HttpStatus.ACCEPTED);

@@ -40,9 +40,7 @@ public class SpringSecurityConfig {
     public SecurityFilterChain apiSecurityFilterChain(HttpSecurity http) throws Exception {
         http
             .securityMatcher("/api/**")
-            .csrf(csrf -> csrf
-                .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-            )
+            .csrf(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(authorize -> 
                 authorize
                     .requestMatchers(

@@ -94,6 +94,7 @@ mybatis-plus:
 springdoc:
   swagger-ui:
     operations-sorter: alpha
+    persist-authorization: true
 
 management:
   endpoints:

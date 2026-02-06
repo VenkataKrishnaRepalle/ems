@@ -16,6 +16,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static com.learning.emsmybatisliquibase.utils.UtilityService.*;
 
@@ -71,6 +72,7 @@ public class NotificationServiceImpl implements NotificationService {
             } else {
                 log.info("Successfully saved notification with ID: {}", notification.getUuid());
                 simpMessagingTemplate.convertAndSend("/topic/notifications/" + notification.getEmployeeUuid(), notification);
+                simpMessagingTemplate.convertAndSend("/topic/notification/count/" + notification.getEmployeeUuid(), 1);
             }
         } catch (DataIntegrityViolationException ex) {
             log.error("Data integrity violation while saving notification: {}", notification, ex);
@@ -89,16 +91,23 @@ public class NotificationServiceImpl implements NotificationService {
         } catch (DataIntegrityViolationException ex) {
             throw new IntegrityException("NOTIFICATION_UPDATE_FAILED", ex.getCause().getMessage());
         }
+        if(notification.isUnread()) {
+            simpMessagingTemplate.convertAndSend("/topic/notifications/count/" + notification.getEmployeeUuid(), -1);
+        }
     }
 
     @Override
     public void deleteById(UUID id) {
+        var notification = getById(id);
         try {
             if (0 == notificationDao.delete(new RequestQuery(Map.of(UUID_NAME, id)))) {
                 throw new IntegrityException("NOTIFICATION_DELETE_FAILED", "Failed to delete notification for employee: " + id);
             }
         } catch (DataIntegrityViolationException ex) {
             throw new IntegrityException("NOTIFICATION_DELETE_FAILED", ex.getCause().getMessage());
+        }
+        if(notification.isUnread()) {
+            simpMessagingTemplate.convertAndSend("/topic/notifications/count/" + notification.getEmployeeUuid(), -1);
         }
     }
 
@@ -123,6 +132,16 @@ public class NotificationServiceImpl implements NotificationService {
         } catch (DataIntegrityViolationException ex) {
             throw new IntegrityException("NOTIFICATION_UPDATE_FAILED", ex.getCause().getMessage());
         }
+    }
+
+    @Override
+    public Map<String, Long> getCount(UUID employeeUuid) {
+        List<Map<String, Object>> counts = notificationDao.getCount(employeeUuid);
+        return counts.stream()
+                .collect(Collectors.toMap(
+                        m -> (String) m.get("status"),
+                        m -> (Long) m.get("count")
+                ));
     }
 
     private Notification.Status findReverseStatus(Notification.Status status) {

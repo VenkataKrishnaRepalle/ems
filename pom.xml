@@ -27,8 +27,6 @@
         <mybatis.plus.version>3.5.5</mybatis.plus.version>
         <jwt.version>0.12.5</jwt.version>
         <resilience4j.version>2.2.0</resilience4j.version>
-        <scala.binary.version>2.12</scala.binary.version>
-        <spark.version>3.5.1</spark.version>
         <snappy-java.version>1.1.10.5</snappy-java.version>
         <antlr4.version>4.9.3</antlr4.version>
     </properties>
@@ -249,24 +247,6 @@
             <groupId>me.paulschwarz</groupId>
             <artifactId>spring-dotenv</artifactId>
             <version>4.0.0</version>
-        </dependency>
-        <!-- Apache Spark Dependencies -->
-        <dependency>
-            <groupId>org.apache.spark</groupId>
-            <artifactId>spark-core_${scala.binary.version}</artifactId>
-            <version>${spark.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.spark</groupId>
-            <artifactId>spark-sql_${scala.binary.version}</artifactId>
-            <version>${spark.version}</version>
-        </dependency>
-        <!-- Add javax.servlet API for Spark -->
-        <dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>javax.servlet-api</artifactId>
-            <version>4.0.1</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>

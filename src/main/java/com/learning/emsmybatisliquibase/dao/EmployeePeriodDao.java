@@ -15,4 +15,6 @@ public interface EmployeePeriodDao {
     int update(@Param("employeePeriod") EmployeePeriod employeePeriod);
 
     List<EmployeePeriod> get(@Param("request") RequestQuery requestQuery);
+
+    List<String> getAllYearsByEmployeeId(@Param("employeeId") UUID employeeId);
 }

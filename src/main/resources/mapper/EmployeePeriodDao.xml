@@ -36,6 +36,12 @@
             <include refid="applyFilter"/>
         </trim>
     </select>
+    <select id="getAllYearsByEmployeeId" resultType="java.lang.String">
+        SELECT p.name
+        FROM employee_period ep
+                 JOIN period p ON p.uuid = ep.period_uuid
+        WHERE ep.employee_uuid = #{employeeId}
+    </select>
 
     <sql id="applyFilter">
         <if test="request.properties.uuid != null">

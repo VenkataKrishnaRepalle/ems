@@ -80,7 +80,7 @@ public class EmployeeController {
 
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'EMPLOYEE')")
     @GetMapping(value = "/getByManagerId/{managerId}")
-    public ResponseEntity<List<EmployeeResponseDto>> getByManagerId(@PathVariable UUID managerId) {
+    public ResponseEntity<List<EmployeeDetailsDto>> getByManagerId(@PathVariable UUID managerId) {
         return new ResponseEntity<>(employeeService.getByManagerUuid(managerId), HttpStatus.OK);
     }
 

@@ -41,6 +41,9 @@
         select *
         from attendance
         where employee_uuid = #{employeeUuid}
+        <if test="year != null">
+            and EXTRACT(YEAR FROM date) = #{year}
+        </if>
     </select>
 
     <delete id="delete" flushCache="true">

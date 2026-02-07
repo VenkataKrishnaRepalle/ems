@@ -1,8 +1,7 @@
 package com.learning.emsmybatisliquibase.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.learning.emsmybatisliquibase.dto.ApplyAttendanceDto;
-import com.learning.emsmybatisliquibase.dto.UpdateAttendanceDto;
+import com.learning.emsmybatisliquibase.dto.AttendanceDto;
 import com.learning.emsmybatisliquibase.dto.ViewEmployeeAttendanceDto;
 import com.learning.emsmybatisliquibase.entity.Attendance;
 import com.learning.emsmybatisliquibase.entity.enums.AttendanceStatus;
@@ -21,9 +20,8 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
@@ -57,14 +55,14 @@ class AttendanceControllerTest {
 
     @Test
     void testApply() throws Exception {
-        List<ApplyAttendanceDto> attendanceDtos = List.of(
-                new ApplyAttendanceDto(WorkMode.WORK_FROM_OFFICE, AttendanceType.FULL_DAY, AttendanceStatus.SUBMITTED, Date.from(Instant.from(LocalDateTime.now()))),
-                new ApplyAttendanceDto(WorkMode.WORK_FROM_OFFICE, AttendanceType.FULL_DAY, AttendanceStatus.SUBMITTED, Date.from(Instant.from(LocalDateTime.now())))
+        List<AttendanceDto> attendanceDtos = List.of(
+                new AttendanceDto(WorkMode.WORK_FROM_OFFICE, AttendanceType.FULL_DAY, AttendanceStatus.SUBMITTED, LocalDate.now()),
+                new AttendanceDto(WorkMode.WORK_FROM_OFFICE, AttendanceType.FULL_DAY, AttendanceStatus.SUBMITTED, LocalDate.now())
         );
 
         List<Attendance> attendances = List.of(
-                new Attendance(UUID.randomUUID(), EMPLOYEE_UUID, WorkMode.WORK_FROM_OFFICE, AttendanceType.FULL_DAY, AttendanceStatus.SUBMITTED, Date.from(Instant.from(LocalDateTime.now())), LocalDateTime.now(), LocalDateTime.now()),
-                new Attendance(UUID.randomUUID(), EMPLOYEE_UUID, WorkMode.WORK_FROM_OFFICE, AttendanceType.FULL_DAY, AttendanceStatus.SUBMITTED, Date.from(Instant.from(LocalDateTime.now())), LocalDateTime.now(), LocalDateTime.now())
+                new Attendance(UUID.randomUUID(), EMPLOYEE_UUID, WorkMode.WORK_FROM_OFFICE, AttendanceType.FULL_DAY, AttendanceStatus.SUBMITTED, LocalDate.now(), LocalDateTime.now(), LocalDateTime.now()),
+                new Attendance(UUID.randomUUID(), EMPLOYEE_UUID, WorkMode.WORK_FROM_OFFICE, AttendanceType.FULL_DAY, AttendanceStatus.SUBMITTED, LocalDate.now(), LocalDateTime.now(), LocalDateTime.now())
         );
 
         when(attendanceService.apply(EMPLOYEE_UUID, attendanceDtos)).thenReturn(attendances);
@@ -82,9 +80,9 @@ class AttendanceControllerTest {
     @Test
     void testUpdate() throws Exception {
         UUID attendanceUuid = UUID.randomUUID();
-        UpdateAttendanceDto attendanceDto = new UpdateAttendanceDto(attendanceUuid, WorkMode.WORK_FROM_OFFICE, AttendanceType.FULL_DAY, AttendanceStatus.SUBMITTED);
+        AttendanceDto attendanceDto = new AttendanceDto(WorkMode.WORK_FROM_OFFICE, AttendanceType.FULL_DAY, AttendanceStatus.SUBMITTED, LocalDate.now());
 
-        Attendance attendance = new Attendance(attendanceUuid, EMPLOYEE_UUID, WorkMode.WORK_FROM_OFFICE, AttendanceType.FULL_DAY, AttendanceStatus.SUBMITTED, Date.from(Instant.from(LocalDateTime.now())), LocalDateTime.now(), LocalDateTime.now());
+        Attendance attendance = new Attendance(attendanceUuid, EMPLOYEE_UUID, WorkMode.WORK_FROM_OFFICE, AttendanceType.FULL_DAY, AttendanceStatus.SUBMITTED, LocalDate.now(), LocalDateTime.now(), LocalDateTime.now());
 
         when(attendanceService.update(EMPLOYEE_UUID, attendanceUuid, attendanceDto)).thenReturn(attendance);
 
@@ -101,7 +99,7 @@ class AttendanceControllerTest {
     void testGet() throws Exception {
         UUID attendanceUuid = UUID.randomUUID();
 
-        Attendance attendance = new Attendance(attendanceUuid, EMPLOYEE_UUID, WorkMode.WORK_FROM_OFFICE, AttendanceType.FULL_DAY, AttendanceStatus.SUBMITTED, Date.from(Instant.from(LocalDateTime.now())), LocalDateTime.now(), LocalDateTime.now());
+        Attendance attendance = new Attendance(attendanceUuid, EMPLOYEE_UUID, WorkMode.WORK_FROM_OFFICE, AttendanceType.FULL_DAY, AttendanceStatus.SUBMITTED, LocalDate.now(), LocalDateTime.now(), LocalDateTime.now());
 
         when(attendanceService.getByUuid(EMPLOYEE_UUID, attendanceUuid)).thenReturn(attendance);
 
@@ -119,7 +117,7 @@ class AttendanceControllerTest {
     void testGetEmployeeAttendance() throws Exception {
         ViewEmployeeAttendanceDto employeeAttendanceDto = new ViewEmployeeAttendanceDto(EMPLOYEE_UUID, "test first name", "test last name", List.of(), List.of(), List.of());
 
-        when(attendanceService.getEmployeeAttendance(EMPLOYEE_UUID)).thenReturn(employeeAttendanceDto);
+        when(attendanceService.getEmployeeAttendance(EMPLOYEE_UUID, null)).thenReturn(employeeAttendanceDto);
 
         mockMvc.perform(get("/api/attendance/get/{employeeUuid}", EMPLOYEE_UUID)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -129,26 +127,7 @@ class AttendanceControllerTest {
                 .andExpect(jsonPath("$.employeeFirstName").value(employeeAttendanceDto.getEmployeeFirstName()))
                 .andExpect(jsonPath("$.employeeLastName").value(employeeAttendanceDto.getEmployeeLastName()));
 
-        verify(attendanceService, times(1)).getEmployeeAttendance(EMPLOYEE_UUID);
-    }
-
-    @Test
-    void testGetAllEmployeesAttendanceByManager() throws Exception {
-        UUID managerUuid = UUID.randomUUID();
-        List<ViewEmployeeAttendanceDto> employeeAttendanceDtos = List.of(
-                new ViewEmployeeAttendanceDto(EMPLOYEE_UUID, "test first name", "test last name", List.of(), List.of(), List.of()),
-                new ViewEmployeeAttendanceDto(UUID.randomUUID(), "test first name", "test last name", List.of(), List.of(), List.of())
-        );
-
-        when(attendanceService.getAllEmployeesAttendanceByManager(managerUuid)).thenReturn(employeeAttendanceDtos);
-
-        mockMvc.perform(get("/api/attendance/get/attendance/manager/{managerUuid}", managerUuid)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].employeeUuid").value(EMPLOYEE_UUID.toString()));
-
-        verify(attendanceService, times(1)).getAllEmployeesAttendanceByManager(managerUuid);
+        verify(attendanceService, times(1)).getEmployeeAttendance(EMPLOYEE_UUID, null);
     }
 
     @Test
@@ -158,14 +137,14 @@ class AttendanceControllerTest {
                 new ViewEmployeeAttendanceDto(UUID.randomUUID(), "test first name", "test last name", List.of(), List.of(), List.of())
         );
 
-        when(attendanceService.getFullTeamAttendance(EMPLOYEE_UUID)).thenReturn(employeeAttendanceDtos);
+        when(attendanceService.getTeamAttendance(EMPLOYEE_UUID, 2000L)).thenReturn(employeeAttendanceDtos);
 
-        mockMvc.perform(get("/api/attendance/get/attendance/full-team/{employeeUuid}", EMPLOYEE_UUID)
+        mockMvc.perform(get("/api/attendance/get/attendance/full-team/{employeeUuid}", EMPLOYEE_UUID, 2000L)
                        .contentType(MediaType.APPLICATION_JSON)
                        .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
 
-        verify(attendanceService, times(1)).getFullTeamAttendance(EMPLOYEE_UUID);
+        verify(attendanceService, times(1)).getTeamAttendance(EMPLOYEE_UUID, 2000L);
     }
 
 }

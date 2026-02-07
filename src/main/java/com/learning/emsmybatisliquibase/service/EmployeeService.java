@@ -30,7 +30,7 @@ public interface EmployeeService {
 
     void update(Employee employee);
 
-    List<EmployeeResponseDto> getByManagerUuid(UUID managerId);
+    List<EmployeeDetailsDto> getByManagerUuid(UUID managerId);
 
     Boolean isManager(UUID uuid);
 

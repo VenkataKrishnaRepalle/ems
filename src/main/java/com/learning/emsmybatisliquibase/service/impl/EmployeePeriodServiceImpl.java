@@ -306,7 +306,7 @@ public class EmployeePeriodServiceImpl implements EmployeePeriodService {
     }
 
     @Override
-    public EmployeeCycleAndTimelineResponseDto getByYear(UUID employeeId, Optional<Long> optionalYear) {
+    public EmployeeCycleAndTimelineResponseDto getByYear(UUID employeeId, Optional<Long> optionalYear, Optional<Boolean> includeYears) {
         var year = optionalYear.isEmpty() ? LocalDateTime.now().getYear() : optionalYear.get();
         var period = getPeriodByYear(year);
         var employeePeriod = employeePeriodDao.get(new RequestQuery(
@@ -315,7 +315,11 @@ public class EmployeePeriodServiceImpl implements EmployeePeriodService {
             throw new NotFoundException("EMPLOYEE_PERIOD_NOT_FOUND", "Employee period not found for employee: " + employeeId);
         }
 
-        return toEmployeeCycleAndTimelineResponseDtoMap(employeeId, employeePeriod.getFirst(), period);
+        var response = toEmployeeCycleAndTimelineResponseDtoMap(employeeId, employeePeriod.getFirst(), period);
+        if (includeYears.isPresent() && includeYears.get()) {
+            response.setYears(employeePeriodDao.getAllYearsByEmployeeId(employeeId).stream().map(Long::valueOf).toList());
+        }
+        return response;
     }
 
     @Override
@@ -341,7 +345,6 @@ public class EmployeePeriodServiceImpl implements EmployeePeriodService {
         int year = optionalYear.map(Long::intValue).orElseGet(() -> LocalDateTime.now().getYear());
         return new SuccessResponseDto();
     }
-
 
     private EmployeePeriod getById(UUID employeePeriodId) {
         var employeePeriod = employeePeriodDao.get(new RequestQuery(

@@ -1,8 +1,7 @@
 package com.learning.emsmybatisliquibase.service.impl;
 
 import com.learning.emsmybatisliquibase.dao.AttendanceDao;
-import com.learning.emsmybatisliquibase.dto.ApplyAttendanceDto;
-import com.learning.emsmybatisliquibase.dto.UpdateAttendanceDto;
+import com.learning.emsmybatisliquibase.dto.AttendanceDto;
 import com.learning.emsmybatisliquibase.dto.ViewEmployeeAttendanceDto;
 import com.learning.emsmybatisliquibase.entity.Attendance;
 import com.learning.emsmybatisliquibase.entity.enums.AttendanceStatus;
@@ -18,11 +17,9 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.UUID;
-import java.util.EnumMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.learning.emsmybatisliquibase.exception.errorcodes.AttendanceErrorCodes.*;
 import static com.learning.emsmybatisliquibase.exception.errorcodes.EmployeeErrorCodes.MANAGER_ACCESS_NOT_FOUND;
@@ -40,8 +37,8 @@ public class AttendanceServiceImpl implements AttendanceService {
     private static final String DATE_FORMAT = "MM-dd-yyyy";
 
     @Override
-    public List<Attendance> apply(UUID employeeUuid, List<ApplyAttendanceDto> attendanceDtos) {
-        var appliedAttendances = attendanceDao.getByEmployeeUuid(employeeUuid);
+    public List<Attendance> apply(UUID employeeUuid, List<AttendanceDto> attendanceDtos) {
+        var appliedAttendances = attendanceDao.getByEmployeeUuid(employeeUuid, null);
 
         for (var attendanceDto : attendanceDtos) {
             var formattedDate = new SimpleDateFormat(DATE_FORMAT).format(attendanceDto.getDate());
@@ -76,9 +73,22 @@ public class AttendanceServiceImpl implements AttendanceService {
     }
 
     @Override
-    public Attendance update(UUID employeeUuid, UUID attendanceUuid, UpdateAttendanceDto attendanceDto) {
+    public Attendance update(UUID employeeUuid, UUID attendanceUuid, AttendanceDto attendanceDto) {
         var attendance = getByUuid(employeeUuid, attendanceUuid);
+        return updateAttendance(attendanceDto, attendance);
+    }
 
+    @Override
+    public Attendance updateByManager(UUID managerUuid, UUID attendanceUuid, AttendanceDto attendanceDto) {
+        var attendance = get(attendanceUuid);
+        var employee = employeeService.getById(attendance.getEmployeeUuid());
+        if (!employee.getManagerUuid().equals(managerUuid)) {
+            throw new NotFoundException(MANAGER_ACCESS_NOT_FOUND.code(), "User is not a Manager");
+        }
+        return updateAttendance(attendanceDto, attendance);
+    }
+
+    private Attendance updateAttendance(AttendanceDto attendanceDto, Attendance attendance) {
         attendance.setWorkMode(attendanceDto.getWorkMode());
         attendance.setType(attendanceDto.getType());
         attendance.setStatus(attendanceDto.getStatus());
@@ -96,19 +106,30 @@ public class AttendanceServiceImpl implements AttendanceService {
 
     @Override
     public Attendance getByUuid(UUID employeeUuid, UUID attendanceUuid) {
-        var attendance = attendanceDao.getById(attendanceUuid);
-        if (attendance == null || !attendance.getEmployeeUuid().equals(employeeUuid)) {
+        var attendance = get(attendanceUuid);
+        if (!attendance.getEmployeeUuid().equals(employeeUuid)) {
             throw new InvalidInputException(ATTENDANCE_NOT_EXISTS.code(),
                     "Attendance not exists for employeeId: " + employeeUuid + " and attendanceId: " + attendanceUuid);
         }
         return attendance;
     }
 
+    private Attendance get(UUID id) {
+        var attendance = attendanceDao.getById(id);
+        if (attendance == null) {
+            throw new InvalidInputException(ATTENDANCE_NOT_EXISTS.code(), "Attendance not exists for attendanceId: " + id);
+        }
+        return attendance;
+    }
+
     @Override
-    public ViewEmployeeAttendanceDto getEmployeeAttendance(UUID employeeUuid) {
+    public ViewEmployeeAttendanceDto getEmployeeAttendance(UUID employeeUuid, Long year) {
+        if (year == null) {
+            year = (long) LocalDate.now().getYear();
+        }
         var employee = employeeService.getById(employeeUuid);
 
-        var attendances = attendanceDao.getByEmployeeUuid(employeeUuid);
+        var attendances = attendanceDao.getByEmployeeUuid(employeeUuid, year);
 
         Map<AttendanceStatus, List<Attendance>> attendanceStatusListMap = new EnumMap<>(AttendanceStatus.class);
 
@@ -120,10 +141,10 @@ public class AttendanceServiceImpl implements AttendanceService {
                 .employeeUuid(employee.getUuid())
                 .employeeFirstName(employee.getFirstName())
                 .employeeLastName(employee.getLastName())
-                .submittedAttendance(attendanceStatusListMap.get(AttendanceStatus.SUBMITTED))
-                .waitingForCancellationAttendance(attendanceStatusListMap
-                        .get(AttendanceStatus.WAITING_FOR_CANCELLATION))
-                .cancelledAttendance(attendanceStatusListMap.get(AttendanceStatus.CANCELLED))
+                .submitted(attendanceStatusListMap.get(AttendanceStatus.SUBMITTED))
+                .approved(attendanceStatusListMap
+                        .get(AttendanceStatus.APPROVED))
+                .cancelled(attendanceStatusListMap.get(AttendanceStatus.CANCELLED))
                 .build();
     }
 
@@ -134,25 +155,15 @@ public class AttendanceServiceImpl implements AttendanceService {
     }
 
     @Override
-    public List<ViewEmployeeAttendanceDto> getAllEmployeesAttendanceByManager(UUID managerUuid) {
-        if (!employeeService.isManager(managerUuid)) {
-            throw new NotFoundException(MANAGER_ACCESS_NOT_FOUND.code(), "User is not a Manager");
+    public List<ViewEmployeeAttendanceDto> getTeamAttendance(UUID employeeUuid, Long year) {
+        if (year == null) {
+            year = (long) LocalDate.now().getYear();
         }
-
-        return employeeService.getByManagerUuid(managerUuid)
-                .stream()
-                .map(employee -> getEmployeeAttendance(employee.getUuid()))
-                .toList();
-    }
-
-    @Override
-    public List<ViewEmployeeAttendanceDto> getFullTeamAttendance(UUID employeeUuid) {
-//        var fullTeam = employeeService.getFullTeam(employeeUuid);
-//        List<ViewEmployeeAttendanceDto> employeeAttendance = new ArrayList<>();
-//        for (var employee : fullTeam) {
-//            employeeAttendance.add(getEmployeeAttendance(employee.getUuid()));
-//        }
-//        return employeeAttendance;
-        return null;
+        var fullTeam = employeeService.getByManagerUuid(employeeUuid);
+        List<ViewEmployeeAttendanceDto> employeeAttendance = new ArrayList<>();
+        for (var employee : fullTeam) {
+            employeeAttendance.add(getEmployeeAttendance(employee.getUuid(), year));
+        }
+        return employeeAttendance;
     }
 }

@@ -45,7 +45,7 @@
         <sql>
             ALTER TABLE attendance
                 ADD CONSTRAINT status_check CHECK (status = 'SUBMITTED' or
-                                                   status = 'WAITING_FOR_CANCELLATION' or
+                                                   status = 'APPROVED' or
                                                    status = 'CANCELLED')
         </sql>
     </changeSet>

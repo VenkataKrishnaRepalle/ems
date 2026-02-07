@@ -20,9 +20,9 @@ public class ViewEmployeeAttendanceDto {
 
     private String employeeLastName;
 
-    private List<Attendance> submittedAttendance;
+    private List<Attendance> submitted;
 
-    private List<Attendance> waitingForCancellationAttendance;
+    private List<Attendance> approved;
 
-    private List<Attendance> cancelledAttendance;
+    private List<Attendance> cancelled;
 }

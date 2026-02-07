@@ -49,9 +49,10 @@ public class EmployeePeriodController {
 
     @GetMapping("getByYear/{employeeId}")
     public ResponseEntity<EmployeeCycleAndTimelineResponseDto> getByYear(@PathVariable UUID employeeId,
-                                                                         @RequestParam(name = "year", required = false) Optional<Long> year) {
+                                                                         @RequestParam(name = "year", required = false) Optional<Long> year,
+                                                                         @RequestParam(name = "includeYears", required = false) Optional<Boolean> includeYears) {
         log.info("Employee Controller:: getByYear is called");
-        return new ResponseEntity<>(employeePeriodService.getByYear(employeeId, year), HttpStatus.OK);
+        return new ResponseEntity<>(employeePeriodService.getByYear(employeeId, year, includeYears), HttpStatus.OK);
     }
 
     @GetMapping("getById/{employeePeriodId}")

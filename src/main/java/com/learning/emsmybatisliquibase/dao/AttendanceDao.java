@@ -13,7 +13,7 @@ public interface AttendanceDao {
 
     Attendance getById(@Param("uuid") UUID uuid);
 
-    List<Attendance> getByEmployeeUuid(@Param("employeeUuid") UUID uuid);
+    List<Attendance> getByEmployeeUuid(@Param("employeeUuid") UUID uuid, @Param("year") Long year);
 
     int delete(@Param("uuid") UUID uuid);
 }

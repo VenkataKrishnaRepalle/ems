@@ -291,7 +291,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
-    public List<EmployeeResponseDto> getByManagerUuid(UUID managerId) {
+    public List<EmployeeDetailsDto> getByManagerUuid(UUID managerId) {
         var employee = getById(managerId);
         if (employee.getIsManager().equals(Boolean.TRUE)) {
             return getAllByManagerUuid(managerId);
@@ -300,7 +300,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         }
     }
 
-    private List<EmployeeResponseDto> getAllByManagerUuid(UUID mangerUuid) {
+    private List<EmployeeDetailsDto> getAllByManagerUuid(UUID mangerUuid) {
         return employeeDao.getEmployeesByManager(mangerUuid);
     }
 
@@ -318,19 +318,11 @@ public class EmployeeServiceImpl implements EmployeeService {
         }
         HashMap<String, List<EmployeeResponseDto>> fullTeam = new HashMap<>();
 
-        List<EmployeeAndManagerDto> employees = new ArrayList<>();
-        var employeesByManager = getAllByManagerUuid(employeeId);
-        List<EmployeeResponseDto> myManagerReportees = new ArrayList<>();
-        List<EmployeeResponseDto> myReportees = new ArrayList<>();
-        for (var employee : employeesByManager) {
-            if (employee.getManagerUuid().equals(me.getManagerUuid())) {
-                myManagerReportees.add(employee);
-            } else if (me.getUuid().equals(employee.getManagerUuid())) {
-                myReportees.add(employee);
-            }
+        if(me.getManagerUuid() != null) {
+            fullTeam.put("myManagerReportees", employeeDao.getEmployeeFullDetailsByManager(me.getManagerUuid()));
+
         }
-        fullTeam.put("myManagerReportees", myManagerReportees);
-        fullTeam.put("myReportees", myReportees);
+        fullTeam.put("myReportees", employeeDao.getEmployeeFullDetailsByManager(employeeId));
         return fullTeam;
     }
 

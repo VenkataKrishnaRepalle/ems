@@ -156,7 +156,7 @@ class EmployeeControllerTest {
 
     @Test
     void testGetByManagerId() throws Exception {
-        when(employeeService.getByManagerUuid(any(UUID.class))).thenReturn(List.of(employeeResponseDto));
+        when(employeeService.getByManagerUuid(any(UUID.class))).thenReturn(List.of(new EmployeeDetailsDto()));
 
         mockMvc.perform(get("/api/employee/getByManagerId/{id}", employee.getManagerUuid())
                         .contentType(MediaType.APPLICATION_JSON)

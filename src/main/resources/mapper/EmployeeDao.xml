@@ -157,14 +157,35 @@
         e.uuid = #{employeeUuid}
     </select>
 
-    <select id="getEmployeesByManager" resultMap="employeeResponseDtoStructure">
+    <resultMap id="employeeDetailsDto" type="com.learning.emsmybatisliquibase.dto.EmployeeDetailsDto">
+        <id property="uuid" column="uuid" javaType="java.util.UUID" jdbcType="VARCHAR"
+            typeHandler="com.learning.emsmybatisliquibase.handler.UuidTypeHandler"/>
+        <result property="firstName" column="first_name"/>
+        <result property="lastName" column="last_name"/>
+        <result property="email" column="email"/>
+    </resultMap>
+
+
+    <select id="getEmployeesByManager" resultMap="employeeDetailsDto">
+        SELECT e.uuid,
+               e.first_name,
+               e.last_name,
+               e.email
+        from employee e
+                 JOIN profile p on e.uuid = p.employee_uuid
+        WHERE e.manager_uuid = #{managerUuid}
+          AND p.profile_status in ('ACTIVE', 'PENDING')
+    </select>
+
+    <select id="getEmployeeFullDetailsByManager" resultMap="employeeResponseDtoStructure">
         <include refid="getEmployeeResponse"/>
         e.manager_uuid = #{managerUuid}
     </select>
 
     <resultMap id="employeePaginationMap" type="com.learning.emsmybatisliquibase.dto.EmployeePaginationResponseDto">
         <result property="count" column="total_count"/>
-        <collection property="employees" ofType="com.learning.emsmybatisliquibase.entity.Employee" resultMap="employeeResult"/>
+        <collection property="employees" ofType="com.learning.emsmybatisliquibase.entity.Employee"
+                    resultMap="employeeResult"/>
     </resultMap>
 
     <select id="findAll" resultMap="employeePaginationMap">

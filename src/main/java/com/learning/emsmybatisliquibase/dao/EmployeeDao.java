@@ -37,7 +37,9 @@ public interface EmployeeDao {
 
     EmployeeResponseDto getEmployee(@Param("employeeUuid") UUID employeeUuid);
 
-    List<EmployeeResponseDto> getEmployeesByManager(@Param("managerUuid") UUID managerUuid);
+    List<EmployeeDetailsDto> getEmployeesByManager(@Param("managerUuid") UUID managerUuid);
+
+    List<EmployeeResponseDto> getEmployeeFullDetailsByManager(@Param("managerUuid") UUID managerUuid);
 
     EmployeePaginationResponseDto findAll(@Param("size") int size, @Param("offSet") int offSet,
                                           @Param("sortBy") String sortBy, @Param("sortOrder") String sortOrder,

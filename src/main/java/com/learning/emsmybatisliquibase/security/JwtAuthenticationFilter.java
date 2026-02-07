@@ -8,6 +8,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -49,8 +50,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
-                                    HttpServletResponse response,
-                                    FilterChain filterChain) throws ServletException, IOException {
+                                    @NonNull HttpServletResponse response,
+                                    @NonNull FilterChain filterChain) throws ServletException, IOException {
         if (request.getMethod().equals("OPTIONS")) {
             filterChain.doFilter(request, response);
             return;
@@ -102,7 +103,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private boolean isKeycloakToken(String token) {
-        String alg = getJwtHeaderValue(token, "alg");
+        String alg = getJwtHeaderValue(token);
         return StringUtils.hasText(alg) && alg.startsWith("RS");
     }
 
@@ -146,7 +147,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
     }
 
-    private String getJwtHeaderValue(String token, String field) {
+    private String getJwtHeaderValue(String token) {
         try {
             String[] parts = token.split("\\.");
             if (parts.length < 2) {
@@ -155,7 +156,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             byte[] decoded = Base64.getUrlDecoder().decode(parts[0]);
             String json = new String(decoded, StandardCharsets.UTF_8);
             Map<String, Object> values = OBJECT_MAPPER.readValue(json, new TypeReference<>() {});
-            Object value = values.get(field);
+            Object value = values.get("alg");
             return value == null ? null : String.valueOf(value);
         } catch (Exception ignored) {
             return null;

@@ -88,11 +88,28 @@ Set the following environment variables:
 Then call the API with a Keycloak access token:
 
 ```bash
-curl -X POST http://localhost:8083/api/login-keycloak \
+curl -X POST http://localhost:8083/api/keycloak/login-keycloak \
   -H "Authorization: Bearer <KEYCLOAK_ACCESS_TOKEN>"
 ```
 
 You can also call secured `/api/**` endpoints directly with the Keycloak token (no cookie exchange), as long as `KEYCLOAK_ISSUER_URI` matches the token `iss` claim.
+
+## Keycloak Admin Client (User Provisioning)
+
+This app can call Keycloak Admin REST API to create users (e.g. `POST /admin/realms/{realm}/users`) using a **client-credentials** token.
+
+Required env vars:
+
+- `KEYCLOAK_BASE_URL=http://<keycloak-host>:<port>`
+- `KEYCLOAK_REALM=<realm>`
+- `KEYCLOAK_ADMIN_CLIENT_ID=<confidential-client-id>`
+- `KEYCLOAK_ADMIN_CLIENT_SECRET=<client-secret>`
+
+Keycloak setup (to avoid `403 Forbidden` from the Admin API):
+
+- Create/configure the admin client as **confidential** with **Service accounts enabled**
+- In `Clients -> <admin-client> -> Service accounts roles`, assign roles from `realm-management`:
+  - `manage-users` (and typically `view-users`)
 
 ## Run Keycloak via Docker Compose
 

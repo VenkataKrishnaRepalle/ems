@@ -2,6 +2,7 @@ package com.learning.emsmybatisliquibase.service.impl;
 
 import com.learning.emsmybatisliquibase.dao.*;
 import com.learning.emsmybatisliquibase.dto.*;
+import com.learning.emsmybatisliquibase.dto.pagination.KeycloakCredentialsDto;
 import com.learning.emsmybatisliquibase.dto.pagination.RequestQuery;
 import com.learning.emsmybatisliquibase.entity.*;
 import com.learning.emsmybatisliquibase.entity.enums.JobTitleType;
@@ -59,6 +60,8 @@ public class EmployeeServiceImpl implements EmployeeService {
     private final EmployeeRoleService employeeRoleService;
 
     private final NotificationService notificationService;
+
+    private final KeycloakService keycloakService;
 
     @Override
     @Transactional
@@ -148,6 +151,23 @@ public class EmployeeServiceImpl implements EmployeeService {
             var link = "view/" + employee.getUuid();
             notificationService.send(createNotification(employee.getManagerUuid(), managerTitle, managerMessage, link));
         }
+
+        var crateUserDto = KeycloakCreateUserDto.builder()
+                .id(employee.getUuid().toString())
+                .username(employee.getEmail())
+                .email(employee.getEmail())
+                .firstName(employee.getFirstName())
+                .lastName(employee.getLastName())
+                .enabled(true)
+                .emailVerified(true)
+                .credentials(List.of(KeycloakCredentialsDto.builder()
+                        .type("password")
+                        .value(password)
+                        .temporary(false)
+                        .build()))
+                .build();
+
+        keycloakService.create(crateUserDto);
 
         return response;
     }
@@ -350,7 +370,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         return PaginatedResponse.<Employee>builder()
                 .data(totalCount > 0 ? employees.getEmployees() : Collections.emptyList())
                 .totalItems(totalCount > 0 ? totalCount : 0)
-                .totalPages(totalCount > 0 ? totalCount/size : 0)
+                .totalPages(totalCount > 0 ? totalCount / size : 0)
                 .currentPage(page)
                 .build();
     }

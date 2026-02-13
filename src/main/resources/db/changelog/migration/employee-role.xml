@@ -6,7 +6,7 @@
             <column name="employee_uuid" type="${uuid_type}">
                 <constraints nullable="false"/>
             </column>
-            <column name="role" type="varchar">
+            <column name="role" type="INTEGER">
                 <constraints nullable="false"/>
             </column>
         </createTable>
@@ -14,9 +14,36 @@
                                  constraintName="employee_role_fk" deferrable="false"
                                  initiallyDeferred="false" onUpdate="CASCADE" onDelete="CASCADE"
                                  referencedTableName="employee" referencedColumnNames="uuid"/>
-        <sql>
-            ALTER TABLE employee_role
-                ADD CONSTRAINT employee_role_check CHECK ( role = 'ADMIN' or role = 'EMPLOYEE')
-        </sql>
+
+        <createTable tableName="role">
+            <column name="id" type="INTEGER">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="role_id_pk"/>
+            </column>
+            <column name="name" type="VARCHAR">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint baseTableName="employee_role" baseColumnNames="role"
+                                 constraintName="employee_role_role_fk" deferrable="false"
+                                 initiallyDeferred="false" onUpdate="CASCADE" onDelete="CASCADE"
+                                 referencedTableName="role" referencedColumnNames="id"/>
+
+        <insert tableName="role">
+            <column name="id" value="1"/>
+            <column name="name" value="ADMIN"/>
+        </insert>
+        <insert tableName="role">
+            <column name="id" value="2"/>
+            <column name="name" value="EMPLOYEE"/>
+        </insert>
+        <insert tableName="role">
+            <column name="id" value="3"/>
+            <column name="name" value="MANAGER"/>
+        </insert>
+        <insert tableName="role">
+            <column name="id" value="4"/>
+            <column name="name" value="HR"/>
+        </insert>
     </changeSet>
 </databaseChangeLog>

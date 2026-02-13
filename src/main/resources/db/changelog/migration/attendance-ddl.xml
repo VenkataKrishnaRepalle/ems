@@ -9,13 +9,13 @@
             <column name="employee_uuid" type="${uuid_type}">
                 <constraints nullable="false"/>
             </column>
-            <column name="work_mode" type="VARCHAR">
+            <column name="work_mode" type="INTEGER">
                 <constraints nullable="false"/>
             </column>
-            <column name="type" type="VARCHAR">
+            <column name="type" type="INTEGER">
                 <constraints nullable="false"/>
             </column>
-            <column name="status" type="VARCHAR">
+            <column name="status" type="INTEGER">
                 <constraints nullable="false"/>
             </column>
             <column name="date" type="date">
@@ -28,25 +28,85 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
+
+        <createTable tableName="work_mode">
+            <column name="id" type="INTEGER">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="work_mode_id_pk"/>
+            </column>
+            <column name="name" type="VARCHAR">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="attendance_type">
+            <column name="id" type="INTEGER">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="attendance_type_id_pk"/>
+            </column>
+            <column name="name" type="VARCHAR">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="attendance_status">
+            <column name="id" type="INTEGER">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="attendance_status_id_pk"/>
+            </column>
+            <column name="name" type="VARCHAR">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
         <addForeignKeyConstraint baseTableName="attendance" baseColumnNames="employee_uuid"
                                  constraintName="employee_uuid_fk" deferrable="false"
                                  initiallyDeferred="false" onDelete="CASCADE" onUpdate="CASCADE"
                                  referencedTableName="employee" referencedColumnNames="uuid"/>
-        <sql>
-            ALTER TABLE attendance
-                ADD CONSTRAINT work_mode_check CHECK ( work_mode = 'WORK_FROM_HOME' or
-                                                       work_mode = 'WORK_FROM_OFFICE')
-        </sql>
-        <sql>
-            ALTER TABLE attendance
-                ADD CONSTRAINT type_check CHECK ( type = 'HALF_DAY' or
-                                                  type = 'FULL_DAY')
-        </sql>
-        <sql>
-            ALTER TABLE attendance
-                ADD CONSTRAINT status_check CHECK (status = 'SUBMITTED' or
-                                                   status = 'APPROVED' or
-                                                   status = 'CANCELLED')
-        </sql>
+
+        <addForeignKeyConstraint baseTableName="attendance" baseColumnNames="work_mode"
+                                 constraintName="work_mode_fk" deferrable="false"
+                                 initiallyDeferred="false" onDelete="CASCADE" onUpdate="CASCADE"
+                                 referencedTableName="work_mode" referencedColumnNames="id"/>
+
+        <addForeignKeyConstraint baseTableName="attendance" baseColumnNames="type"
+                                 constraintName="type_fk" deferrable="false"
+                                 initiallyDeferred="false" onDelete="CASCADE" onUpdate="CASCADE"
+                                 referencedTableName="attendance_type" referencedColumnNames="id"/>
+
+        <addForeignKeyConstraint baseTableName="attendance" baseColumnNames="status"
+                                 constraintName="status_fk" deferrable="false"
+                                 initiallyDeferred="false" onDelete="CASCADE" onUpdate="CASCADE"
+                                 referencedTableName="attendance_status" referencedColumnNames="id"/>
+
+        <insert tableName="work_mode">
+            <column name="id" value="1"/>
+            <column name="name" value="WORK_FROM_HOME"/>
+        </insert>
+
+        <insert tableName="work_mode">
+            <column name="id" value="2"/>
+            <column name="name" value="WORK_FROM_OFFICE"/>
+        </insert>
+
+        <insert tableName="attendance_type">
+            <column name="id" value="1"/>
+            <column name="name" value="HALF_DAY"/>
+        </insert>
+
+        <insert tableName="attendance_type">
+            <column name="id" value="2"/>
+            <column name="name" value="FULL_DAY"/>
+        </insert>
+
+        <insert tableName="attendance_status">
+            <column name="id" value="1"/>
+            <column name="name" value="SUBMITTED"/>
+        </insert>
+        <insert tableName="attendance_status">
+            <column name="id" value="2"/>
+            <column name="name" value="APPROVED"/>
+        </insert>
+        <insert tableName="attendance_status">
+            <column name="id" value="3"/>
+            <column name="name" value="CANCELLED"/>
+        </insert>
     </changeSet>
 </databaseChangeLog>

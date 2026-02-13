@@ -12,7 +12,7 @@
             <column name="target_employee_uuid" type="${uuid_type}">
                 <constraints nullable="false"/>
             </column>
-            <column name="type" type="VARCHAR">
+            <column name="type" type="INTEGER">
                 <constraints nullable="false"/>
             </column>
             <column name="look_back" type="VARCHAR"/>
@@ -34,10 +34,35 @@
                                  deferrable="false" onDelete="CASCADE" onUpdate="CASCADE"
                                  referencedTableName="employee" referencedColumnNames="uuid"/>
 
-        <sql>ALTER TABLE feedback
-            ADD CONSTRAINT type_check check (type = 'DRAFT' or
-                                             type = 'SEND' or
-                                             type = 'REQUEST' or
-                                             type = 'RESPOND')</sql>
+        <createTable tableName="feedback_type">
+            <column name="id" type="INTEGER">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="feedback_type_pk"/>
+            </column>
+            <column name="name" type="VARCHAR">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="feedback" baseColumnNames="type" constraintName="feedback_type_id_fk"
+                                 deferrable="false" initiallyDeferred="false"
+                                 onUpdate="CASCADE" onDelete="CASCADE"
+                                 referencedTableName="feedback_type"
+                                 referencedColumnNames="id"/>
+        <insert tableName="feedback_type">
+            <column name="id" value="1"/>
+            <column name="name" value="DRAFT"/>
+        </insert>
+        <insert tableName="feedback_type">
+            <column name="id" value="2"/>
+            <column name="name" value="SEND"/>
+        </insert>
+        <insert tableName="feedback_type">
+            <column name="id" value="3"/>
+            <column name="name" value="REQUEST"/>
+        </insert>
+        <insert tableName="feedback_type">
+            <column name="id" value="4"/>
+            <column name="name" value="RESPOND"/>
+        </insert>
+
     </changeSet>
 </databaseChangeLog>

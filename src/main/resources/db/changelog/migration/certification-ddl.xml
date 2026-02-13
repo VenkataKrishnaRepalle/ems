@@ -27,7 +27,7 @@
             <column name="skill_sets" type="VARCHAR">
                 <constraints nullable="false"/>
             </column>
-            <column name="level" type="VARCHAR">
+            <column name="level" type="INTEGER">
                 <constraints nullable="false"/>
             </column>
             <column name="certified_date" type="DATE">
@@ -44,6 +44,15 @@
             </column>
         </createTable>
 
+        <createTable tableName="certification_level">
+            <column name="id" type="INTEGER">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="certification_level_id_pk"/>
+            </column>
+            <column name="name" type="VARCHAR">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
         <addForeignKeyConstraint baseTableName="certification" baseColumnNames="certification_category_uuid"
                                  constraintName="certification_category_fk" initiallyDeferred="false"
                                  deferrable="false" onUpdate="CASCADE" onDelete="CASCADE"
@@ -54,11 +63,22 @@
                                  deferrable="false" onDelete="CASCADE" onUpdate="CASCADE"
                                  referencedTableName="employee" referencedColumnNames="uuid"/>
 
-        <sql>
-            ALTER TABLE certification
-                ADD CONSTRAINT level_check CHECK ( level = 'BEGINNER' or
-                                                   level = 'INTERMEDIATE' or
-                                                   level = 'EXPERT')
-        </sql>
+        <addForeignKeyConstraint baseTableName="certification" baseColumnNames="level"
+                                 constraintName="certification_level_fk" initiallyDeferred="false"
+                                 deferrable="false" onDelete="CASCADE" onUpdate="CASCADE"
+                                 referencedTableName="certification_level" referencedColumnNames="id"/>
+
+        <insert tableName="certification_level">
+            <column name="id" value="1"/>
+            <column name="name" value="BEGINNER"/>
+        </insert>
+        <insert tableName="certification_level">
+            <column name="id" value="2"/>
+            <column name="name" value="INTERMEDIATE"/>
+        </insert>
+        <insert tableName="certification_level">
+            <column name="id" value="3"/>
+            <column name="name" value="EXPERT"/>
+        </insert>
     </changeSet>
 </databaseChangeLog>

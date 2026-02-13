@@ -17,6 +17,16 @@ spring:
       resourceserver:
         jwt:
           issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8080/realms/ems}
+      client:
+        registration:
+          keycloak:
+            client-id: ${KEYCLOAK_ADMIN_CLIENT_ID}
+            client-secret: ${KEYCLOAK_ADMIN_CLIENT_SECRET}
+            scope: openid
+            authorization-grant-type: authorization_code
+        provider:
+          keycloak:
+            issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8080/realms/ems}
   application:
     name: ems-mybatis-liquibase
   datasource:
@@ -100,6 +110,10 @@ springdoc:
   swagger-ui:
     operations-sorter: alpha
     persist-authorization: true
+    oauth2:
+      client-id: ${KEYCLOAK_ADMIN_CLIENT_ID}
+      use-pkce-with-authorization-code-grant: true
+      oauth2-redirect-url: http://localhost:8082/swagger-ui/oauth2-redirect.html
 
 management:
   endpoints:

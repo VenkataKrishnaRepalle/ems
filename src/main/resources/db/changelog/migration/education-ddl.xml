@@ -9,7 +9,7 @@
             <column name="employee_uuid" type="${uuid_type}">
                 <constraints nullable="false"/>
             </column>
-            <column name="degree" type="VARCHAR">
+            <column name="degree" type="INTEGER">
                 <constraints nullable="false"/>
             </column>
             <column name="school_name" type="VARCHAR">
@@ -30,20 +30,53 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
+
+        <createTable tableName="education_degrees">
+            <column name="id" type="INTEGER">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="education_degress_pk"/>
+            </column>
+            <column name="name" type="VARCHAR">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
         <addForeignKeyConstraint baseTableName="education" baseColumnNames="employee_uuid"
                                  constraintName="employee_uuid_fk" deferrable="false"
                                  initiallyDeferred="false" onDelete="CASCADE" onUpdate="CASCADE"
                                  referencedTableName="employee" referencedColumnNames="uuid"/>
 
-        <sql>
-            ALTER TABLE education
-                ADD CONSTRAINT degree_type_check CHECK ( degree = 'SSC_10TH' or
-                                                         degree = 'INTERMEDIATE' or
-                                                         degree = 'DIPLOMA' or
-                                                         degree = 'BTECH' or
-                                                         degree = 'MTECH' or
-                                                         degree = 'BCA' or
-                                                         degree = 'BSC')
-        </sql>
+        <addForeignKeyConstraint baseTableName="education" baseColumnNames="degree"
+                                 constraintName="education_degree_fk" deferrable="false"
+                                 initiallyDeferred="false" onDelete="CASCADE" onUpdate="CASCADE"
+                                 referencedTableName="education_degrees" referencedColumnNames="id"/>
+
+        <insert tableName="education_degrees">
+            <column name="id" value="1"/>
+            <column name="name" value="SSC_10TH"/>
+        </insert>
+        <insert tableName="education_degrees">
+            <column name="id" value="2"/>
+            <column name="name" value="INTERMEDIATE"/>
+        </insert>
+        <insert tableName="education_degrees">
+            <column name="id" value="3"/>
+            <column name="name" value="DIPLOMA"/>
+        </insert>
+        <insert tableName="education_degrees">
+            <column name="id" value="4"/>
+            <column name="name" value="BTECH"/>
+        </insert>
+        <insert tableName="education_degrees">
+            <column name="id" value="5"/>
+            <column name="name" value="MTECH"/>
+        </insert>
+        <insert tableName="education_degrees">
+            <column name="id" value="6"/>
+            <column name="name" value="BCA"/>
+        </insert>
+        <insert tableName="education_degrees">
+            <column name="id" value="7"/>
+            <column name="name" value="BSC"/>
+        </insert>
+
     </changeSet>
 </databaseChangeLog>

@@ -139,7 +139,7 @@ public class NotificationServiceImpl implements NotificationService {
         List<Map<String, Object>> counts = notificationDao.getCount(employeeUuid);
         return counts.stream()
                 .collect(Collectors.toMap(
-                        m -> (String) m.get("status"),
+                        m -> getStatus((Integer) m.get("status")),
                         m -> (Long) m.get("count")
                 ));
     }
@@ -150,5 +150,9 @@ public class NotificationServiceImpl implements NotificationService {
         } else {
             return Notification.Status.READ;
         }
+    }
+
+    private String getStatus(int value) {
+        return Notification.Status.values()[value - 1].toString();
     }
 }

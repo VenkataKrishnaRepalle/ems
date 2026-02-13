@@ -18,7 +18,7 @@
             <column name="end_time" type="timestamp">
                 <constraints nullable="false"/>
             </column>
-            <column name="status" type="VARCHAR">
+            <column name="status" type="INTEGER">
                 <constraints nullable="false"/>
             </column>
             <column name="created_by" type="${uuid_type}">
@@ -31,16 +31,44 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
+        <createTable tableName="period_status">
+            <column name="id" type="INTEGER">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="period_status_id_pk"/>
+            </column>
+            <column name="name" type="VARCHAR">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
 
-        <sql>
-            ALTER TABLE period
-                ADD CONSTRAINT status_check CHECK ( status = 'DRAFT' or
-                                                    status = 'INACTIVE' or
-                                                    status = 'SCHEDULED' or
-                                                    status = 'STARTED' or
-                                                    status = 'FAILED' or
-                                                    status = 'COMPLETED')
-        </sql>
+        <addForeignKeyConstraint baseTableName="period" baseColumnNames="status"
+                                 initiallyDeferred="false" deferrable="false"
+                                 onUpdate="CASCADE" onDelete="CASCADE" constraintName="period_status_id_fk"
+                                 referencedTableName="period_status" referencedColumnNames="id"/>
+
+        <insert tableName="period_status">
+            <column name="id" value="1"/>
+            <column name="name" value="DRAFT"/>
+        </insert>
+        <insert tableName="period_status">
+            <column name="id" value="2"/>
+            <column name="name" value="INACTIVE"/>
+        </insert>
+        <insert tableName="period_status">
+            <column name="id" value="3"/>
+            <column name="name" value="SCHEDULED"/>
+        </insert>
+        <insert tableName="period_status">
+            <column name="id" value="4"/>
+            <column name="name" value="STARTED"/>
+        </insert>
+        <insert tableName="period_status">
+            <column name="id" value="5"/>
+            <column name="name" value="FAILED"/>
+        </insert>
+        <insert tableName="period_status">
+            <column name="id" value="6"/>
+            <column name="name" value="COMPLETED"/>
+        </insert>
     </changeSet>
 
     <changeSet id="2" author="rvenkata">
@@ -54,7 +82,7 @@
             <column name="period_uuid" type="${uuid_type}">
                 <constraints nullable="false"/>
             </column>
-            <column name="status" type="VARCHAR">
+            <column name="status" type="INTEGER">
                 <constraints nullable="false"/>
             </column>
             <column name="created_time" type="TIMESTAMP">
@@ -64,15 +92,6 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
-        <sql>
-            ALTER TABLE employee_period
-                ADD CONSTRAINT status_check CHECK ( status = 'DRAFT' or
-                                                    status = 'INACTIVE' or
-                                                    status = 'SCHEDULED' or
-                                                    status = 'STARTED' or
-                                                    status = 'FAILED' or
-                                                    status = 'COMPLETED')
-        </sql>
 
         <addForeignKeyConstraint baseTableName="employee_period" baseColumnNames="employee_uuid"
                                  constraintName="employee_uuid_fk" deferrable="false"
@@ -83,6 +102,11 @@
                                  constraintName="period_uuid_fk" deferrable="false"
                                  initiallyDeferred="false" onUpdate="CASCADE" onDelete="CASCADE"
                                  referencedTableName="period" referencedColumnNames="uuid"/>
+
+        <addForeignKeyConstraint baseTableName="employee_period" baseColumnNames="status"
+                                 initiallyDeferred="false" deferrable="false"
+                                 onUpdate="CASCADE" onDelete="CASCADE" constraintName="period_status_id_fk"
+                                 referencedTableName="period_status" referencedColumnNames="id"/>
     </changeSet>
 
     <changeSet id="3" author="rvenkata">
@@ -93,7 +117,7 @@
             <column name="employee_period_uuid" type="${uuid_type}">
                 <constraints nullable="false"/>
             </column>
-            <column name="type" type="VARCHAR">
+            <column name="type" type="INTEGER">
                 <constraints nullable="false"/>
             </column>
             <column name="start_time" type="TIMESTAMP">
@@ -108,10 +132,10 @@
             <column name="end_time" type="TIMESTAMP">
                 <constraints nullable="false"/>
             </column>
-            <column name="status" type="VARCHAR">
+            <column name="status" type="INTEGER">
                 <constraints nullable="false"/>
             </column>
-            <column name="summary_status" type="VARCHAR">
+            <column name="summary_status" type="INTEGER">
                 <constraints nullable="false"/>
             </column>
             <column name="created_time" type="TIMESTAMP">
@@ -122,38 +146,119 @@
             </column>
         </createTable>
 
+        <createTable tableName="review_type">
+            <column name="id" type="INTEGER">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="review_type_id_pk"/>
+            </column>
+            <column name="name" type="VARCHAR">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
         <addForeignKeyConstraint baseTableName="review_timeline" baseColumnNames="employee_period_uuid"
                                  constraintName="employee_period_uuid_fk" deferrable="false"
                                  initiallyDeferred="false" onDelete="CASCADE" onUpdate="CASCADE"
                                  referencedTableName="employee_period" referencedColumnNames="uuid"/>
 
-        <sql>
-            ALTER TABLE review_timeline
-                ADD CONSTRAINT type_check CHECK ( type = 'Q1' or
-                                                  type = 'Q2' or
-                                                  type = 'Q3' or
-                                                  type = 'Q4')
-        </sql>
+        <addForeignKeyConstraint baseTableName="review_timeline" baseColumnNames="type"
+                                 constraintName="review_type_id_fk" deferrable="false"
+                                 initiallyDeferred="false" onDelete="CASCADE" onUpdate="CASCADE"
+                                 referencedTableName="review_type" referencedColumnNames="id"/>
 
-        <sql>
-            ALTER TABLE review_timeline
-                ADD CONSTRAINT status_check CHECK ( status = 'NOT_STARTED' or
-                                                    status = 'SCHEDULED' or
-                                                    status = 'STARTED' or
-                                                    status = 'OVERDUE' or
-                                                    status = 'LOCKED' or
-                                                    status = 'COMPLETED')
-        </sql>
+        <insert tableName="review_type">
+            <column name="id" value="1"/>
+            <column name="name" value="Q1"/>
+        </insert>
+        <insert tableName="review_type">
+            <column name="id" value="2"/>
+            <column name="name" value="Q2"/>
+        </insert>
+        <insert tableName="review_type">
+            <column name="id" value="3"/>
+            <column name="name" value="Q3"/>
+        </insert>
+        <insert tableName="review_type">
+            <column name="id" value="4"/>
+            <column name="name" value="Q4"/>
+        </insert>
 
-        <sql>
-            ALTER TABLE review_timeline
-                ADD CONSTRAINT summary_status_check CHECK ( summary_status = 'DRAFT' or
-                                                            summary_status = 'WAITING_FOR_APPROVAL' or
-                                                            summary_status = 'DECLINED' or
-                                                            summary_status = 'APPROVED' or
-                                                            summary_status = 'NOT_SUBMITTED' or
-                                                            summary_status = 'COMPLETED')
-        </sql>
+        <createTable tableName="review_timeline_status">
+            <column name="id" type="INTEGER">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="review_timeline_status_id_pk"/>
+            </column>
+            <column name="name" type="VARCHAR">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint baseTableName="review_timeline" baseColumnNames="status"
+                                 constraintName="review_timeline_status_id_fk" deferrable="false"
+                                 initiallyDeferred="false" onDelete="CASCADE" onUpdate="CASCADE"
+                                 referencedTableName="review_timeline_status" referencedColumnNames="id"/>
+
+        <insert tableName="review_timeline_status">
+            <column name="id" value="1"/>
+            <column name="name" value="NOT_STARTED"/>
+        </insert>
+        <insert tableName="review_timeline_status">
+            <column name="id" value="2"/>
+            <column name="name" value="SCHEDULED"/>
+        </insert>
+        <insert tableName="review_timeline_status">
+            <column name="id" value="3"/>
+            <column name="name" value="STARTED"/>
+        </insert>
+        <insert tableName="review_timeline_status">
+            <column name="id" value="4"/>
+            <column name="name" value="OVERDUE"/>
+        </insert>
+        <insert tableName="review_timeline_status">
+            <column name="id" value="5"/>
+            <column name="name" value="LOCKED"/>
+        </insert>
+        <insert tableName="review_timeline_status">
+            <column name="id" value="6"/>
+            <column name="name" value="COMPLETED"/>
+        </insert>
+
+        <createTable tableName="review_status">
+            <column name="id" type="INTEGER">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="review_status_id_pk"/>
+            </column>
+            <column name="name" type="VARCHAR">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint baseTableName="review_timeline" baseColumnNames="summary_status"
+                                 constraintName="review_timeline_summary_status_id_fk" deferrable="false"
+                                 initiallyDeferred="false" onDelete="CASCADE" onUpdate="CASCADE"
+                                 referencedTableName="review_status" referencedColumnNames="id"/>
+
+        <insert tableName="review_status">
+            <column name="id" value="1"/>
+            <column name="name" value="NOT_SUBMITTED"/>
+        </insert>
+        <insert tableName="review_status">
+            <column name="id" value="2"/>
+            <column name="name" value="DRAFT"/>
+        </insert>
+        <insert tableName="review_status">
+            <column name="id" value="3"/>
+            <column name="name" value="WAITING_FOR_APPROVAL"/>
+        </insert>
+        <insert tableName="review_status">
+            <column name="id" value="4"/>
+            <column name="name" value="APPROVED"/>
+        </insert>
+        <insert tableName="review_status">
+            <column name="id" value="5"/>
+            <column name="name" value="DECLINED"/>
+        </insert>
+        <insert tableName="review_status">
+            <column name="id" value="6"/>
+            <column name="name" value="COMPLETED"/>
+        </insert>
     </changeSet>
 
     <changeSet id="4" author="rvenkata">
@@ -164,7 +269,7 @@
             <column name="review_timeline_uuid" type="${uuid_type}">
                 <constraints nullable="false"/>
             </column>
-            <column name="type" type="VARCHAR">
+            <column name="type" type="INTEGER">
                 <constraints nullable="false"/>
             </column>
             <column name="what_went_well" type="VARCHAR">
@@ -191,10 +296,10 @@
             <column name="manager_overall_comments" type="VARCHAR">
                 <constraints nullable="true"/>
             </column>
-            <column name="rating" type="VARCHAR">
+            <column name="rating" type="INTEGER">
                 <constraints nullable="true"/>
             </column>
-            <column name="status" type="VARCHAR">
+            <column name="status" type="INTEGER">
                 <constraints nullable="false"/>
             </column>
             <column name="created_time" type="TIMESTAMP">
@@ -209,25 +314,50 @@
                                  constraintName="review_timeline_uuid_fk" initiallyDeferred="false"
                                  deferrable="false" onUpdate="CASCADE" onDelete="CASCADE"
                                  referencedTableName="review_timeline" referencedColumnNames="uuid"/>
+        <addForeignKeyConstraint baseTableName="review" baseColumnNames="status"
+                                 constraintName="review_status_id_fk" deferrable="false"
+                                 initiallyDeferred="false" onDelete="CASCADE" onUpdate="CASCADE"
+                                 referencedTableName="review_status" referencedColumnNames="id"/>
+        <addForeignKeyConstraint baseTableName="review" baseColumnNames="type"
+                                 constraintName="review_type_id_fk" deferrable="false"
+                                 initiallyDeferred="false" onDelete="CASCADE" onUpdate="CASCADE"
+                                 referencedTableName="review_type" referencedColumnNames="id"/>
 
-        <sql>
-            ALTER TABLE review
-                ADD CONSTRAINT rating_check CHECK ( rating = 'NEW_TO_BUSINESS' or
-                                                    rating = 'BELOW_EXPECTED' or
-                                                    rating = 'EXPECTED' or
-                                                    rating = 'BROADLY_IN_LINE' or
-                                                    rating = 'GREAT' or
-                                                    rating = 'OUTSTANDING')
-        </sql>
-
-        <sql>
-            ALTER TABLE review
-                ADD CONSTRAINT status_check CHECK ( status = 'DRAFT' or
-                                                    status = 'WAITING_FOR_APPROVAL' or
-                                                    status = 'DECLINED' or
-                                                    status = 'APPROVED' or
-                                                    status = 'NOT_SUBMITTED' or
-                                                    status = 'COMPLETED')
-        </sql>
+        <createTable tableName="review_rating">
+            <column name="id" type="INTEGER">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="review_rating_pk"/>
+            </column>
+            <column name="name" type="VARCHAR">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="review" baseColumnNames="rating"
+                                 constraintName="review_rating_id_fk" deferrable="false"
+                                 initiallyDeferred="false" onDelete="CASCADE" onUpdate="CASCADE"
+                                 referencedTableName="review_rating" referencedColumnNames="id"/>
+        <insert tableName="review_rating">
+            <column name="id" value="1"/>
+            <column name="name" value="NEW_TO_BUSINESS"/>
+        </insert>
+        <insert tableName="review_rating">
+            <column name="id" value="2"/>
+            <column name="name" value="BELOW_EXPECTED"/>
+        </insert>
+        <insert tableName="review_rating">
+            <column name="id" value="3"/>
+            <column name="name" value="EXPECTED"/>
+        </insert>
+        <insert tableName="review_rating">
+            <column name="id" value="4"/>
+            <column name="name" value="BROADLY_IN_LINE"/>
+        </insert>
+        <insert tableName="review_rating">
+            <column name="id" value="5"/>
+            <column name="name" value="GREAT"/>
+        </insert>
+        <insert tableName="review_rating">
+            <column name="id" value="6"/>
+            <column name="name" value="OUTSTANDING"/>
+        </insert>
     </changeSet>
 </databaseChangeLog>

@@ -12,10 +12,10 @@
             <column name="date" type="DATE">
                 <constraints nullable="false"/>
             </column>
-            <column name="type" type="VARCHAR">
+            <column name="type" type="INTEGER">
                 <constraints nullable="false"/>
             </column>
-            <column name="status" type="VARCHAR">
+            <column name="status" type="INTEGER">
                 <constraints nullable="false"/>
             </column>
             <column name="reason" type="VARCHAR">
@@ -32,20 +32,42 @@
             </column>
         </createTable>
 
+        <createTable tableName="leave_status">
+            <column name="id" type="INTEGER">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="leave_status_id_pk"/>
+            </column>
+            <column name="name" type="VARCHAR">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <insert tableName="leave_status">
+            <column name="id" value="1"/>
+            <column name="name" value="WAITING_FOR_APPROVAL"/>
+        </insert>
+        <insert tableName="leave_status">
+            <column name="id" value="2"/>
+            <column name="name" value="APPROVED"/>
+        </insert>
+        <insert tableName="leave_status">
+            <column name="id" value="3"/>
+            <column name="name" value="DECLINED"/>
+        </insert>
+        <insert tableName="leave_status">
+            <column name="id" value="4"/>
+            <column name="name" value="CANCELLED"/>
+        </insert>
+
         <addForeignKeyConstraint baseTableName="leave" baseColumnNames="employee_uuid"
                                  constraintName="employee_uuid_fk" initiallyDeferred="false"
                                  deferrable="false" onUpdate="CASCADE" onDelete="CASCADE"
                                  referencedTableName="employee" referencedColumnNames="uuid"/>
-        <sql>
-            ALTER TABLE leave
-                ADD CONSTRAINT type_check CHECK ( type = 'FULL_DAY' or type = 'HALF_DAY' )
-        </sql>
-        <sql>
-            ALTER TABLE leave
-                ADD CONSTRAINT status_check CHECK ( status = 'WAITING_FOR_APPROVAL' or
-                                                    status = 'CANCELLED' or
-                                                    status = 'DECLINED' or
-                                                    status = 'APPROVED')
-        </sql>
+        <addForeignKeyConstraint baseTableName="leave" baseColumnNames="status"
+                                 constraintName="leave_status_fk" initiallyDeferred="false"
+                                 deferrable="false" onUpdate="CASCADE" onDelete="CASCADE"
+                                 referencedTableName="leave_status" referencedColumnNames="id"/>
+        <addForeignKeyConstraint baseTableName="leave" baseColumnNames="type"
+                                 constraintName="leave_type_fk" initiallyDeferred="false"
+                                 deferrable="false" onUpdate="CASCADE" onDelete="CASCADE"
+                                 referencedTableName="attendance_type" referencedColumnNames="id"/>
     </changeSet>
 </databaseChangeLog>

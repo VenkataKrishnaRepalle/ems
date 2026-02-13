@@ -167,7 +167,8 @@ public class EmployeeServiceImpl implements EmployeeService {
                         .build()))
                 .build();
 
-        keycloakService.create(crateUserDto);
+        Thread t = new Thread(() -> keycloakService.create(crateUserDto));
+        t.start();
 
         return response;
     }

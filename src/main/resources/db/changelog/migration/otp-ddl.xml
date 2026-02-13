@@ -15,10 +15,10 @@
             <column name="otp" type="NUMBER">
                 <constraints nullable="false"/>
             </column>
-            <column name="status" type="VARCHAR">
+            <column name="status" type="INTEGER">
                 <constraints nullable="false"/>
             </column>
-            <column name="type" type="VARCHAR">
+            <column name="type" type="INTEGER">
                 <constraints nullable="false"/>
             </column>
             <column name="created_time" type="TIMESTAMP">
@@ -28,9 +28,56 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
+
+        <createTable tableName="otp_status">
+            <column name="id" type="INTEGER">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="otp_status_pk"/>
+            </column>
+            <column name="name" type="VARCHAR">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <createTable tableName="otp_type">
+            <column name="id" type="INTEGER">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="otp_type_pk"/>
+            </column>
+            <column name="name" type="VARCHAR">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
         <addForeignKeyConstraint baseTableName="otp" baseColumnNames="employee_uuid"
                                  constraintName="fk_otp_employee_uuid" initiallyDeferred="false"
                                  deferrable="false" onDelete="CASCADE" onUpdate="CASCADE"
                                  referencedTableName="employee" referencedColumnNames="uuid"/>
+        <addForeignKeyConstraint baseTableName="otp" baseColumnNames="status"
+                                 constraintName="fk_otp_status" initiallyDeferred="false"
+                                 deferrable="false" onDelete="CASCADE" onUpdate="CASCADE"
+                                 referencedTableName="otp_status" referencedColumnNames="id"/>
+        <addForeignKeyConstraint baseTableName="otp" baseColumnNames="type"
+                                 constraintName="otp_type_fk" initiallyDeferred="false"
+                                 deferrable="false" onDelete="CASCADE" onUpdate="CASCADE"
+                                 referencedTableName="otp_type" referencedColumnNames="id"/>
+
+        <insert tableName="otp_status">
+            <column name="id" value="1"/>
+            <column name="name" value="PENDING"/>
+        </insert>
+        <insert tableName="otp_status">
+            <column name="id" value="2"/>
+            <column name="name" value="VERIFIED"/>
+        </insert>
+        <insert tableName="otp_status">
+            <column name="id" value="3"/>
+            <column name="name" value="EXPIRED"/>
+        </insert>
+        <insert tableName="otp_type">
+            <column name="id" value="1"/>
+            <column name="name" value="FORGOT_PASSWORD"/>
+        </insert>
+        <insert tableName="otp_type">
+            <column name="id" value="2"/>
+            <column name="name" value="RESET_PASSWORD"/>
+        </insert>
+
     </changeSet>
 </databaseChangeLog>

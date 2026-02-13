@@ -12,7 +12,7 @@
             <column name="last_name" type="VARCHAR">
                 <constraints nullable="false"/>
             </column>
-            <column name="gender" type="VARCHAR">
+            <column name="gender" type="INTEGER">
                 <constraints nullable="false"/>
             </column>
             <column name="date_of_birth" type="DATE">
@@ -44,11 +44,33 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
+        <createTable tableName="gender_type">
+            <column name="id" type="INTEGER">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="gender_type_id_pk"/>
+            </column>
+            <column name="name" type="VARCHAR">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
         <addForeignKeyConstraint baseTableName="employee" baseColumnNames="manager_uuid"
                                  constraintName="manager_uuid_fk" deferrable="false"
                                  initiallyDeferred="false" onDelete="RESTRICT" onUpdate="CASCADE"
                                  referencedTableName="employee" referencedColumnNames="uuid"/>
-        <sql>ALTER TABLE employee
-            ADD CONSTRAINT gender_type CHECK (gender = 'MALE' or gender = 'FEMALE' or gender = 'OTHERS' )</sql>
+        <addForeignKeyConstraint baseTableName="employee" baseColumnNames="gender"
+                                 constraintName="gender_type_fk" deferrable="false"
+                                 initiallyDeferred="false" onDelete="RESTRICT" onUpdate="CASCADE"
+                                 referencedTableName="gender_type" referencedColumnNames="id"/>
+        <insert tableName="gender_type">
+            <column name="id" value="1"/>
+            <column name="name" value="MALE"/>
+        </insert>
+        <insert tableName="gender_type">
+            <column name="id" value="2"/>
+            <column name="name" value="FEMALE"/>
+        </insert>
+        <insert tableName="gender_type">
+            <column name="id" value="3"/>
+            <column name="name" value="OTHERS"/>
+        </insert>
     </changeSet>
 </databaseChangeLog>

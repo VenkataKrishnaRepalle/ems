@@ -1,9 +1,7 @@
 package com.learning.emsmybatisliquibase.entity;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import com.baomidou.mybatisplus.annotation.EnumValue;
+import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -30,8 +28,14 @@ public class Notification {
 
     private LocalDateTime updatedTime;
 
+    @RequiredArgsConstructor
     public enum Status {
-        READ, UNREAD
+        READ(1),
+        UNREAD(2);
+
+        @EnumValue
+        @Getter
+        private final int value;
     }
 
     public boolean isRead() {

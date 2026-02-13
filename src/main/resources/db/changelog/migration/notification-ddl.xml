@@ -18,7 +18,7 @@
                 <constraints nullable="false"/>
             </column>
             <column name="link" type="VARCHAR"/>
-            <column name="status" type="VARCHAR">
+            <column name="status" type="INTEGER">
                 <constraints nullable="false"/>
             </column>
             <column name="created_time" type="TIMESTAMP">
@@ -28,9 +28,31 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
+
+        <createTable tableName="notification_status">
+            <column name="id" type="INTEGER">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="notification_status_pk"/>
+            </column>
+            <column name="name" type="VARCHAR">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <insert tableName="notification_status">
+            <column name="id" value="1"/>
+            <column name="name" value="READ"/>
+        </insert>
+        <insert tableName="notification_status">
+            <column name="id" value="2"/>
+            <column name="name" value="UNREAD"/>
+        </insert>
+
         <addForeignKeyConstraint baseTableName="notification" baseColumnNames="employee_uuid"
                                  constraintName="notification_employee_fk" initiallyDeferred="false"
                                  deferrable="false" onDelete="CASCADE" onUpdate="CASCADE"
                                  referencedTableName="employee" referencedColumnNames="uuid"/>
+        <addForeignKeyConstraint baseTableName="notification" baseColumnNames="status"
+                                 constraintName="notification_status_fk" initiallyDeferred="false"
+                                 deferrable="false" onDelete="CASCADE" onUpdate="CASCADE"
+                                 referencedTableName="notification_status" referencedColumnNames="id"/>
     </changeSet>
 </databaseChangeLog>

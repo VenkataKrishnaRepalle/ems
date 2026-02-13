@@ -14,10 +14,10 @@
             <column name="employee_uuid" type="${uuid_type}">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="colleague_uuid_pk"/>
             </column>
-            <column name="job_title" type="VARCHAR">
+            <column name="job_title" type="INTEGER">
                 <constraints nullable="false"/>
             </column>
-            <column name="profile_status" type="VARCHAR">
+            <column name="profile_status" type="INTEGER">
                 <constraints nullable="false"/>
             </column>
             <column name="department_uuid" type="${uuid_type}">
@@ -26,6 +26,94 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
+
+        <createTable tableName="profile_status">
+            <column name="id" type="INTEGER">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="profile_status_pk"/>
+            </column>
+            <column name="name" type="VARCHAR">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <insert tableName="profile_status">
+            <column name="id" value="1"/>
+            <column name="name" value="ACTIVE"/>
+        </insert>
+        <insert tableName="profile_status">
+            <column name="id" value="2"/>
+            <column name="name" value="PENDING"/>
+        </insert>
+        <insert tableName="profile_status">
+            <column name="id" value="3"/>
+            <column name="name" value="INACTIVE"/>
+        </insert>
+
+        <createTable tableName="job_titles">
+            <column name="id" type="INTEGER">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="job_title_pk"/>
+            </column>
+            <column name="name" type="VARCHAR">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <insert tableName="job_titles">
+            <column name="id" value="1"/>
+            <column name="name" value="ENGINEER_TRAINEE"/>
+        </insert>
+        <insert tableName="job_titles">
+            <column name="id" value="2"/>
+            <column name="name" value="SOFTWARE_ENGINEER"/>
+        </insert>
+        <insert tableName="job_titles">
+            <column name="id" value="3"/>
+            <column name="name" value="SENIOR_SOFTWARE_ENGINEER"/>
+        </insert>
+        <insert tableName="job_titles">
+            <column name="id" value="4"/>
+            <column name="name" value="MODULE_LEAD"/>
+        </insert>
+        <insert tableName="job_titles">
+            <column name="id" value="5"/>
+            <column name="name" value="TECHNICAL_LEAD"/>
+        </insert>
+        <insert tableName="job_titles">
+            <column name="id" value="6"/>
+            <column name="name" value="PROJECT_LEAD"/>
+        </insert>
+        <insert tableName="job_titles">
+            <column name="id" value="7"/>
+            <column name="name" value="PROJECT_MANAGER"/>
+        </insert>
+        <insert tableName="job_titles">
+            <column name="id" value="8"/>
+            <column name="name" value="SENIOR_PROJECT_MANAGER"/>
+        </insert>
+        <insert tableName="job_titles">
+            <column name="id" value="9"/>
+            <column name="name" value="PRINCIPAL_DELIVERY_MANAGER"/>
+        </insert>
+        <insert tableName="job_titles">
+            <column name="id" value="10"/>
+            <column name="name" value="ASSOCIATIVE_DIRECTOR"/>
+        </insert>
+        <insert tableName="job_titles">
+            <column name="id" value="11"/>
+            <column name="name" value="SENIOR_DIRECTOR"/>
+        </insert>
+        <insert tableName="job_titles">
+            <column name="id" value="12"/>
+            <column name="name" value="CHIEF_DELIVERY_OFFICER"/>
+        </insert>
+        <insert tableName="job_titles">
+            <column name="id" value="13"/>
+            <column name="name" value="DEPUTY_CEO"/>
+        </insert>
+        <insert tableName="job_titles">
+            <column name="id" value="14"/>
+            <column name="name" value="CEO"/>
+        </insert>
+
         <addForeignKeyConstraint baseTableName="profile" baseColumnNames="employee_uuid"
                                  constraintName="colleague_fk" deferrable="false"
                                  initiallyDeferred="false" onUpdate="CASCADE" onDelete="CASCADE"
@@ -35,28 +123,15 @@
                                  constraintName="department_fk" deferrable="false"
                                  initiallyDeferred="false" onUpdate="CASCADE" onDelete="CASCADE"
                                  referencedTableName="department" referencedColumnNames="uuid"/>
-        <sql>
-            ALTER TABLE profile
-                ADD CONSTRAINT job_title_check CHECK ( job_title = 'ENGINEER_TRAINEE' or
-                                                       job_title = 'SOFTWARE_ENGINEER' or
-                                                       job_title = 'SENIOR_SOFTWARE_ENGINEER' or
-                                                       job_title = 'MODULE_LEAD' or
-                                                       job_title = 'TECHNICAL_LEAD' or
-                                                       job_title = 'PROJECT_LEAD' or
-                                                       job_title = 'PROJECT_MANAGER' or
-                                                       job_title = 'SENIOR_PROJECT_MANAGER' or
-                                                       job_title = 'PRINCIPAL_DELIVERY_MANAGER' or
-                                                       job_title = 'ASSOCIATIVE_DIRECTOR' or
-                                                       job_title = 'SENIOR_DIRECTOR' or
-                                                       job_title = 'CHIEF_DELIVERY_OFFICER' or
-                                                       job_title = 'DEPUTY_CEO' or
-                                                       job_title = 'CEO')
-        </sql>
-        <sql>
-            ALTER TABLE profile
-                ADD CONSTRAINT profile_status_check CHECK ( profile_status = 'ACTIVE' or
-                                                            profile_status = 'PENDING' or
-                                                            profile_status = 'INACTIVE')
-        </sql>
+
+        <addForeignKeyConstraint baseTableName="profile" baseColumnNames="profile_status"
+                                 constraintName="profile_status_fk" deferrable="false"
+                                 initiallyDeferred="false" onDelete="CASCADE" onUpdate="CASCADE"
+                                 referencedTableName="profile_status" referencedColumnNames="id"/>
+
+        <addForeignKeyConstraint baseTableName="profile" baseColumnNames="job_title"
+                                 constraintName="job_title_fk" deferrable="false"
+                                 initiallyDeferred="false" onDelete="CASCADE" onUpdate="CASCADE"
+                                 referencedTableName="job_titles" referencedColumnNames="id"/>
     </changeSet>
 </databaseChangeLog>

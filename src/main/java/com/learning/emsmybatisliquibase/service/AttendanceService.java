@@ -14,9 +14,9 @@ public interface AttendanceService {
 
     Attendance getByUuid(UUID employeeUuid, UUID attendanceUuid);
 
-    ViewEmployeeAttendanceDto getEmployeeAttendance(UUID employeeUuid, Long year);
+    ViewEmployeeAttendanceDto getEmployeeAttendance(UUID employeeUuid, Long year, Integer month);
 
-    List<ViewEmployeeAttendanceDto> getTeamAttendance(UUID employeeUuid, Long year);
+    List<ViewEmployeeAttendanceDto> getTeamAttendance(UUID employeeUuid, Long year, Integer month);
 
     Attendance updateByManager(UUID managerUuid, UUID attendanceUuid, AttendanceDto attendanceDto);
 }

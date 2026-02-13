@@ -44,6 +44,9 @@
         <if test="year != null">
             and EXTRACT(YEAR FROM date) = #{year}
         </if>
+        <if test="month != null">
+            and EXTRACT(MONTH FROM date) = #{month}
+        </if>
     </select>
 
     <delete id="delete" flushCache="true">

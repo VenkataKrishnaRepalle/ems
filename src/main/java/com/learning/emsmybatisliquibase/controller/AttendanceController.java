@@ -53,15 +53,21 @@ public class AttendanceController {
 
     @PreAuthorize("hasAnyRole('EMPLOYEE', 'MANAGER', 'ADMIN')")
     @GetMapping("/get/{employeeUuid}")
-    public ResponseEntity<ViewEmployeeAttendanceDto> getEmployeeAttendance(@PathVariable UUID employeeUuid, @RequestParam(name = "year", required = false) Long year) {
-        return new ResponseEntity<>(attendanceService.getEmployeeAttendance(employeeUuid, year),
+    public ResponseEntity<ViewEmployeeAttendanceDto> getEmployeeAttendance(@PathVariable UUID employeeUuid,
+                                                                           @RequestParam(name = "year", required = false) Long year,
+                                                                           @RequestParam(name = "month", required = false) Integer month)
+
+    {
+        return new ResponseEntity<>(attendanceService.getEmployeeAttendance(employeeUuid, year, month),
                 HttpStatus.OK);
     }
 
     @PreAuthorize("hasAnyRole('EMPLOYEE', 'MANAGER', 'ADMIN')")
     @GetMapping("/get/attendance/full-team/{employeeUuid}")
-    public ResponseEntity<List<ViewEmployeeAttendanceDto>> getFullTeamAttendance(@PathVariable UUID employeeUuid, @RequestParam(name = "year", required = false) Long year) {
-        return new ResponseEntity<>(attendanceService.getTeamAttendance(employeeUuid, year),
+    public ResponseEntity<List<ViewEmployeeAttendanceDto>> getFullTeamAttendance(@PathVariable UUID employeeUuid,
+                                                                                 @RequestParam(name = "year", required = false) Long year,
+                                                                                 @RequestParam(name = "month", required = false) Integer month) {
+        return new ResponseEntity<>(attendanceService.getTeamAttendance(employeeUuid, year, month),
                 HttpStatus.OK);
     }
 }

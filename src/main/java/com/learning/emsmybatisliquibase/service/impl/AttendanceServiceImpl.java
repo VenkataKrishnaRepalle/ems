@@ -38,7 +38,7 @@ public class AttendanceServiceImpl implements AttendanceService {
 
     @Override
     public List<Attendance> apply(UUID employeeUuid, List<AttendanceDto> attendanceDtos) {
-        var appliedAttendances = attendanceDao.getByEmployeeUuid(employeeUuid, null);
+        var appliedAttendances = attendanceDao.getByEmployeeUuid(employeeUuid, null, null);
 
         for (var attendanceDto : attendanceDtos) {
             var formattedDate = new SimpleDateFormat(DATE_FORMAT).format(attendanceDto.getDate());
@@ -123,13 +123,16 @@ public class AttendanceServiceImpl implements AttendanceService {
     }
 
     @Override
-    public ViewEmployeeAttendanceDto getEmployeeAttendance(UUID employeeUuid, Long year) {
+    public ViewEmployeeAttendanceDto getEmployeeAttendance(UUID employeeUuid, Long year, Integer month) {
         if (year == null) {
             year = (long) LocalDate.now().getYear();
         }
+        if (month == null) {
+            month = LocalDate.now().getMonth().getValue();
+        }
         var employee = employeeService.getById(employeeUuid);
 
-        var attendances = attendanceDao.getByEmployeeUuid(employeeUuid, year);
+        var attendances = attendanceDao.getByEmployeeUuid(employeeUuid, year, month);
 
         Map<AttendanceStatus, List<Attendance>> attendanceStatusListMap = new EnumMap<>(AttendanceStatus.class);
 
@@ -155,14 +158,17 @@ public class AttendanceServiceImpl implements AttendanceService {
     }
 
     @Override
-    public List<ViewEmployeeAttendanceDto> getTeamAttendance(UUID employeeUuid, Long year) {
+    public List<ViewEmployeeAttendanceDto> getTeamAttendance(UUID employeeUuid, Long year, Integer month) {
         if (year == null) {
             year = (long) LocalDate.now().getYear();
+        }
+        if (month == null) {
+            month = LocalDate.now().getMonth().getValue();
         }
         var fullTeam = employeeService.getByManagerUuid(employeeUuid);
         List<ViewEmployeeAttendanceDto> employeeAttendance = new ArrayList<>();
         for (var employee : fullTeam) {
-            employeeAttendance.add(getEmployeeAttendance(employee.getUuid(), year));
+            employeeAttendance.add(getEmployeeAttendance(employee.getUuid(), year, month));
         }
         return employeeAttendance;
     }

@@ -306,8 +306,8 @@ public class EmployeePeriodServiceImpl implements EmployeePeriodService {
     }
 
     @Override
-    public EmployeeCycleAndTimelineResponseDto getByYear(UUID employeeId, Optional<Long> optionalYear, Optional<Boolean> includeYears) {
-        var year = optionalYear.isEmpty() ? LocalDateTime.now().getYear() : optionalYear.get();
+    public EmployeeCycleAndTimelineResponseDto getByYear(UUID employeeId, Long optionalYear, Boolean includeYears) {
+        var year = optionalYear == null ? LocalDateTime.now().getYear() : optionalYear;
         var period = getPeriodByYear(year);
         var employeePeriod = employeePeriodDao.get(new RequestQuery(
                 Map.of(EMPLOYEE_UUID, employeeId, PERIOD_UUID, period.getUuid())));
@@ -316,28 +316,10 @@ public class EmployeePeriodServiceImpl implements EmployeePeriodService {
         }
 
         var response = toEmployeeCycleAndTimelineResponseDtoMap(employeeId, employeePeriod.getFirst(), period);
-        if (includeYears.isPresent() && includeYears.get()) {
+        if (includeYears) {
             response.setYears(employeePeriodDao.getAllYearsByEmployeeId(employeeId).stream().map(Long::valueOf).toList());
         }
         return response;
-    }
-
-    @Override
-    public List<Integer> getAllEligibleYears(UUID employeeId) {
-        RequestQuery request = new RequestQuery();
-        request.setProperty(EMPLOYEE_UUID, employeeId);
-        request.setProperty(STATUSES, List.of(PeriodStatus.STARTED, PeriodStatus.COMPLETED));
-        var employeePeriods = employeePeriodDao.get(request);
-
-        return employeePeriods.stream()
-                .map(EmployeePeriod::getPeriodUuid)
-                .distinct()
-                .map(periodDao::getById)
-                .filter(Objects::nonNull)
-                .map(Period::getName)
-                .map(Integer::parseInt)
-                .sorted(Collections.reverseOrder())
-                .toList();
     }
 
     @Override

@@ -54,26 +54,26 @@ class AttendanceServiceImplTest {
         var existingAttendance = new Attendance();
         existingAttendance.setDate(attendanceDto.getDate());
 
-        when(attendanceDao.getByEmployeeUuid(EMPLOYEE_UUID, null)).thenReturn(List.of(existingAttendance));
+        when(attendanceDao.getByEmployeeUuid(EMPLOYEE_UUID, null, null)).thenReturn(List.of(existingAttendance));
 
         assertThrows(FoundException.class, () ->
                 attendanceService.apply(EMPLOYEE_UUID, attendanceDtos));
 
-        verify(attendanceDao, times(1)).getByEmployeeUuid(EMPLOYEE_UUID, null);
+        verify(attendanceDao, times(1)).getByEmployeeUuid(EMPLOYEE_UUID, null, null);
     }
 
     @Test
     void testApplyAttendanceNotCreated() {
         AttendanceDto attendanceDto = new AttendanceDto(WorkMode.WORK_FROM_HOME, AttendanceType.FULL_DAY, AttendanceStatus.SUBMITTED, LocalDate.now());
         List<AttendanceDto> attendanceDtos = List.of(attendanceDto);
-        when(attendanceDao.getByEmployeeUuid(EMPLOYEE_UUID, null)).thenReturn(Collections.emptyList());
+        when(attendanceDao.getByEmployeeUuid(EMPLOYEE_UUID, null, null)).thenReturn(Collections.emptyList());
         when(attendanceMapper.applyAttendanceDtoToAttendance(attendanceDto)).thenReturn(new Attendance());
         when(attendanceDao.insert(any(Attendance.class))).thenReturn(0);
 
         assertThrows(IntegrityException.class, () ->
                 attendanceService.apply(EMPLOYEE_UUID, attendanceDtos));
 
-        verify(attendanceDao, times(1)).getByEmployeeUuid(EMPLOYEE_UUID, null);
+        verify(attendanceDao, times(1)).getByEmployeeUuid(EMPLOYEE_UUID, null, null);
         verify(attendanceMapper, times(1)).applyAttendanceDtoToAttendance(attendanceDto);
         verify(attendanceDao, times(1)).insert(any());
     }
@@ -87,7 +87,7 @@ class AttendanceServiceImplTest {
                 new AttendanceDto(WorkMode.WORK_FROM_HOME, AttendanceType.HALF_DAY, AttendanceStatus.SUBMITTED, LocalDate.now())
         );
 
-        when(attendanceDao.getByEmployeeUuid(employeeUuid, null)).thenReturn(List.of());
+        when(attendanceDao.getByEmployeeUuid(employeeUuid, null, null)).thenReturn(List.of());
         when(attendanceMapper.applyAttendanceDtoToAttendance(any(AttendanceDto.class))).thenAnswer(invocation -> {
             AttendanceDto applyAttendanceDto = invocation.getArgument(0);
             return Attendance.builder()
@@ -102,7 +102,7 @@ class AttendanceServiceImplTest {
 
         assertThat(result).hasSize(2);
         verify(attendanceDao, times(2)).insert(any(Attendance.class));
-        verify(attendanceDao, times(1)).getByEmployeeUuid(any(), any());
+        verify(attendanceDao, times(1)).getByEmployeeUuid(any(), any(), any());
         verifyNoMoreInteractions(attendanceDao);
     }
 
@@ -187,9 +187,9 @@ class AttendanceServiceImplTest {
                 new Attendance(UUID.randomUUID(), EMPLOYEE_UUID, WorkMode.WORK_FROM_HOME, AttendanceType.FULL_DAY, AttendanceStatus.CANCELLED, LocalDate.now(), LocalDateTime.now(), LocalDateTime.now()));
 
         when(employeeService.getById(EMPLOYEE_UUID)).thenReturn(employee);
-        when(attendanceDao.getByEmployeeUuid(EMPLOYEE_UUID, null)).thenReturn(attendanceList);
+        when(attendanceDao.getByEmployeeUuid(EMPLOYEE_UUID, null, null)).thenReturn(attendanceList);
 
-        ViewEmployeeAttendanceDto response = attendanceService.getEmployeeAttendance(EMPLOYEE_UUID, null);
+        ViewEmployeeAttendanceDto response = attendanceService.getEmployeeAttendance(EMPLOYEE_UUID, null, null);
 
         assertNotNull(response);
         assertEquals(employee.getUuid(), response.getEmployeeUuid());
@@ -200,7 +200,7 @@ class AttendanceServiceImplTest {
         assertEquals(1, response.getCancelled().size());
 
         verify(employeeService, times(1)).getById(EMPLOYEE_UUID);
-        verify(attendanceDao, times(1)).getByEmployeeUuid(EMPLOYEE_UUID, null);
+        verify(attendanceDao, times(1)).getByEmployeeUuid(EMPLOYEE_UUID, null, null);
     }
 
 //    @Test

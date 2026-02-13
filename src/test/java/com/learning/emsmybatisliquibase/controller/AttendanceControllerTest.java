@@ -117,7 +117,7 @@ class AttendanceControllerTest {
     void testGetEmployeeAttendance() throws Exception {
         ViewEmployeeAttendanceDto employeeAttendanceDto = new ViewEmployeeAttendanceDto(EMPLOYEE_UUID, "test first name", "test last name", List.of(), List.of(), List.of());
 
-        when(attendanceService.getEmployeeAttendance(EMPLOYEE_UUID, null)).thenReturn(employeeAttendanceDto);
+        when(attendanceService.getEmployeeAttendance(EMPLOYEE_UUID, null, null)).thenReturn(employeeAttendanceDto);
 
         mockMvc.perform(get("/api/attendance/get/{employeeUuid}", EMPLOYEE_UUID)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -127,7 +127,7 @@ class AttendanceControllerTest {
                 .andExpect(jsonPath("$.employeeFirstName").value(employeeAttendanceDto.getEmployeeFirstName()))
                 .andExpect(jsonPath("$.employeeLastName").value(employeeAttendanceDto.getEmployeeLastName()));
 
-        verify(attendanceService, times(1)).getEmployeeAttendance(EMPLOYEE_UUID, null);
+        verify(attendanceService, times(1)).getEmployeeAttendance(EMPLOYEE_UUID, null, null);
     }
 
     @Test
@@ -137,14 +137,14 @@ class AttendanceControllerTest {
                 new ViewEmployeeAttendanceDto(UUID.randomUUID(), "test first name", "test last name", List.of(), List.of(), List.of())
         );
 
-        when(attendanceService.getTeamAttendance(EMPLOYEE_UUID, 2000L)).thenReturn(employeeAttendanceDtos);
+        when(attendanceService.getTeamAttendance(EMPLOYEE_UUID, 2000L, null)).thenReturn(employeeAttendanceDtos);
 
         mockMvc.perform(get("/api/attendance/get/attendance/full-team/{employeeUuid}", EMPLOYEE_UUID, 2000L)
                        .contentType(MediaType.APPLICATION_JSON)
                        .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
 
-        verify(attendanceService, times(1)).getTeamAttendance(EMPLOYEE_UUID, 2000L);
+        verify(attendanceService, times(1)).getTeamAttendance(EMPLOYEE_UUID, 2000L, null);
     }
 
 }

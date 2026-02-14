@@ -90,16 +90,18 @@
     <select id="getActiveEmployeesWithPastLeavingDate" resultMap="employeeResult">
         select e.*
         from employee e
-                 left join profile p on e.uuid = p.employee_uuid
+                 join profile p on e.uuid = p.employee_uuid
+                 join profile_status ps on p.profile_status = ps.id
         where e.leaving_date &lt; current_date
-          and p.profile_status != 'INACTIVE'
+          and ps.name != 'INACTIVE'
     </select>
 
     <select id="getAllActiveEmployeeIds" resultMap="uuidResultMap">
         select e.uuid
         from employee e
-        left join profile p on e.uuid = p.employee_uuid
-        where p.profile_status in
+        join profile p on e.uuid = p.employee_uuid
+        join profile_status ps on p.profile_status = ps.id
+        where ps.name in
         <foreach collection="profileStatuses" item="profileStatus" open="(" separator="," close=")">
             #{profileStatus}
         </foreach>
@@ -173,8 +175,10 @@
                e.email
         from employee e
                  JOIN profile p on e.uuid = p.employee_uuid
+                 JOIN profile_status ps on p.profile_status = ps.id
+
         WHERE e.manager_uuid = #{managerUuid}
-          AND p.profile_status in ('ACTIVE', 'PENDING')
+          AND ps.name in ('ACTIVE', 'PENDING')
     </select>
 
     <select id="getEmployeeFullDetailsByManager" resultMap="employeeResponseDtoStructure">
@@ -194,6 +198,7 @@
         COUNT(*) OVER() as total_count
         FROM employee e
         JOIN profile p ON e.uuid = p.employee_uuid
+        JOIN profile_status ps ON p.profile_status = ps.id
         WHERE
         <if test="profileStatuses != null">
             <include refid="profileStatus"/>
@@ -215,7 +220,7 @@
     </sql>
 
     <sql id="profileStatus">
-        p.profile_status in
+        ps.name in
         <foreach collection="profileStatuses" item="status" open="(" separator="," close=")" nullable="false">
             #{status}
         </foreach>
@@ -225,6 +230,7 @@
         SELECT count(p.*)
         FROM employee e
         JOIN profile p ON e.uuid = p.employee_uuid
+        JOIN profile_status ps ON p.profile_status = ps.id
         WHERE
         <if test="profileStatuses != null">
             <include refid="profileStatus"/>
@@ -252,7 +258,8 @@
                e.last_name,
                e.email
         FROM employee e
-                 JOIN profile p ON e.uuid = p.employee_uuid AND profile_status in ('ACTIVE', 'PENDING')
+                 JOIN profile p ON e.uuid = p.employee_uuid
+                 JOIN profile_status ps on p.profile_status = ps.id AND ps.name in ('ACTIVE', 'PENDING')
         WHERE e.first_name LIKE CONCAT('%', #{name}, '%')
            OR e.last_name LIKE CONCAT('%', #{name}, '%')
            OR e.email LIKE CONCAT('%', #{name}, '%')

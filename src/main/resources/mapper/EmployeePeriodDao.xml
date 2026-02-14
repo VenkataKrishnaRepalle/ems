@@ -56,11 +56,5 @@
         <if test="request.properties.status != null">
             AND status = #{request.properties.status}
         </if>
-        <if test="request.properties.statuses != null and request.properties.statuses.size() > 0">
-            <foreach collection="request.properties.statuses" item="status" open="AND status IN (" separator=","
-                     close=")">
-                #{status}
-            </foreach>
-        </if>
     </sql>
 </mapper>

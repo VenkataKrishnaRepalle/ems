@@ -39,14 +39,21 @@
 
     <select id="getByEmployeeUuid" resultMap="attendanceStructure">
         select *
-        from attendance
-        where employee_uuid = #{employeeUuid}
-        <if test="year != null">
-            and EXTRACT(YEAR FROM date) = #{year}
-        </if>
-        <if test="month != null">
-            and EXTRACT(MONTH FROM date) = #{month}
-        </if>
+        from attendance a
+        where a.employee_uuid = #{employeeUuid}
+        <trim prefix="AND" prefixOverrides="AND|OR" suffixOverrides="AND|OR">
+            <include refid="applyFilters"/>
+        </trim>
+    </select>
+    <select id="getTimesheet" resultType="java.lang.Integer">
+        select EXTRACT(DAY FROM a.date)
+        from employee e
+        join attendance a on a.employee_uuid = e.uuid
+        where a.employee_uuid = #{employeeUuid}
+        <trim prefix="AND" prefixOverrides="AND|OR" suffixOverrides="AND|OR">
+            <include refid="applyFilters"/>
+        </trim>
+
     </select>
 
     <delete id="delete" flushCache="true">
@@ -54,4 +61,60 @@
         from attendance
         where uuid = #{uuid}
     </delete>
+
+    <sql id="applyFilters">
+        <if test="year != null">
+            and EXTRACT(YEAR FROM a.date) = #{year}
+        </if>
+        <if test="month != null">
+            and EXTRACT(MONTH FROM a.date) = #{month}
+        </if>
+    </sql>
+
+    <resultMap id="attendanceGroupMap" type="com.learning.emsmybatisliquibase.dto.AttendanceGroupDto">
+        <id property="status" column="status"/>
+        <collection property="days" ofType="java.lang.Integer" notNullColumn="day">
+            <result column="day"/>
+        </collection>
+    </resultMap>
+
+    <select id="getGroupedAttendance" resultMap="attendanceGroupMap">
+        select s.id as status, CAST(EXTRACT(DAY FROM a.date) AS INTEGER) as day
+        from attendance_status s
+            left join attendance a
+        on a.status = s.id
+            and a.employee_uuid = #{employeeUuid}
+            and EXTRACT (YEAR FROM a.date) = #{year}
+            and EXTRACT (MONTH FROM a.date) = #{month}
+        order by s.id, day
+    </select>
+
+    <resultMap id="employeeAttendanceMap" type="com.learning.emsmybatisliquibase.dto.EmployeeAttendanceDto">
+        <id property="employeeUuid" column="uuid" jdbcType="VARCHAR" javaType="java.util.UUID"
+            typeHandler="com.learning.emsmybatisliquibase.handler.UuidTypeHandler"/>
+        <result property="firstName" column="first_name"/>
+        <result property="lastName" column="last_name"/>
+        <result property="attendanceUuid" column="attendanceUuid" jdbcType="VARCHAR" javaType="java.util.UUID"
+                typeHandler="com.learning.emsmybatisliquibase.handler.UuidTypeHandler"/>
+        <result property="workMode" column="work_mode"/>
+        <result property="type" column="type"/>
+        <result property="status" column="status"/>
+        <result property="date" column="date"/>
+    </resultMap>
+    <select id="getByManagerUuid" resultMap="employeeAttendanceMap">
+        select e.uuid,
+        e.first_name,
+        e.last_name,
+        a.uuid as attendanceUuid,
+        a.work_mode,
+        a.type,
+        a.status,
+        a.date
+        from employee e
+        join attendance a on a.employee_uuid = e.uuid
+        where e.manager_uuid = #{managerUuid}
+        <trim prefix="AND" prefixOverrides="AND" suffixOverrides="AND">
+            <include refid="applyFilters"/>
+        </trim>
+    </select>
 </mapper>

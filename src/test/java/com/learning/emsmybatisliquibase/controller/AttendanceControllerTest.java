@@ -2,6 +2,7 @@ package com.learning.emsmybatisliquibase.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.learning.emsmybatisliquibase.dto.AttendanceDto;
+import com.learning.emsmybatisliquibase.dto.EmployeeAttendanceDto;
 import com.learning.emsmybatisliquibase.dto.ViewEmployeeAttendanceDto;
 import com.learning.emsmybatisliquibase.entity.Attendance;
 import com.learning.emsmybatisliquibase.entity.enums.AttendanceStatus;
@@ -132,12 +133,12 @@ class AttendanceControllerTest {
 
     @Test
     void testGetFullTeamAttendance() throws Exception {
-        List<ViewEmployeeAttendanceDto> employeeAttendanceDtos = List.of(
-                new ViewEmployeeAttendanceDto(EMPLOYEE_UUID, "test first name", "test last name", List.of(), List.of(), List.of()),
-                new ViewEmployeeAttendanceDto(UUID.randomUUID(), "test first name", "test last name", List.of(), List.of(), List.of())
+        List<EmployeeAttendanceDto> employeeAttendanceDtos = List.of(
+                new EmployeeAttendanceDto(EMPLOYEE_UUID, "test first name", "test last name", any()),
+                new EmployeeAttendanceDto(UUID.randomUUID(), "test first name", "test last name", any())
         );
 
-        when(attendanceService.getTeamAttendance(EMPLOYEE_UUID, 2000L, null)).thenReturn(employeeAttendanceDtos);
+        when(attendanceService.getTeamAttendance(EMPLOYEE_UUID, 2000L, null)).thenReturn(any());
 
         mockMvc.perform(get("/api/attendance/get/attendance/full-team/{employeeUuid}", EMPLOYEE_UUID, 2000L)
                        .contentType(MediaType.APPLICATION_JSON)

@@ -2,6 +2,8 @@ package com.learning.emsmybatisliquibase.service.impl;
 
 import com.learning.emsmybatisliquibase.dao.AttendanceDao;
 import com.learning.emsmybatisliquibase.dto.AttendanceDto;
+import com.learning.emsmybatisliquibase.dto.AttendanceGroupDto;
+import com.learning.emsmybatisliquibase.dto.EmployeeAttendanceDto;
 import com.learning.emsmybatisliquibase.dto.ViewEmployeeAttendanceDto;
 import com.learning.emsmybatisliquibase.entity.Attendance;
 import com.learning.emsmybatisliquibase.entity.enums.AttendanceStatus;
@@ -16,10 +18,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
-import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.learning.emsmybatisliquibase.exception.errorcodes.AttendanceErrorCodes.*;
 import static com.learning.emsmybatisliquibase.exception.errorcodes.EmployeeErrorCodes.MANAGER_ACCESS_NOT_FOUND;
@@ -34,18 +36,15 @@ public class AttendanceServiceImpl implements AttendanceService {
 
     private final AttendanceMapper attendanceMapper;
 
-    private static final String DATE_FORMAT = "MM-dd-yyyy";
-
     @Override
     public List<Attendance> apply(UUID employeeUuid, List<AttendanceDto> attendanceDtos) {
         var appliedAttendances = attendanceDao.getByEmployeeUuid(employeeUuid, null, null);
 
         for (var attendanceDto : attendanceDtos) {
-            var formattedDate = new SimpleDateFormat(DATE_FORMAT).format(attendanceDto.getDate());
             for (var attendance : appliedAttendances) {
-                if (formattedDate.equals(new SimpleDateFormat(DATE_FORMAT).format(attendance.getDate()))) {
+                if (attendanceDto.getDate().equals(attendance.getDate())) {
                     throw new FoundException(ATTENDANCE_ALREADY_EXISTS.code(),
-                            "Attendance already applied for date " + formattedDate);
+                            "Attendance already applied for date " + attendanceDto.getDate());
                 }
             }
         }
@@ -88,6 +87,11 @@ public class AttendanceServiceImpl implements AttendanceService {
         return updateAttendance(attendanceDto, attendance);
     }
 
+    @Override
+    public List<AttendanceGroupDto> getTimesheet(UUID employeeUuid, Long year, Integer month) {
+        return attendanceDao.getGroupedAttendance(employeeUuid, getYear(year), getMonth(month));
+    }
+
     private Attendance updateAttendance(AttendanceDto attendanceDto, Attendance attendance) {
         attendance.setWorkMode(attendanceDto.getWorkMode());
         attendance.setType(attendanceDto.getType());
@@ -124,12 +128,9 @@ public class AttendanceServiceImpl implements AttendanceService {
 
     @Override
     public ViewEmployeeAttendanceDto getEmployeeAttendance(UUID employeeUuid, Long year, Integer month) {
-        if (year == null) {
-            year = (long) LocalDate.now().getYear();
-        }
-        if (month == null) {
-            month = LocalDate.now().getMonth().getValue();
-        }
+        year = getYear(year);
+        month = getMonth(month);
+
         var employee = employeeService.getById(employeeUuid);
 
         var attendances = attendanceDao.getByEmployeeUuid(employeeUuid, year, month);
@@ -158,18 +159,23 @@ public class AttendanceServiceImpl implements AttendanceService {
     }
 
     @Override
-    public List<ViewEmployeeAttendanceDto> getTeamAttendance(UUID employeeUuid, Long year, Integer month) {
+    public Map<AttendanceStatus, List<EmployeeAttendanceDto>> getTeamAttendance(UUID employeeUuid, Long year, Integer month) {
+        return attendanceDao.getByManagerUuid(employeeUuid, getYear(year), getMonth(month))
+                .stream()
+                .collect(Collectors.groupingBy(EmployeeAttendanceDto::getStatus, Collectors.toList()));
+    }
+
+    public Long getYear(Long year) {
         if (year == null) {
             year = (long) LocalDate.now().getYear();
         }
+        return year;
+    }
+
+    public Integer getMonth(Integer month) {
         if (month == null) {
             month = LocalDate.now().getMonth().getValue();
         }
-        var fullTeam = employeeService.getByManagerUuid(employeeUuid);
-        List<ViewEmployeeAttendanceDto> employeeAttendance = new ArrayList<>();
-        for (var employee : fullTeam) {
-            employeeAttendance.add(getEmployeeAttendance(employee.getUuid(), year, month));
-        }
-        return employeeAttendance;
+        return month;
     }
 }

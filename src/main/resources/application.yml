@@ -86,19 +86,6 @@ spring:
     jdbc:
       initialize-schema: always
 
-  mail:
-    host: ${MAIL_HOST}
-    username: ${MAIL_USERNAME}
-    password: ${MAIL_PASSWORD}
-    port: ${MAIL_PORT}
-    properties:
-      mail:
-        smtp:
-          auth: true
-          starttls:
-            enable: true
-
-
 mybatis:
   mapper-locations: classpath:mapper/**/*.xml
   type-aliases-package: com.learning.emsmybatisliquibase.entity
@@ -159,7 +146,11 @@ keycloak:
 
 default:
   send:
-    email: ${MAIL_USERNAME}
+    email:
+      address: ${MAIL_USERNAME}
+      header: Ecommerce OTP Verification
+      api-key: ${EMAIL_API_KEY}
+      url: ${EMAIL_API_URL}
 
 email:
   template:

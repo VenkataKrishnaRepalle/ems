@@ -4,7 +4,6 @@ import com.learning.emsmybatisliquibase.dto.*;
 import com.learning.emsmybatisliquibase.entity.Employee;
 import com.learning.emsmybatisliquibase.entity.enums.ProfileStatus;
 import com.learning.emsmybatisliquibase.service.EmployeeService;
-import jakarta.mail.MessagingException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,7 +18,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 
-import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
@@ -41,8 +39,7 @@ public class EmployeeController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping(value = "/add")
-    public ResponseEntity<AddEmployeeResponseDto> addEmployee(@Valid @RequestBody AddEmployeeDto employeeDto)
-            throws MessagingException, UnsupportedEncodingException {
+    public ResponseEntity<AddEmployeeResponseDto> addEmployee(@Valid @RequestBody AddEmployeeDto employeeDto) {
         return new ResponseEntity<>(employeeService.add(employeeDto), HttpStatus.CREATED);
     }
 

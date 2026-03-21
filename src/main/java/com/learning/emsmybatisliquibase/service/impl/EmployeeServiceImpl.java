@@ -15,7 +15,6 @@ import com.learning.emsmybatisliquibase.exception.InvalidInputException;
 import com.learning.emsmybatisliquibase.exception.NotFoundException;
 import com.learning.emsmybatisliquibase.mapper.EmployeeMapper;
 import com.learning.emsmybatisliquibase.service.*;
-import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -27,7 +26,6 @@ import org.springframework.transaction.annotation.Transactional;
 import static com.learning.emsmybatisliquibase.exception.errorcodes.EmployeeErrorCodes.*;
 import static com.learning.emsmybatisliquibase.utils.UtilityService.*;
 
-import java.io.UnsupportedEncodingException;
 import java.time.LocalDateTime;
 import java.time.LocalDate;
 import java.util.*;
@@ -65,8 +63,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     @Transactional
-    public AddEmployeeResponseDto add(AddEmployeeDto employeeDto) throws MessagingException,
-            UnsupportedEncodingException {
+    public AddEmployeeResponseDto add(AddEmployeeDto employeeDto) {
         if (employeeDto.getManagerUuid() != null) {
             if (!isManager(employeeDto.getManagerUuid())) {
                 employeeDto.setManagerUuid(null);

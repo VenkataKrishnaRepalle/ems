@@ -2,7 +2,6 @@ package com.learning.emsmybatisliquibase.controller;
 
 import com.learning.emsmybatisliquibase.dto.SuccessResponseDto;
 import com.learning.emsmybatisliquibase.service.FilesService;
-import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -26,7 +25,7 @@ public class FilesController {
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping(value = "employee-onboard/file", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<SuccessResponseDto> colleagueOnboard(@RequestParam(name = "file") MultipartFile file)
-            throws IOException, MessagingException {
+            throws IOException {
         return new ResponseEntity<>(filesService.colleagueOnboard(file), HttpStatus.OK);
     }
 

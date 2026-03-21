@@ -4,9 +4,6 @@ package com.learning.emsmybatisliquibase.service;
 import com.learning.emsmybatisliquibase.dto.*;
 import com.learning.emsmybatisliquibase.entity.Employee;
 import com.learning.emsmybatisliquibase.entity.enums.ProfileStatus;
-import jakarta.mail.MessagingException;
-
-import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
@@ -14,7 +11,7 @@ import java.util.UUID;
 
 public interface EmployeeService {
 
-    AddEmployeeResponseDto add(AddEmployeeDto employeeDto) throws MessagingException, UnsupportedEncodingException;
+    AddEmployeeResponseDto add(AddEmployeeDto employeeDto);
 
     Employee getById(UUID id);
 

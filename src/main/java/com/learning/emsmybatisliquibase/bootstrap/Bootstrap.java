@@ -10,12 +10,10 @@ import com.learning.emsmybatisliquibase.entity.enums.RoleType;
 import com.learning.emsmybatisliquibase.service.EmployeeRoleService;
 import com.learning.emsmybatisliquibase.service.PeriodService;
 import com.learning.emsmybatisliquibase.service.EmployeeService;
-import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
-import java.io.UnsupportedEncodingException;
 import java.sql.Date;
 import java.util.Calendar;
 
@@ -40,7 +38,7 @@ public class Bootstrap implements CommandLineRunner {
     private static final String WALMART = "Walmart";
 
     @Override
-    public void run(String... args) throws MessagingException, UnsupportedEncodingException {
+    public void run(String... args) {
         if (periodDao.getByStatus(PeriodStatus.STARTED) == null) {
             var cycle = periodService.createPeriod(Calendar.getInstance().get(Calendar.YEAR));
             periodService.updateStatus(cycle.getUuid(), PeriodStatus.STARTED);

@@ -328,5 +328,4 @@ public class AuthServiceImpl implements AuthService {
         log.error("Location service is down: {}", throwable.getMessage());
         return new RequestQuery();
     }
-
 }

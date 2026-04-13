@@ -7,10 +7,12 @@ import com.learning.emsmybatisliquibase.entity.Employee;
 import com.learning.emsmybatisliquibase.entity.OtpAuth;
 import com.learning.emsmybatisliquibase.entity.enums.OtpAuthStatus;
 import com.learning.emsmybatisliquibase.entity.enums.OtpAuthType;
+import com.learning.emsmybatisliquibase.entity.enums.ProfileStatus;
 import com.learning.emsmybatisliquibase.exception.IntegrityException;
 import com.learning.emsmybatisliquibase.exception.InvalidInputException;
 import com.learning.emsmybatisliquibase.exception.NotFoundException;
 import com.learning.emsmybatisliquibase.service.OtpService;
+import com.learning.emsmybatisliquibase.service.ProfileService;
 import com.learning.emsmybatisliquibase.utils.ErrorMessageUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,6 +34,8 @@ public class OtpServiceImpl implements OtpService {
     private final EmployeeDao employeeDao;
 
     private final OtpDao otpDao;
+
+    private final ProfileService profileService;
 
     @Override
     public OtpAuth getByUuid(UUID uuid) {
@@ -59,7 +63,7 @@ public class OtpServiceImpl implements OtpService {
     }
 
     @Override
-    public OtpAuth sendOtp(String email, OtpAuthType type) {
+    public void sendOtp(String email, OtpAuthType type) {
         var employee = getByEmail(email.trim());
         var requestQuery = createRequestQuery(employee.getUuid(), List.of(type), List.of(OtpAuthStatus.PENDING));
 
@@ -90,7 +94,6 @@ public class OtpServiceImpl implements OtpService {
             log.info(exception.getCause().getMessage());
             throw new IntegrityException(OTP_SENT_FAILED.code(), exception.getCause().getMessage());
         }
-        return otpAuth;
     }
 
     private Employee getByEmail(String email) {
@@ -111,7 +114,7 @@ public class OtpServiceImpl implements OtpService {
     }
 
     @Override
-    public OtpAuth verifyOtp(UUID employeeUuid, String otp, OtpAuthType type) {
+    public void verifyOtp(UUID employeeUuid, String otp, OtpAuthType type) {
         var requestQuery = createRequestQuery(employeeUuid, List.of(type), List.of(OtpAuthStatus.PENDING));
 
         var existingOtpList = otpDao.get(requestQuery);
@@ -128,12 +131,14 @@ public class OtpServiceImpl implements OtpService {
             throw new InvalidInputException(INVALID_OTP.code(), ErrorMessageUtil.getMessage(OTP_VERIFICATION_FAILED.code()));
         }
 
+        var profile = profileService.getByEmployeeUuid(employeeUuid);
+        profile.setProfileStatus(ProfileStatus.ACTIVE);
+        profileService.update(profile);
+
         otpAuth.setStatus(OtpAuthStatus.VERIFIED);
         otpAuth.setUpdatedTime(LocalDateTime.now());
         update(otpAuth);
         log.info(ErrorMessageUtil.getMessage(OTP_SUCCESSFUL_VERIFICATION.code(), employeeUuid));
-
-        return otpAuth;
     }
 
     @Override

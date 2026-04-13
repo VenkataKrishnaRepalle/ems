@@ -2,16 +2,15 @@ package com.learning.emsmybatisliquibase.service.impl;
 
 import com.learning.emsmybatisliquibase.dao.EmployeeDao;
 import com.learning.emsmybatisliquibase.dao.PasswordDao;
-import com.learning.emsmybatisliquibase.dto.ForgotPasswordDto;
-import com.learning.emsmybatisliquibase.dto.PasswordDto;
-import com.learning.emsmybatisliquibase.dto.ResetPasswordDto;
-import com.learning.emsmybatisliquibase.dto.SuccessResponseDto;
+import com.learning.emsmybatisliquibase.dto.*;
+import com.learning.emsmybatisliquibase.dto.pagination.KeycloakCredentialsDto;
 import com.learning.emsmybatisliquibase.entity.Employee;
 import com.learning.emsmybatisliquibase.entity.Password;
 import com.learning.emsmybatisliquibase.entity.enums.OtpAuthType;
 import com.learning.emsmybatisliquibase.entity.enums.PasswordStatus;
 import com.learning.emsmybatisliquibase.exception.IntegrityException;
 import com.learning.emsmybatisliquibase.exception.InvalidInputException;
+import com.learning.emsmybatisliquibase.service.KeycloakService;
 import com.learning.emsmybatisliquibase.service.OtpService;
 import com.learning.emsmybatisliquibase.service.PasswordService;
 import lombok.AllArgsConstructor;
@@ -23,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 import static com.learning.emsmybatisliquibase.exception.errorcodes.EmployeeErrorCodes.*;
@@ -38,6 +38,8 @@ public class PasswordServiceImpl implements PasswordService {
     private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     private final OtpService otpService;
+
+    private final KeycloakService keycloakService;
 
     public Password getById(UUID uuid) {
         var password = passwordDao.getById(uuid);
@@ -88,7 +90,7 @@ public class PasswordServiceImpl implements PasswordService {
     @Override
     public Password update(Password password) {
         getById(password.getUuid());
-
+        var employee = employeeDao.get(password.getEmployeeUuid());
         try {
             if (0 == passwordDao.update(password)) {
                 throw new IntegrityException("PASSWORD_UPDATE_FAILED", "Password not updated");
@@ -97,7 +99,37 @@ public class PasswordServiceImpl implements PasswordService {
             throw new IntegrityException("PASSWORD_UPDATE_FAILED", "Password not updated");
         }
 
+        if(password.getNoOfIncorrectEntries() >= 3) {
+            updateKeycloak(employee, null, false);
+        }
+        updateKeycloak(employee, password.getPassword(), true);
+
+
         return password;
+    }
+
+    private void updateKeycloak(Employee employee, String password, boolean enabled) {
+        KeycloakUserDto keycloakUserDto = KeycloakUserDto.builder()
+                .id(employee.getUuid().toString())
+                .username(employee.getUsername())
+                .firstName(employee.getFirstName())
+                .lastName(employee.getLastName())
+                .email(employee.getEmail())
+                .enabled(enabled)
+                .build();
+
+        if(password!=null) {
+            keycloakUserDto.setCredentials(List.of(KeycloakCredentialsDto.builder()
+                    .temporary(false)
+                    .type("password")
+                    .value(password)
+                    .build()));
+        }
+
+        Thread t = new Thread(() -> {
+            keycloakService.update(keycloakUserDto);
+        });
+        t.start();
     }
 
     @Transactional
@@ -116,6 +148,8 @@ public class PasswordServiceImpl implements PasswordService {
                 .password(forgotPasswordDto.getPassword())
                 .confirmPassword(forgotPasswordDto.getConfirmPassword())
                 .build());
+
+        updateKeycloak(employee, forgotPasswordDto.getPassword(), false);
 
         return SuccessResponseDto.builder()
                 .success(Boolean.TRUE)
@@ -139,6 +173,9 @@ public class PasswordServiceImpl implements PasswordService {
                 .password(resetPasswordDto.getNewPassword())
                 .confirmPassword(resetPasswordDto.getConfirmNewPassword())
                 .build());
+
+        updateKeycloak(employee, resetPasswordDto.getNewPassword(), false);
+
         return SuccessResponseDto.builder()
                 .success(Boolean.TRUE)
                 .data(employee.getUuid().toString())

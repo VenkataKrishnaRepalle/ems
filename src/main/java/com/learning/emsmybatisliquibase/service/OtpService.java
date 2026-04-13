@@ -12,9 +12,9 @@ public interface OtpService {
 
     OtpAuth get(RequestQuery requestQuery);
 
-    OtpAuth sendOtp(String email, OtpAuthType type);
+    void sendOtp(String email, OtpAuthType type);
 
-    OtpAuth verifyOtp(UUID employeeUuid, String otp, OtpAuthType type);
+    void verifyOtp(UUID employeeUuid, String otp, OtpAuthType type);
 
     void update(OtpAuth otpAuth);
 

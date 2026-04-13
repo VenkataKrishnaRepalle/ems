@@ -149,7 +149,7 @@ public class EmployeeServiceImpl implements EmployeeService {
             notificationService.send(createNotification(employee.getManagerUuid(), managerTitle, managerMessage, link));
         }
 
-        var crateUserDto = KeycloakCreateUserDto.builder()
+        var createUserDto = KeycloakUserDto.builder()
                 .id(employee.getUuid().toString())
                 .username(employee.getEmail())
                 .email(employee.getEmail())
@@ -164,7 +164,7 @@ public class EmployeeServiceImpl implements EmployeeService {
                         .build()))
                 .build();
 
-        Thread t = new Thread(() -> keycloakService.create(crateUserDto));
+        Thread t = new Thread(() -> keycloakService.create(createUserDto));
         t.start();
 
         return response;
@@ -252,6 +252,8 @@ public class EmployeeServiceImpl implements EmployeeService {
                             PeriodStatus.INACTIVE));
         }
         profileService.update(profile);
+
+        updateKeycloak(employee, false);
     }
 
 
@@ -268,6 +270,22 @@ public class EmployeeServiceImpl implements EmployeeService {
         } catch (DataIntegrityViolationException exception) {
             throw new IntegrityException(EMPLOYEE_NOT_UPDATED.code(), exception.getCause().getMessage());
         }
+
+        updateKeycloak(employee, true);
+    }
+
+    private void updateKeycloak(Employee employee, boolean enabled) {
+        KeycloakUserDto keycloakUserDto = KeycloakUserDto.builder()
+                .id(employee.getUuid().toString())
+                .username(employee.getUsername())
+                .firstName(employee.getFirstName())
+                .lastName(employee.getLastName())
+                .email(employee.getEmail())
+                .enabled(enabled)
+                .build();
+
+        Thread t = new Thread(() -> keycloakService.update(keycloakUserDto));
+        t.start();
     }
 
     public Employee getByEmail(String email) {
@@ -310,13 +328,12 @@ public class EmployeeServiceImpl implements EmployeeService {
     @Override
     public HashMap<String, List<EmployeeResponseDto>> getFullTeam(UUID employeeId) {
         var me = getById(employeeId);
-        var isManager = isManager(employeeId);
-        if (!isManager) {
+        if (!me.getIsManager()) {
             throw new NotFoundException(MANAGER_ACCESS_NOT_FOUND.code(), "User don't have manager access");
         }
         HashMap<String, List<EmployeeResponseDto>> fullTeam = new HashMap<>();
 
-        if(me.getManagerUuid() != null) {
+        if (me.getManagerUuid() != null) {
             fullTeam.put("myManagerReportees", employeeDao.getEmployeeFullDetailsByManager(me.getManagerUuid()));
 
         }

@@ -220,9 +220,9 @@
     </sql>
 
     <sql id="profileStatus">
-        ps.name in
+        ps.id in
         <foreach collection="profileStatuses" item="status" open="(" separator="," close=")" nullable="false">
-            #{status}
+            #{status.id}
         </foreach>
     </sql>
 

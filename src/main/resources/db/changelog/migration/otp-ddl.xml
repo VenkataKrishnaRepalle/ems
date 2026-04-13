@@ -78,6 +78,10 @@
             <column name="id" value="2"/>
             <column name="name" value="RESET_PASSWORD"/>
         </insert>
+        <insert tableName="otp_type">
+            <column name="id" value="3"/>
+            <column name="name" value="VALIDATE_ACCOUNT"/>
+        </insert>
 
     </changeSet>
 </databaseChangeLog>

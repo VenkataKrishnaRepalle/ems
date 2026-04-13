@@ -97,9 +97,7 @@ public class AuthServiceImpl implements AuthService {
                 .or(() -> employeeService.findByUsername(loginDto.getEmail()))
                 .orElseThrow(() -> new InvalidInputException("INVALID_INPUT", "Invalid email or username"));
         var profile = profileService.getByEmployeeUuid(employee.getUuid());
-        if (profile.getProfileStatus() == ProfileStatus.PENDING) {
-            throw new InvalidInputException("ACCOUNT_NOT_ACTIVATED", "Account not activated, Please set new password");
-        } else if (profile.getProfileStatus() == ProfileStatus.INACTIVE) {
+        if (profile.getProfileStatus() == ProfileStatus.INACTIVE) {
             throw new InvalidInputException("NOT_AUTHORIZED_USER", "You're not eligible to access this application");
         }
 

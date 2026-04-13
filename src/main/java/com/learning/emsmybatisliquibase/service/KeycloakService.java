@@ -1,8 +1,10 @@
 package com.learning.emsmybatisliquibase.service;
 
-import com.learning.emsmybatisliquibase.dto.KeycloakCreateUserDto;
+import com.learning.emsmybatisliquibase.dto.KeycloakUserDto;
 
 public interface KeycloakService {
 
-    void create(KeycloakCreateUserDto dto);
+    void create(KeycloakUserDto dto);
+
+    void update(KeycloakUserDto dto);
 }

@@ -12,7 +12,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class KeycloakCreateUserDto {
+public class KeycloakUserDto {
     private String id;
 
     private String username;

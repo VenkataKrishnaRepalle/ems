@@ -1,7 +1,7 @@
 package com.learning.emsmybatisliquibase.service.impl;
 
 import com.learning.emsmybatisliquibase.config.KeycloakAdminConfig.KeycloakAdminProperties;
-import com.learning.emsmybatisliquibase.dto.KeycloakCreateUserDto;
+import com.learning.emsmybatisliquibase.dto.KeycloakUserDto;
 import com.learning.emsmybatisliquibase.service.KeycloakService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -42,13 +42,11 @@ public class KeycloakServiceImpl implements KeycloakService {
     }
 
     @Override
-    public void create(KeycloakCreateUserDto userDto) {
-        String token = getAdminAccessToken();
-
+    public void create(KeycloakUserDto userDto) {
         adminWebClient
                 .post()
                 .uri("/users")
-                .headers(headers -> headers.setBearerAuth(token))
+                .headers(headers -> headers.setBearerAuth(getAdminAccessToken()))
                 .bodyValue(userDto)
                 .retrieve()
                 .onStatus(
@@ -58,11 +56,31 @@ public class KeycloakServiceImpl implements KeycloakService {
                                 .flatMap(body -> {
                                     log.error("Failed to create user in Keycloak: status={} body={}", response.statusCode().value(), body);
                                     return Mono.error(new IllegalStateException("Failed to create user in Keycloak"));
-                                })
-                )
+                                }))
                 .toBodilessEntity()
                 .doOnSuccess(ignored -> log.info("User created successfully in Keycloak"))
                 .block();
+    }
+
+    @Override
+    public void update(KeycloakUserDto userDto) {
+        adminWebClient
+                .put()
+                .uri("/users/{id}", userDto.getId())
+                .headers(headers -> headers.setBearerAuth(getAdminAccessToken()))
+                .bodyValue(userDto)
+                .retrieve()
+                .onStatus(status -> status.value() != 204,
+                        response -> response.bodyToMono(String.class)
+                                .defaultIfEmpty("")
+                                .flatMap(body -> {
+                                    log.error("Failed to update user in Keycloak: status={} body={}", response.statusCode().value(), body);
+                                    return Mono.error(new IllegalStateException("Failed to update user in Keycloak for id: " + userDto.getId()));
+                                }))
+                .toBodilessEntity()
+                .doOnSuccess(ignored -> log.info("User updated successfully in Keycloak"))
+                .block();
+
     }
 
     private String getAdminAccessToken() {
@@ -124,7 +142,8 @@ public class KeycloakServiceImpl implements KeycloakService {
         return value;
     }
 
-    private record KeycloakTokenResponse(String access_token, Long expires_in) {}
+    private record KeycloakTokenResponse(String access_token, Long expires_in) {
+    }
 
     private record CachedToken(String accessToken, long expiresAtEpochMillis) {
         static CachedToken fromNow(String accessToken, long expiresInSeconds) {

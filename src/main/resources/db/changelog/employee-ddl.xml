@@ -6,6 +6,7 @@
             <column name="uuid" type="${uuid_type}">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="employee_pk"/>
             </column>
+            <column name="keycloak_user_uuid" type="${uuid_type}"/>
             <column name="first_name" type="VARCHAR">
                 <constraints nullable="false"/>
             </column>

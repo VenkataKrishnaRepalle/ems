@@ -1,10 +1,17 @@
 package com.learning.emsmybatisliquibase.service;
 
-import com.learning.emsmybatisliquibase.dto.KeycloakUserDto;
+import org.keycloak.admin.client.resource.RealmResource;
+import org.keycloak.representations.idm.UserRepresentation;
+
+import java.util.List;
 
 public interface KeycloakService {
 
-    void create(KeycloakUserDto dto);
+    String create(UserRepresentation dto);
 
-    void update(KeycloakUserDto dto);
+    String create(UserRepresentation dto, List<String> roles);
+
+    void update(UserRepresentation dto);
+
+    void update(UserRepresentation dto, List<String> roles);
 }

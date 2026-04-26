@@ -11,6 +11,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -24,8 +26,10 @@ import org.springframework.security.oauth2.jwt.JwtException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.List;
 import java.util.Map;
-
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -63,13 +67,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String token = null;
         Cookie[] cookies = request.getCookies();
         if (cookies != null) {
-            for(var cookie : cookies) {
+            for (var cookie : cookies) {
                 if (cookie.getName().equals("token")) {
                     token = cookie.getValue();
                 }
             }
         }
-        if(token == null) {
+        if (token == null) {
             token = getTokenFromRequest(request);
         }
 
@@ -86,8 +90,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         userDetails.getAuthorities()
                 );
 
-                authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request)); //adding request object to the authentication token
-
+                authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authenticationToken);
             }
         }
@@ -134,14 +137,29 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 return;
             }
 
-            UserDetails userDetails = userDetailsService.loadUserByUsername(String.valueOf(employee.getUuid()));
+            Map<String, Object> realmAccess = jwt.getClaim("realm_access");
+            List<String> roles = List.of();
+            if (realmAccess != null && realmAccess.containsKey("roles")) {
+                Object rolesObj = realmAccess.get("roles");
+
+                if (!(rolesObj instanceof List<?> rawList)) {
+                    throw new IllegalArgumentException("'roles' is not a list");
+                }
+                roles = rawList.stream()
+                        .map(String.class::cast)
+                        .toList();
+            }
+
+            Set<GrantedAuthority> authorities = roles.stream()
+                    .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
+                    .collect(Collectors.toSet());
+
             UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
-                    userDetails,
-                    null,
-                    userDetails.getAuthorities()
-            );
+                    employee.getUuid(), null, authorities);
+
             authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
             SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+
         } catch (JwtException ex) {
             request.setAttribute("not_authorized", true);
         }
@@ -155,7 +173,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
             byte[] decoded = Base64.getUrlDecoder().decode(parts[0]);
             String json = new String(decoded, StandardCharsets.UTF_8);
-            Map<String, Object> values = OBJECT_MAPPER.readValue(json, new TypeReference<>() {});
+            Map<String, Object> values = OBJECT_MAPPER.readValue(json, new TypeReference<>() {
+            });
             Object value = values.get("alg");
             return value == null ? null : String.valueOf(value);
         } catch (Exception ignored) {

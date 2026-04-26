@@ -1,6 +1,7 @@
 package com.learning.emsmybatisliquibase.dao;
 
 import com.learning.emsmybatisliquibase.dto.EmployeeDetailsDto;
+import com.learning.emsmybatisliquibase.dto.EmployeeEtmsDetails;
 import com.learning.emsmybatisliquibase.dto.EmployeePaginationResponseDto;
 import com.learning.emsmybatisliquibase.dto.EmployeeResponseDto;
 import com.learning.emsmybatisliquibase.entity.Employee;
@@ -50,4 +51,6 @@ public interface EmployeeDao {
     List<EmployeeDetailsDto> getAllActiveManagers();
 
     List<EmployeeDetailsDto> getByNameOrEmail(@Param("name") String name);
+
+    EmployeeEtmsDetails getEtmsById(@Param("uuid") UUID uuid);
 }

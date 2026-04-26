@@ -18,6 +18,9 @@ import com.learning.emsmybatisliquibase.service.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.jspecify.annotations.NonNull;
+import org.keycloak.representations.idm.CredentialRepresentation;
+import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -149,25 +152,35 @@ public class EmployeeServiceImpl implements EmployeeService {
             notificationService.send(createNotification(employee.getManagerUuid(), managerTitle, managerMessage, link));
         }
 
-        var createUserDto = KeycloakUserDto.builder()
-                .id(employee.getUuid().toString())
-                .username(employee.getEmail())
-                .email(employee.getEmail())
-                .firstName(employee.getFirstName())
-                .lastName(employee.getLastName())
-                .enabled(true)
-                .emailVerified(true)
-                .credentials(List.of(KeycloakCredentialsDto.builder()
-                        .type("password")
-                        .value(password)
-                        .temporary(false)
-                        .build()))
-                .build();
+        List<String> roles = new ArrayList<>(List.of("EMPLOYEE"));
+        if(employee.getIsManager()) {
+            roles.add("MANAGER");
+        }
 
-        Thread t = new Thread(() -> keycloakService.create(createUserDto));
-        t.start();
+        UserRepresentation userRepresentation = getUserRepresentation(employee, password);
 
+        String keycloakUserId = keycloakService.create(userRepresentation, roles);
+        log.info("Created Keycloak user for employeeUuid={} with keycloakUserId={}", employee.getUuid(), keycloakUserId);
+
+        employee.setKeycloakUserUuid(UUID.fromString(keycloakUserId));
+        updateToDB(employee);
         return response;
+    }
+
+    private static @NonNull UserRepresentation getUserRepresentation(Employee employee, String password) {
+        UserRepresentation userRepresentation = new UserRepresentation();
+        userRepresentation.setUsername(employee.getUsername());
+        userRepresentation.setEmail(employee.getEmail());
+        userRepresentation.setFirstName(employee.getFirstName());
+        userRepresentation.setLastName(employee.getLastName());
+        userRepresentation.setEnabled(true);
+        userRepresentation.setEmailVerified(true);
+        CredentialRepresentation credentialRepresentation = new CredentialRepresentation();
+        credentialRepresentation.setType(CredentialRepresentation.PASSWORD);
+        credentialRepresentation.setTemporary(false);
+        credentialRepresentation.setValue(password);
+        userRepresentation.setCredentials(List.of(credentialRepresentation));
+        return userRepresentation;
     }
 
 
@@ -263,6 +276,12 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     public void update(Employee employee) {
+        updateToDB(employee);
+
+        updateKeycloak(employee, true);
+    }
+
+    private void updateToDB(Employee employee) {
         try {
             if (0 == employeeDao.update(employee)) {
                 throw new NotFoundException(EMPLOYEE_NOT_UPDATED.code(), "Failed in updating employee manager status");
@@ -270,21 +289,18 @@ public class EmployeeServiceImpl implements EmployeeService {
         } catch (DataIntegrityViolationException exception) {
             throw new IntegrityException(EMPLOYEE_NOT_UPDATED.code(), exception.getCause().getMessage());
         }
-
-        updateKeycloak(employee, true);
     }
 
     private void updateKeycloak(Employee employee, boolean enabled) {
-        KeycloakUserDto keycloakUserDto = KeycloakUserDto.builder()
-                .id(employee.getUuid().toString())
-                .username(employee.getUsername())
-                .firstName(employee.getFirstName())
-                .lastName(employee.getLastName())
-                .email(employee.getEmail())
-                .enabled(enabled)
-                .build();
+        UserRepresentation userRepresentation = new UserRepresentation();
+        userRepresentation.setUsername(employee.getUsername());
+        userRepresentation.setEmail(employee.getEmail());
+        userRepresentation.setFirstName(employee.getFirstName());
+        userRepresentation.setLastName(employee.getLastName());
+        userRepresentation.setEmail(employee.getEmail());
+        userRepresentation.setEnabled(enabled);
 
-        Thread t = new Thread(() -> keycloakService.update(keycloakUserDto));
+        Thread t = new Thread(() -> keycloakService.update(userRepresentation));
         t.start();
     }
 

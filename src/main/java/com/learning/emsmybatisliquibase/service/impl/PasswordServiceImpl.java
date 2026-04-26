@@ -15,6 +15,8 @@ import com.learning.emsmybatisliquibase.service.OtpService;
 import com.learning.emsmybatisliquibase.service.PasswordService;
 import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
+import org.keycloak.representations.idm.CredentialRepresentation;
+import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -109,25 +111,27 @@ public class PasswordServiceImpl implements PasswordService {
     }
 
     private void updateKeycloak(Employee employee, String password, boolean enabled) {
-        KeycloakUserDto keycloakUserDto = KeycloakUserDto.builder()
-                .id(employee.getUuid().toString())
-                .username(employee.getUsername())
-                .firstName(employee.getFirstName())
-                .lastName(employee.getLastName())
-                .email(employee.getEmail())
-                .enabled(enabled)
-                .build();
+        UserRepresentation userRepresentation = new UserRepresentation();
+        userRepresentation.setId(employee.getKeycloakUserUuid().toString());
+        userRepresentation.setUsername(employee.getUsername());
+        userRepresentation.setEmail(employee.getEmail());
+        userRepresentation.setFirstName(employee.getFirstName());
+        userRepresentation.setLastName(employee.getLastName());
+        userRepresentation.setEmail(employee.getEmail());
+        userRepresentation.setEnabled(enabled);
 
         if(password!=null) {
-            keycloakUserDto.setCredentials(List.of(KeycloakCredentialsDto.builder()
-                    .temporary(false)
-                    .type("password")
-                    .value(password)
-                    .build()));
+            CredentialRepresentation credentialRepresentation = new CredentialRepresentation();
+            credentialRepresentation.setType(CredentialRepresentation.PASSWORD);
+            credentialRepresentation.setValue(password);
+            credentialRepresentation.setTemporary(false);
+
+            userRepresentation.setCredentials(List.of(credentialRepresentation));
+
         }
 
         Thread t = new Thread(() -> {
-            keycloakService.update(keycloakUserDto);
+            keycloakService.update(userRepresentation);
         });
         t.start();
     }

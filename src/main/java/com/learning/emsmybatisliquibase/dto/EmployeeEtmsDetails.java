@@ -1,25 +1,25 @@
 package com.learning.emsmybatisliquibase.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.Instant;
 import java.util.UUID;
 
+@Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
 public class EmployeeEtmsDetails {
-    private String employeeUuid;
+    private UUID uuid;
 
     private String name;
 
     private String email;
 
     private String phone;
+
+    private String profileStatus;
 
     private UUID managerUuid;
 
@@ -28,10 +28,6 @@ public class EmployeeEtmsDetails {
     private String managerPhone;
 
     private String managerEmail;
-
-    private String home_latitude;
-
-    private String home_longitude;
 
     private Instant createdTime;
 

@@ -24,8 +24,6 @@ public class Employee implements Serializable {
 
     private UUID uuid;
 
-    private UUID keycloakUserUuid;
-
     private String firstName;
 
     private String lastName;

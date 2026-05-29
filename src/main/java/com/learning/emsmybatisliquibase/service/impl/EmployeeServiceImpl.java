@@ -2,7 +2,6 @@ package com.learning.emsmybatisliquibase.service.impl;
 
 import com.learning.emsmybatisliquibase.dao.*;
 import com.learning.emsmybatisliquibase.dto.*;
-import com.learning.emsmybatisliquibase.dto.pagination.KeycloakCredentialsDto;
 import com.learning.emsmybatisliquibase.dto.pagination.RequestQuery;
 import com.learning.emsmybatisliquibase.entity.*;
 import com.learning.emsmybatisliquibase.entity.enums.JobTitleType;
@@ -78,9 +77,9 @@ public class EmployeeServiceImpl implements EmployeeService {
             throw new FoundException(EMPLOYEE_ALREADY_EXISTS.code(), "Employee with given email already exists");
         }
 
-        boolean isManager = "T".equalsIgnoreCase(employeeDto.getIsManager().trim()) || "true".equalsIgnoreCase(employeeDto.getIsManager().trim());
+        boolean isManager = "T".equalsIgnoreCase(employeeDto.getIsManager().trim()) ||
+                "true".equalsIgnoreCase(employeeDto.getIsManager().trim());
         var employee = employeeMapper.addEmployeeDtoToEmployee(employeeDto);
-        employee.setUuid(UUID.randomUUID());
         if (null == employee.getUsername()) {
             employee.setUsername(employee.getEmail());
         }
@@ -89,19 +88,21 @@ public class EmployeeServiceImpl implements EmployeeService {
         employee.setCreatedTime(LocalDateTime.now());
         employee.setUpdatedTime(LocalDateTime.now());
 
+        String password;
+        if (validatePasswords(employeeDto.getPassword(), employeeDto.getConfirmPassword())) {
+            password = employeeDto.getPassword();
+        } else {
+            password = generateRandomPassword();
+        }
+
+        employee.setUuid(createKeycloakUser(employee, password));
+
         try {
             if (0 == employeeDao.insert(employee)) {
                 throw new NotFoundException(EMPLOYEE_NOT_CREATED.code(), "Failed in saving employee");
             }
         } catch (DataIntegrityViolationException exception) {
             throw new IntegrityException(EMPLOYEE_NOT_CREATED.code(), exception.getCause().getMessage());
-        }
-
-        String password;
-        if (validatePasswords(employeeDto.getPassword(), employeeDto.getConfirmPassword())) {
-            password = employeeDto.getPassword();
-        } else {
-            password = generateRandomPassword();
         }
 
         passwordService.create(employee.getUuid(),
@@ -133,12 +134,30 @@ public class EmployeeServiceImpl implements EmployeeService {
             communicationService.sendSuccessfulEmployeeOnBoard(employee, password, 1);
         }
 
-
         var response = employeeMapper.employeeToAddEmployeeResponseDto(employee);
         response.setProfile(profile);
         response.setDepartment(department);
         response.setIsManager(isManager);
 
+        sendCreateUserNotification(employee);
+
+        return response;
+    }
+
+    private UUID createKeycloakUser(Employee employee, String password) {
+        List<String> roles = new ArrayList<>(List.of("EMPLOYEE"));
+        if (employee.getIsManager()) {
+            roles.add("MANAGER");
+        }
+
+        UserRepresentation userRepresentation = getUserRepresentation(employee, password);
+
+        String keycloakUserId = keycloakService.create(userRepresentation, roles);
+        log.info("Created Keycloak user for employeeUuid={} with keycloakUserId={}", employee.getUuid(), keycloakUserId);
+        return UUID.fromString(keycloakUserId);
+    }
+
+    private void sendCreateUserNotification(Employee employee) {
         var welcomeTitle = "Welcome to the team";
         var welcomeMessage = "Welcome to the team " + employee.getFirstName() + " " + employee.getLastName() +
                 "! Please complete necessary onboarding details";
@@ -151,20 +170,6 @@ public class EmployeeServiceImpl implements EmployeeService {
             var link = "view/" + employee.getUuid();
             notificationService.send(createNotification(employee.getManagerUuid(), managerTitle, managerMessage, link));
         }
-
-        List<String> roles = new ArrayList<>(List.of("EMPLOYEE"));
-        if(employee.getIsManager()) {
-            roles.add("MANAGER");
-        }
-
-        UserRepresentation userRepresentation = getUserRepresentation(employee, password);
-
-        String keycloakUserId = keycloakService.create(userRepresentation, roles);
-        log.info("Created Keycloak user for employeeUuid={} with keycloakUserId={}", employee.getUuid(), keycloakUserId);
-
-        employee.setKeycloakUserUuid(UUID.fromString(keycloakUserId));
-        updateToDB(employee);
-        return response;
     }
 
     private static @NonNull UserRepresentation getUserRepresentation(Employee employee, String password) {

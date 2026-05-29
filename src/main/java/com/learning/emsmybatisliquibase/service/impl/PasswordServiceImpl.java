@@ -3,7 +3,6 @@ package com.learning.emsmybatisliquibase.service.impl;
 import com.learning.emsmybatisliquibase.dao.EmployeeDao;
 import com.learning.emsmybatisliquibase.dao.PasswordDao;
 import com.learning.emsmybatisliquibase.dto.*;
-import com.learning.emsmybatisliquibase.dto.pagination.KeycloakCredentialsDto;
 import com.learning.emsmybatisliquibase.entity.Employee;
 import com.learning.emsmybatisliquibase.entity.Password;
 import com.learning.emsmybatisliquibase.entity.enums.OtpAuthType;
@@ -112,7 +111,7 @@ public class PasswordServiceImpl implements PasswordService {
 
     private void updateKeycloak(Employee employee, String password, boolean enabled) {
         UserRepresentation userRepresentation = new UserRepresentation();
-        userRepresentation.setId(employee.getKeycloakUserUuid().toString());
+        userRepresentation.setId(employee.getUuid().toString());
         userRepresentation.setUsername(employee.getUsername());
         userRepresentation.setEmail(employee.getEmail());
         userRepresentation.setFirstName(employee.getFirstName());
@@ -130,9 +129,7 @@ public class PasswordServiceImpl implements PasswordService {
 
         }
 
-        Thread t = new Thread(() -> {
-            keycloakService.update(userRepresentation);
-        });
+        Thread t = new Thread(() -> keycloakService.update(userRepresentation));
         t.start();
     }
 

@@ -7,8 +7,12 @@ import io.swagger.v3.oas.annotations.info.License;
 import io.swagger.v3.oas.annotations.servers.Server;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.security.OAuthFlow;
+import io.swagger.v3.oas.models.security.OAuthFlows;
+import io.swagger.v3.oas.models.security.Scopes;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -47,20 +51,29 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class OpenApiConfig {
 
+    @Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri}")
+    private String issuerUri;
+
     @Bean
     public OpenAPI customOpenAPI() {
-        final String securitySchemeName = "bearerAuth";
+        final String securitySchemeName = "keycloak_auth";
+        String normalizedIssuerUri = issuerUri.endsWith("/")
+                ? issuerUri.substring(0, issuerUri.length() - 1)
+                : issuerUri;
+        String authUrl = normalizedIssuerUri + "/protocol/openid-connect/auth";
+        String tokenUrl = normalizedIssuerUri + "/protocol/openid-connect/token";
+        OAuthFlow authorizationCodeFlow = new OAuthFlow()
+                .authorizationUrl(authUrl)
+                .tokenUrl(tokenUrl)
+                .scopes(new Scopes().addString("openid", "OpenID Connect scope"));
+
         return new OpenAPI()
                 .addSecurityItem(new SecurityRequirement().addList(securitySchemeName))
-                .components(
-                        new Components()
-                                .addSecuritySchemes(securitySchemeName,
-                                        new SecurityScheme()
-                                                .name(securitySchemeName)
-                                                .type(SecurityScheme.Type.HTTP)
-                                                .scheme("bearer")
-                                                .bearerFormat("JWT")
-                                )
-                );
+                .components(new Components()
+                        .addSecuritySchemes(securitySchemeName,
+                                new SecurityScheme()
+                                        .type(SecurityScheme.Type.OAUTH2)
+                                        .flows(new OAuthFlows()
+                                                .authorizationCode(authorizationCodeFlow))));
     }
 }

@@ -96,7 +96,7 @@ springdoc:
   swagger-ui:
     operations-sorter: alpha
     persist-authorization: true
-    oauth2:
+    oauth:
       client-id: ${KEYCLOAK_SWAGGER_CLIENT_ID:${KEYCLOAK_FRONTEND_CLIENT_ID:ems-frontend}}
       use-pkce-with-authorization-code-grant: true
 

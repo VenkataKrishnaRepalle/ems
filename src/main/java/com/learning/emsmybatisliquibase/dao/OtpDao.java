@@ -2,8 +2,6 @@ package com.learning.emsmybatisliquibase.dao;
 
 import com.learning.emsmybatisliquibase.dto.pagination.RequestQuery;
 import com.learning.emsmybatisliquibase.entity.OtpAuth;
-import com.learning.emsmybatisliquibase.entity.enums.OtpAuthStatus;
-import com.learning.emsmybatisliquibase.entity.enums.OtpAuthType;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;

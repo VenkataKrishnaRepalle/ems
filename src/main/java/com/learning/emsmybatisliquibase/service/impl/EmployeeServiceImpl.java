@@ -1,9 +1,21 @@
 package com.learning.emsmybatisliquibase.service.impl;
 
-import com.learning.emsmybatisliquibase.dao.*;
-import com.learning.emsmybatisliquibase.dto.*;
+import com.learning.emsmybatisliquibase.dao.EmployeeDao;
+import com.learning.emsmybatisliquibase.dao.EmployeePeriodDao;
+import com.learning.emsmybatisliquibase.dto.AddDepartmentDto;
+import com.learning.emsmybatisliquibase.dto.AddEmployeeDto;
+import com.learning.emsmybatisliquibase.dto.AddEmployeeResponseDto;
+import com.learning.emsmybatisliquibase.dto.EmployeeDetailsDto;
+import com.learning.emsmybatisliquibase.dto.EmployeeFullReportingChainDto;
+import com.learning.emsmybatisliquibase.dto.EmployeeResponseDto;
+import com.learning.emsmybatisliquibase.dto.PaginatedResponse;
+import com.learning.emsmybatisliquibase.dto.PasswordDto;
+import com.learning.emsmybatisliquibase.dto.UpdateLeavingDateDto;
 import com.learning.emsmybatisliquibase.dto.pagination.RequestQuery;
-import com.learning.emsmybatisliquibase.entity.*;
+import com.learning.emsmybatisliquibase.entity.Department;
+import com.learning.emsmybatisliquibase.entity.Employee;
+import com.learning.emsmybatisliquibase.entity.Profile;
+import com.learning.emsmybatisliquibase.entity.Notification;
 import com.learning.emsmybatisliquibase.entity.enums.JobTitleType;
 import com.learning.emsmybatisliquibase.entity.enums.PeriodStatus;
 import com.learning.emsmybatisliquibase.entity.enums.ProfileStatus;
@@ -13,7 +25,16 @@ import com.learning.emsmybatisliquibase.exception.IntegrityException;
 import com.learning.emsmybatisliquibase.exception.InvalidInputException;
 import com.learning.emsmybatisliquibase.exception.NotFoundException;
 import com.learning.emsmybatisliquibase.mapper.EmployeeMapper;
-import com.learning.emsmybatisliquibase.service.*;
+import com.learning.emsmybatisliquibase.service.CommunicationService;
+import com.learning.emsmybatisliquibase.service.DepartmentService;
+import com.learning.emsmybatisliquibase.service.EmployeeService;
+import com.learning.emsmybatisliquibase.service.EmployeePeriodService;
+import com.learning.emsmybatisliquibase.service.EmployeeRoleService;
+import com.learning.emsmybatisliquibase.service.KeycloakService;
+import com.learning.emsmybatisliquibase.service.NotificationService;
+import com.learning.emsmybatisliquibase.service.PasswordService;
+import com.learning.emsmybatisliquibase.service.PeriodService;
+import com.learning.emsmybatisliquibase.service.ProfileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -25,12 +46,25 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import static com.learning.emsmybatisliquibase.exception.errorcodes.EmployeeErrorCodes.*;
+import static com.learning.emsmybatisliquibase.exception.errorcodes.EmployeeErrorCodes.EMPLOYEE_ALREADY_EXISTS;
+import static com.learning.emsmybatisliquibase.exception.errorcodes.EmployeeErrorCodes.EMPLOYEE_INTEGRATE_VIOLATION;
+import static com.learning.emsmybatisliquibase.exception.errorcodes.EmployeeErrorCodes.EMPLOYEE_NOT_CREATED;
+import static com.learning.emsmybatisliquibase.exception.errorcodes.EmployeeErrorCodes.EMPLOYEE_NOT_FOUND;
+import static com.learning.emsmybatisliquibase.exception.errorcodes.EmployeeErrorCodes.EMPLOYEE_NOT_UPDATED;
+import static com.learning.emsmybatisliquibase.exception.errorcodes.EmployeeErrorCodes.MANAGER_ACCESS_NOT_FOUND;
 import static com.learning.emsmybatisliquibase.utils.UtilityService.*;
 
 import java.time.LocalDateTime;
 import java.time.LocalDate;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Random;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -66,11 +100,10 @@ public class EmployeeServiceImpl implements EmployeeService {
     @Override
     @Transactional
     public AddEmployeeResponseDto add(AddEmployeeDto employeeDto) {
-        if (employeeDto.getManagerUuid() != null) {
-            if (!isManager(employeeDto.getManagerUuid())) {
+        if (employeeDto.getManagerUuid() != null && Boolean.FALSE.equals(isManager(employeeDto.getManagerUuid()))) {
                 employeeDto.setManagerUuid(null);
             }
-        }
+
 
         var employeeByEmail = employeeDao.getByEmail(employeeDto.getEmail());
         if (employeeByEmail != null) {
@@ -146,7 +179,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     private UUID createKeycloakUser(Employee employee, String password) {
         List<String> roles = new ArrayList<>(List.of("EMPLOYEE"));
-        if (employee.getIsManager()) {
+        if (Boolean.TRUE.equals(employee.getIsManager())) {
             roles.add("MANAGER");
         }
 
@@ -349,7 +382,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     @Override
     public HashMap<String, List<EmployeeResponseDto>> getFullTeam(UUID employeeId) {
         var me = getById(employeeId);
-        if (!me.getIsManager()) {
+        if (Boolean.FALSE.equals(me.getIsManager())) {
             throw new NotFoundException(MANAGER_ACCESS_NOT_FOUND.code(), "User don't have manager access");
         }
         HashMap<String, List<EmployeeResponseDto>> fullTeam = new HashMap<>();

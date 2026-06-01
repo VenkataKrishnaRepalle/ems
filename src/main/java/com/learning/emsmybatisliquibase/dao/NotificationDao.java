@@ -2,7 +2,6 @@ package com.learning.emsmybatisliquibase.dao;
 
 import com.learning.emsmybatisliquibase.dto.pagination.RequestQuery;
 import com.learning.emsmybatisliquibase.entity.Notification;
-import org.apache.ibatis.annotations.MapKey;
 import org.apache.ibatis.annotations.Param;
 
 import java.time.LocalDateTime;

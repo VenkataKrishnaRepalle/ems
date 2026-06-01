@@ -1,6 +1,5 @@
 package com.learning.emsmybatisliquibase.service;
 
-import org.keycloak.admin.client.resource.RealmResource;
 import org.keycloak.representations.idm.UserRepresentation;
 
 import java.util.List;

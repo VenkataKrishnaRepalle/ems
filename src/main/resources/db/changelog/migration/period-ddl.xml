@@ -284,21 +284,11 @@
             <column name="overall_comments" type="VARCHAR">
                 <constraints nullable="true"/>
             </column>
-            <column name="manager_what_went_well" type="VARCHAR">
-                <constraints nullable="true"/>
-            </column>
-            <column name="manager_what_done_better" type="VARCHAR">
-                <constraints nullable="true"/>
-            </column>
-            <column name="manager_way_forward" type="VARCHAR">
-                <constraints nullable="true"/>
-            </column>
-            <column name="manager_overall_comments" type="VARCHAR">
-                <constraints nullable="true"/>
-            </column>
-            <column name="rating" type="INTEGER">
-                <constraints nullable="true"/>
-            </column>
+            <column name="manager_what_went_well" type="VARCHAR"/>
+            <column name="manager_what_done_better" type="VARCHAR"/>
+            <column name="manager_way_forward" type="VARCHAR"/>
+            <column name="manager_overall_comments" type="VARCHAR"/>
+            <column name="rating" type="INTEGER"/>
             <column name="status" type="INTEGER">
                 <constraints nullable="false"/>
             </column>

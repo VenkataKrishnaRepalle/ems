@@ -1,6 +1,5 @@
 package com.learning.emsmybatisliquibase.service.impl;
 
-import com.learning.emsmybatisliquibase.dao.PasswordDao;
 import com.learning.emsmybatisliquibase.entity.*;
 import com.learning.emsmybatisliquibase.entity.enums.PasswordStatus;
 import com.learning.emsmybatisliquibase.entity.enums.ProfileStatus;

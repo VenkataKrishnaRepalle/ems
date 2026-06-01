@@ -2,7 +2,6 @@ package com.learning.emsmybatisliquibase.controller;
 
 import com.learning.emsmybatisliquibase.entity.EmployeeSession;
 import com.learning.emsmybatisliquibase.service.EmployeeSessionService;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

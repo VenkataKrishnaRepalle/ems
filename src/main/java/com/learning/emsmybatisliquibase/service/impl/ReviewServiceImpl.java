@@ -61,6 +61,8 @@ public class ReviewServiceImpl implements ReviewService {
 
         var review = new Review();
         review.setUuid(UUID.randomUUID());
+        review.setCreatedTime(LocalDateTime.now());
+        review.setUpdatedTime(LocalDateTime.now());
         setReview(review, reviewDto, employeeUuid);
 
         try {

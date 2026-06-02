@@ -3,7 +3,7 @@ package com.learning.emsmybatisliquibase.batch;
 import com.learning.emsmybatisliquibase.dto.AddEmployeeDto;
 import com.learning.emsmybatisliquibase.entity.enums.Gender;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.batch.item.ItemReader;
+import org.springframework.batch.infrastructure.item.ItemReader;
 
 import java.text.DecimalFormat;
 import java.time.LocalDate;

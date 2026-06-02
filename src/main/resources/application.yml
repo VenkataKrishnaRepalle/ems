@@ -12,6 +12,8 @@ admin:
   uuid: 019a4b09-c44a-729a-ab56-48d21adb0f80
 
 spring:
+  config:
+    import: optional:file:.env[.properties]
   security:
     oauth2:
       resourceserver:
@@ -88,9 +90,11 @@ spring:
 mybatis:
   mapper-locations: classpath:mapper/**/*.xml
   type-aliases-package: com.learning.emsmybatisliquibase.entity
+
 mybatis-plus:
   configuration:
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  type-handlers-package: com.learning.emsmybatisliquibase.entity.enums
 
 springdoc:
   swagger-ui:

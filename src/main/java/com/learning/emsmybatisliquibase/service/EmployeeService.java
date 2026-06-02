@@ -42,4 +42,6 @@ public interface EmployeeService {
     List<EmployeeDetailsDto> getAllActiveManagers();
 
     List<EmployeeDetailsDto> getByNameOrEmail(String name);
+
+    List<EmployeeEtmsDetails> getAllForEtms();
 }

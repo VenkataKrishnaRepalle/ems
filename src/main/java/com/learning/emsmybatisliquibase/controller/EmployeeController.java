@@ -103,4 +103,9 @@ public class EmployeeController {
     public ResponseEntity<List<EmployeeDetailsDto>> getByNameOrEmail(@RequestParam(name = "name") String name) {
         return ResponseEntity.ok(employeeService.getByNameOrEmail(name));
     }
+
+    @GetMapping("/getAllForEtms")
+    public ResponseEntity<List<EmployeeEtmsDetails>> getAllForEtms() {
+        return new ResponseEntity<>(employeeService.getAllForEtms(), HttpStatus.OK);
+    }
 }

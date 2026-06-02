@@ -2,15 +2,7 @@ package com.learning.emsmybatisliquibase.service.impl;
 
 import com.learning.emsmybatisliquibase.dao.EmployeeDao;
 import com.learning.emsmybatisliquibase.dao.EmployeePeriodDao;
-import com.learning.emsmybatisliquibase.dto.AddDepartmentDto;
-import com.learning.emsmybatisliquibase.dto.AddEmployeeDto;
-import com.learning.emsmybatisliquibase.dto.AddEmployeeResponseDto;
-import com.learning.emsmybatisliquibase.dto.EmployeeDetailsDto;
-import com.learning.emsmybatisliquibase.dto.EmployeeFullReportingChainDto;
-import com.learning.emsmybatisliquibase.dto.EmployeeResponseDto;
-import com.learning.emsmybatisliquibase.dto.PaginatedResponse;
-import com.learning.emsmybatisliquibase.dto.PasswordDto;
-import com.learning.emsmybatisliquibase.dto.UpdateLeavingDateDto;
+import com.learning.emsmybatisliquibase.dto.*;
 import com.learning.emsmybatisliquibase.dto.pagination.RequestQuery;
 import com.learning.emsmybatisliquibase.entity.Department;
 import com.learning.emsmybatisliquibase.entity.Employee;
@@ -468,6 +460,11 @@ public class EmployeeServiceImpl implements EmployeeService {
     @Override
     public List<EmployeeDetailsDto> getByNameOrEmail(String name) {
         return employeeDao.getByNameOrEmail(name);
+    }
+
+    @Override
+    public List<EmployeeEtmsDetails> getAllForEtms() {
+        return employeeDao.getAllForEtms();
     }
 
     private String generateRandomPassword() {

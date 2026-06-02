@@ -295,4 +295,20 @@
                  JOIN profile_status ps ON p.profile_status = ps.id
         WHERE e.uuid = #{uuid}
     </select>
+
+    <select id="getAllForEtms" resultMap="employeeEtmsDetailsMap">
+        SELECT e.uuid                             as uuid,
+               e.first_name || ' ' || e.last_name as name,
+               e.email                            as email,
+               e.phone_number                     as phone,
+               ps.name                            as status,
+               m.uuid                             as manager_uuid,
+               m.first_name || ' ' || m.last_name as manager_name,
+               m.email                            as manager_email,
+               m.phone_number                     as manager_phone
+        FROM employee e
+                 LEFT JOIN employee m ON e.manager_uuid = m.uuid
+                 JOIN profile p ON e.uuid = p.employee_uuid
+                 JOIN profile_status ps ON p.profile_status = ps.id
+    </select>
 </mapper>

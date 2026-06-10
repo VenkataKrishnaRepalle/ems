@@ -1,6 +1,7 @@
 package com.learning.emsmybatisliquibase.service.impl;
 
 import com.learning.emsmybatisliquibase.config.KeycloakAdminConfig.KeycloakAdminProperties;
+import com.learning.emsmybatisliquibase.exception.IntegrityException;
 import com.learning.emsmybatisliquibase.service.KeycloakService;
 import jakarta.ws.rs.core.Response;
 import lombok.extern.slf4j.Slf4j;
@@ -15,6 +16,7 @@ import org.springframework.util.StringUtils;
 
 import java.net.URI;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @Slf4j
@@ -86,6 +88,16 @@ public class KeycloakServiceImpl implements KeycloakService {
 
                 userResource.roles().realmLevel().add(newRoles);
             }
+        }
+    }
+
+    @Override
+    public void delete(UUID uuid) {
+        try {
+            UserResource userResource = realmResource.users().get(uuid.toString());
+            userResource.remove();
+        } catch (Exception e) {
+            throw new IntegrityException("KEYCLOAK_DELETE_FAILED", "Failed to delete keycloak with id: " + uuid);
         }
     }
 

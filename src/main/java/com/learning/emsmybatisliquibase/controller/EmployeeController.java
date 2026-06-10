@@ -39,7 +39,7 @@ public class EmployeeController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping(value = "/add")
-    public ResponseEntity<AddEmployeeResponseDto> addEmployee(@Valid @RequestBody AddEmployeeDto employeeDto) {
+    public ResponseEntity<ApiResponse<?>> addEmployee(@Valid @RequestBody AddEmployeeDto employeeDto) {
         return new ResponseEntity<>(employeeService.add(employeeDto), HttpStatus.CREATED);
     }
 

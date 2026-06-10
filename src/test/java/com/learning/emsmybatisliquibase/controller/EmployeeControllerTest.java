@@ -76,7 +76,7 @@ class EmployeeControllerTest {
                 .lastName("test2")
                 .gender(Gender.MALE)
                 .build();
-        when(employeeService.add(addEmployeeDto)).thenReturn(addEmployeeResponseDto);
+        when(employeeService.add(addEmployeeDto)).thenReturn(any());
 
         mockMvc.perform(post("/api/employee/add")
                         .content(objectMapper.writeValueAsString(addEmployeeDto))

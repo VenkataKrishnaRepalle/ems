@@ -45,9 +45,6 @@ public class CommunicationServiceImpl implements CommunicationService {
     @Value("${email.template.successful-onboard.name}")
     String emailTemplateNameSuccessfulOnboard;
 
-    @Value("${email.template.successful-onboard.temp-password.name}")
-    String getEmailTemplateNameSuccessfulOnboardTempPassword;
-
     @Value("${email.template.successful-onboard.subject}")
     String emailTemplateSuccessfulOnboard;
 
@@ -73,9 +70,8 @@ public class CommunicationServiceImpl implements CommunicationService {
     }
 
     @Override
-    public void sendSuccessfulEmployeeOnBoard(Employee employee, String password, int capacity) {
-        String templateName = capacity == 1 ? emailTemplateNameSuccessfulOnboard :
-                getEmailTemplateNameSuccessfulOnboardTempPassword;
+    public void sendSuccessfulEmployeeOnBoard(Employee employee, String password) {
+        String templateName =emailTemplateNameSuccessfulOnboard;
         Thread thread = new Thread(() -> {
             String fullName = employee.getFirstName() + " " + employee.getLastName();
             Context context = new Context();

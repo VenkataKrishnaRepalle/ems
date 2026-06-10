@@ -19,7 +19,7 @@
         <lombok.version>1.18.30</lombok.version>
         <mapstruct.version>1.5.5.Final</mapstruct.version>
         <project-lombok.version>0.2.0</project-lombok.version>
-        <springdoc-openapi.version>2.8.14</springdoc-openapi.version>
+        <springdoc-openapi.version>3.0.3</springdoc-openapi.version>
         <modelmapper.version>3.2.0</modelmapper.version>
         <apache-poi.version>5.4.0</apache-poi.version>
         <postgresql.version>42.7.3</postgresql.version>
@@ -258,6 +258,11 @@
             <version>26.0.8</version>
             <scope>compile</scope>
         </dependency>
+        <dependency>
+            <groupId>io.camunda</groupId>
+            <artifactId>camunda-spring-boot-starter</artifactId>
+            <version>8.9.5</version>
+        </dependency>
     </dependencies>
     <build>
         <resources>
@@ -270,6 +275,9 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
+                    <compilerArgs>
+                        <arg>-parameters</arg>
+                    </compilerArgs>
                     <jvmArguments>--add-opens java.base/sun.nio.ch=ALL-UNNAMED</jvmArguments>
                     <excludes>
                         <exclude>

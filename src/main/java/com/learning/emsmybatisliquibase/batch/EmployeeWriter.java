@@ -26,8 +26,8 @@ public class EmployeeWriter implements ItemWriter<AddEmployeeDto> {
         
         for (AddEmployeeDto employee : chunk) {
             try {
-                UUID uuid = employeeService.add(employee).getUuid();
-                createdUuids.add(uuid);
+//                UUID uuid = employeeService.add(employee).getUuid();
+//                createdUuids.add(uuid);
             } catch (Exception e) {
                 log.error("Failed to add employee {}: {}", employee.getEmail(), e.getMessage());
             }

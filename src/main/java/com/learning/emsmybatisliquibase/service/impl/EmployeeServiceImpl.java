@@ -4,11 +4,7 @@ import com.learning.emsmybatisliquibase.dao.EmployeeDao;
 import com.learning.emsmybatisliquibase.dao.EmployeePeriodDao;
 import com.learning.emsmybatisliquibase.dto.*;
 import com.learning.emsmybatisliquibase.dto.pagination.RequestQuery;
-import com.learning.emsmybatisliquibase.entity.Department;
 import com.learning.emsmybatisliquibase.entity.Employee;
-import com.learning.emsmybatisliquibase.entity.Profile;
-import com.learning.emsmybatisliquibase.entity.Notification;
-import com.learning.emsmybatisliquibase.entity.enums.JobTitleType;
 import com.learning.emsmybatisliquibase.entity.enums.PeriodStatus;
 import com.learning.emsmybatisliquibase.entity.enums.ProfileStatus;
 import com.learning.emsmybatisliquibase.entity.enums.RoleType;
@@ -17,21 +13,16 @@ import com.learning.emsmybatisliquibase.exception.IntegrityException;
 import com.learning.emsmybatisliquibase.exception.InvalidInputException;
 import com.learning.emsmybatisliquibase.exception.NotFoundException;
 import com.learning.emsmybatisliquibase.mapper.EmployeeMapper;
-import com.learning.emsmybatisliquibase.service.CommunicationService;
-import com.learning.emsmybatisliquibase.service.DepartmentService;
 import com.learning.emsmybatisliquibase.service.EmployeeService;
 import com.learning.emsmybatisliquibase.service.EmployeePeriodService;
 import com.learning.emsmybatisliquibase.service.EmployeeRoleService;
 import com.learning.emsmybatisliquibase.service.KeycloakService;
-import com.learning.emsmybatisliquibase.service.NotificationService;
-import com.learning.emsmybatisliquibase.service.PasswordService;
 import com.learning.emsmybatisliquibase.service.PeriodService;
 import com.learning.emsmybatisliquibase.service.ProfileService;
+import io.camunda.client.CamundaClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.jspecify.annotations.NonNull;
-import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -47,8 +38,6 @@ import static com.learning.emsmybatisliquibase.exception.errorcodes.EmployeeErro
 import static com.learning.emsmybatisliquibase.utils.UtilityService.*;
 
 import java.time.LocalDateTime;
-import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -65,11 +54,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     private final EmployeeDao employeeDao;
 
-    private final PasswordService passwordService;
-
     private final EmployeeMapper employeeMapper;
-
-    private final DepartmentService departmentService;
 
     private final ProfileService profileService;
 
@@ -79,24 +64,20 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     private final EmployeePeriodDao employeePeriodDao;
 
-    private final CommunicationService communicationService;
-
     private final Random random = new Random();
 
     private final EmployeeRoleService employeeRoleService;
 
-    private final NotificationService notificationService;
-
     private final KeycloakService keycloakService;
+
+    private final CamundaClient camundaClient;
 
     @Override
     @Transactional
-    public AddEmployeeResponseDto add(AddEmployeeDto employeeDto) {
+    public ApiResponse<?> add(AddEmployeeDto employeeDto) {
         if (employeeDto.getManagerUuid() != null && Boolean.FALSE.equals(isManager(employeeDto.getManagerUuid()))) {
-                employeeDto.setManagerUuid(null);
-            }
-
-
+            employeeDto.setManagerUuid(null);
+        }
         var employeeByEmail = employeeDao.getByEmail(employeeDto.getEmail());
         if (employeeByEmail != null) {
             throw new FoundException(EMPLOYEE_ALREADY_EXISTS.code(), "Employee with given email already exists");
@@ -119,9 +100,21 @@ public class EmployeeServiceImpl implements EmployeeService {
         } else {
             password = generateRandomPassword();
         }
+        try {
+            camundaClient.newCreateInstanceCommand()
+                    .bpmnProcessId("onboarding_colleague")
+                    .latestVersion()
+                    .variables(Map.of("employeeDto", employeeDto, "employee", employee, "password", password))
+                    .send()
+                    .join();
+        } catch (Exception e) {
+            throw new IntegrityException("ONBOARDING_FAILED", e.getMessage());
+        }
+        return ApiResponse.success("Employee onboarded successfully");
+    }
 
-        employee.setUuid(createKeycloakUser(employee, password));
-
+    @Override
+    public Employee insert(Employee employee) {
         try {
             if (0 == employeeDao.insert(employee)) {
                 throw new NotFoundException(EMPLOYEE_NOT_CREATED.code(), "Failed in saving employee");
@@ -129,124 +122,11 @@ public class EmployeeServiceImpl implements EmployeeService {
         } catch (DataIntegrityViolationException exception) {
             throw new IntegrityException(EMPLOYEE_NOT_CREATED.code(), exception.getCause().getMessage());
         }
-
-        passwordService.create(employee.getUuid(),
-                PasswordDto.builder()
-                        .password(password)
-                        .confirmPassword(password)
-                        .build());
-
-        Department department = null;
-        if (employeeDto.getDepartmentName() != null) {
-            department = departmentService.add(new AddDepartmentDto(employeeDto.getDepartmentName().trim()));
-        }
-
-        var profile = Profile.builder()
-                .profileStatus(profileStatus(employeeDto))
-                .jobTitle(JobTitleType.valueOf(employeeDto.getJobTitle()))
-                .employeeUuid(employee.getUuid())
-                .departmentUuid(department == null ? null : department.getUuid())
-                .updatedTime(LocalDateTime.now())
-                .build();
-
-        profileService.insert(profile);
-
-        employeePeriodService.periodAssignment(List.of(employee.getUuid()));
-
-        if (!validatePasswords(employeeDto.getPassword(), employeeDto.getConfirmPassword())) {
-            communicationService.sendSuccessfulEmployeeOnBoard(employee, password, 0);
-        } else {
-            communicationService.sendSuccessfulEmployeeOnBoard(employee, password, 1);
-        }
-
-        var response = employeeMapper.employeeToAddEmployeeResponseDto(employee);
-        response.setProfile(profile);
-        response.setDepartment(department);
-        response.setIsManager(isManager);
-
-        sendCreateUserNotification(employee);
-
-        return response;
-    }
-
-    private UUID createKeycloakUser(Employee employee, String password) {
-        List<String> roles = new ArrayList<>(List.of("EMPLOYEE"));
-        if (Boolean.TRUE.equals(employee.getIsManager())) {
-            roles.add("MANAGER");
-        }
-
-        UserRepresentation userRepresentation = getUserRepresentation(employee, password);
-
-        String keycloakUserId = keycloakService.create(userRepresentation, roles);
-        log.info("Created Keycloak user for employeeUuid={} with keycloakUserId={}", employee.getUuid(), keycloakUserId);
-        return UUID.fromString(keycloakUserId);
-    }
-
-    private void sendCreateUserNotification(Employee employee) {
-        var welcomeTitle = "Welcome to the team";
-        var welcomeMessage = "Welcome to the team " + employee.getFirstName() + " " + employee.getLastName() +
-                "! Please complete necessary onboarding details";
-        notificationService.send(createNotification(employee.getUuid(), welcomeTitle, welcomeMessage, null));
-
-        if (employee.getManagerUuid() != null) {
-            var managerTitle = "New employee onboarded Name: " + employee.getFirstName() + " " + employee.getLastName();
-            var managerMessage = "New employee onboarded successfully on " + employee.getJoiningDate() +
-                    " and reporting to you. Please complete necessary onboarding details";
-            var link = "view/" + employee.getUuid();
-            notificationService.send(createNotification(employee.getManagerUuid(), managerTitle, managerMessage, link));
-        }
-    }
-
-    private static @NonNull UserRepresentation getUserRepresentation(Employee employee, String password) {
-        UserRepresentation userRepresentation = new UserRepresentation();
-        userRepresentation.setUsername(employee.getUsername());
-        userRepresentation.setEmail(employee.getEmail());
-        userRepresentation.setFirstName(employee.getFirstName());
-        userRepresentation.setLastName(employee.getLastName());
-        userRepresentation.setEnabled(true);
-        userRepresentation.setEmailVerified(true);
-        CredentialRepresentation credentialRepresentation = new CredentialRepresentation();
-        credentialRepresentation.setType(CredentialRepresentation.PASSWORD);
-        credentialRepresentation.setTemporary(false);
-        credentialRepresentation.setValue(password);
-        userRepresentation.setCredentials(List.of(credentialRepresentation));
-        return userRepresentation;
-    }
-
-
-    private ProfileStatus profileStatus(AddEmployeeDto employeeDto) {
-        ProfileStatus profileStatus;
-        boolean value = validatePasswords(employeeDto.getPassword(), employeeDto.getConfirmPassword());
-        if (employeeDto.getLeavingDate() != null && employeeDto.getLeavingDate().isAfter(LocalDate.now())) {
-            profileStatus = ProfileStatus.INACTIVE;
-        } else if ((employeeDto.getLeavingDate() == null ||
-                employeeDto.getLeavingDate().isBefore(LocalDate.now())) && !value) {
-            profileStatus = ProfileStatus.PENDING;
-        } else if ((employeeDto.getLeavingDate() == null ||
-                employeeDto.getLeavingDate().isBefore(LocalDate.now())) && value) {
-            profileStatus = ProfileStatus.ACTIVE;
-        } else {
-            profileStatus = ProfileStatus.PENDING;
-        }
-        return profileStatus;
+        return employee;
     }
 
     private boolean validatePasswords(String password, String confirmPassword) {
         return StringUtils.isNotEmpty(password) && StringUtils.isNotEmpty(confirmPassword);
-    }
-
-
-    private Notification createNotification(UUID toEmployeeUuid, String title, String message, String link) {
-        return Notification.builder()
-                .uuid(UUID.randomUUID())
-                .employeeUuid(toEmployeeUuid)
-                .status(Notification.Status.UNREAD)
-                .title(title)
-                .message(message)
-                .link(link)
-                .createdTime(LocalDateTime.now())
-                .updatedTime(LocalDateTime.now())
-                .build();
     }
 
 
@@ -367,8 +247,8 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     public Boolean isManager(UUID uuid) {
-        var manager = getById(uuid);
-        return manager.getIsManager();
+        var manager = employeeDao.get(uuid);
+        return manager != null && manager.getIsManager();
     }
 
     @Override
@@ -465,6 +345,17 @@ public class EmployeeServiceImpl implements EmployeeService {
     @Override
     public List<EmployeeEtmsDetails> getAllForEtms() {
         return employeeDao.getAllForEtms();
+    }
+
+    @Override
+    public void delete(UUID uuid) {
+        try {
+            if (0 == employeeDao.delete(uuid)) {
+                throw new IntegrityException("EMPLOYEE_DELETE_FAILED", "Employee delete failed for employee: " + uuid);
+            }
+        } catch (DataIntegrityViolationException exception) {
+            throw new IntegrityException("EMPLOYEE_DELETE_FAILED", exception.getCause().getMessage());
+        }
     }
 
     private String generateRandomPassword() {

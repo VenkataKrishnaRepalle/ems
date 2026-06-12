@@ -37,7 +37,6 @@ import static com.learning.emsmybatisliquibase.exception.errorcodes.EmployeeErro
 import static com.learning.emsmybatisliquibase.exception.errorcodes.EmployeeErrorCodes.MANAGER_ACCESS_NOT_FOUND;
 import static com.learning.emsmybatisliquibase.utils.UtilityService.*;
 
-import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -75,38 +74,35 @@ public class EmployeeServiceImpl implements EmployeeService {
     @Override
     @Transactional
     public ApiResponse<?> add(AddEmployeeDto employeeDto) {
-        if (employeeDto.getManagerUuid() != null && Boolean.FALSE.equals(isManager(employeeDto.getManagerUuid()))) {
-            employeeDto.setManagerUuid(null);
+        var validate = employeeDto.validate();
+        if (!validate.isEmpty()) {
+            throw new InvalidInputException("INVALID_EMPLOYEE_INPUT", validate);
         }
-        var employeeByEmail = employeeDao.getByEmail(employeeDto.getEmail());
+        var employee = employeeMapper.addEmployeeDtoToEmployee(employeeDto);
+        if (employeeDto.getManagerUuid() != null && Boolean.FALSE.equals(isManager(employeeDto.getManagerUuid()))) {
+            employee.setManagerUuid(null);
+        }
+        var employeeByEmail = employeeDao.getByEmail(employee.getEmail());
         if (employeeByEmail != null) {
             throw new FoundException(EMPLOYEE_ALREADY_EXISTS.code(), "Employee with given email already exists");
         }
 
         boolean isManager = "T".equalsIgnoreCase(employeeDto.getIsManager().trim()) ||
                 "true".equalsIgnoreCase(employeeDto.getIsManager().trim());
-        var employee = employeeMapper.addEmployeeDtoToEmployee(employeeDto);
+        employee.setIsManager(isManager);
+        employee.setManagerUuid(employee.getManagerUuid());
         if (null == employee.getUsername()) {
             employee.setUsername(employee.getEmail());
         }
-        employee.setIsManager(isManager);
-        employee.setManagerUuid(employeeDto.getManagerUuid());
-        employee.setCreatedTime(LocalDateTime.now());
-        employee.setUpdatedTime(LocalDateTime.now());
 
-        String password;
-        if (validatePasswords(employeeDto.getPassword(), employeeDto.getConfirmPassword())) {
-            password = employeeDto.getPassword();
-        } else {
-            password = generateRandomPassword();
-        }
+        String password = validatePasswords(employeeDto.getPassword(), employeeDto.getConfirmPassword()) ?
+                employeeDto.getPassword() : generateRandomPassword();
         try {
             camundaClient.newCreateInstanceCommand()
                     .bpmnProcessId("onboarding_colleague")
                     .latestVersion()
                     .variables(Map.of("employeeDto", employeeDto, "employee", employee, "password", password))
-                    .send()
-                    .join();
+                    .send();
         } catch (Exception e) {
             throw new IntegrityException("ONBOARDING_FAILED", e.getMessage());
         }
@@ -210,8 +206,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         userRepresentation.setEmail(employee.getEmail());
         userRepresentation.setEnabled(enabled);
 
-        Thread t = new Thread(() -> keycloakService.update(userRepresentation));
-        t.start();
+        keycloakService.update(userRepresentation);
     }
 
     public Employee getByEmail(String email) {

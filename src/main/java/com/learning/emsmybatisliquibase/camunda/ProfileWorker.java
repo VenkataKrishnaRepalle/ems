@@ -58,13 +58,13 @@ public class ProfileWorker {
                     .departmentUuid(department == null ? null : department.getUuid())
                     .updatedTime(LocalDateTime.now())
                     .build());
+            log.info("Profile inserted for employee: {}", employeeUuid);
         } catch (Exception e) {
             log.error("Profile job worker failed with exception: {}", e.getMessage());
             client.newThrowErrorCommand(job.getKey())
                     .errorCode("compensate-keycloak-employee-error")
                     .errorMessage("Invalid job title: " + employeeDto.getJobTitle())
-                    .send()
-                    .join();
+                    .send();
         }
     }
 

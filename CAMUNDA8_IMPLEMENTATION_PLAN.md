@@ -795,6 +795,443 @@ Tasks:
 - lock review
 - complete review
 
+## Quarterly Review Workflow: Detailed Implementation Plan
+
+### Recommended process-instance boundary
+
+Use **one Camunda process instance per `review_timeline` row**.
+
+This is preferable to one process per quarter because every timeline already has its own:
+
+- employee-period association
+- review type
+- start time
+- overdue time
+- lock time
+- end time
+- lifecycle status
+
+Use `reviewTimelineUuid` as the process business key and primary correlation identifier. Store only identifiers and timer timestamps as process variables; reload mutable employee and review data from PostgreSQL inside workers.
+
+Do not use one process instance for all employees in a quarter. A bulk process would recreate the current loop-heavy behavior, make individual failures harder to retry, and reduce operational visibility.
+
+### Target BPMN flow
+
+Create:
+
+```text
+src/main/resources/bpmn/quarterly-review-lifecycle.bpmn
+```
+
+Model the process as:
+
+```text
+Start
+  -> Wait until preStartTime
+  -> Send pre-start email
+  -> Wait until startTime
+  -> Mark timeline STARTED
+  -> Send start email
+  -> Wait until overdueTime
+  -> Mark timeline OVERDUE when still STARTED
+  -> Wait until lockTime
+  -> Mark timeline LOCKED when still STARTED or OVERDUE
+  -> Wait until endTime
+  -> Mark timeline COMPLETED when not already COMPLETED
+  -> End
+```
+
+Use intermediate timer catch events with date expressions:
+
+```text
+=preStartTime
+=startTime
+=overdueTime
+=lockTime
+=endTime
+```
+
+Use these service-task job types:
+
+```text
+review.send-pre-start-email
+review.mark-started
+review.send-start-email
+review.mark-overdue
+review.lock
+review.complete
+```
+
+The timer values passed to Camunda must include an offset or UTC timezone. The current entity uses `LocalDateTime`, so the workflow starter must convert each value using the configured business timezone, currently `Asia/Kolkata`, to an ISO-8601 offset timestamp before starting the process.
+
+### Process variables
+
+Create:
+
+```text
+src/main/java/com/learning/emsmybatisliquibase/camunda/workflow/review/QuarterlyReviewVariables.java
+```
+
+Variables:
+
+```text
+reviewTimelineUuid
+employeePeriodUuid
+reviewType
+preStartTime
+startTime
+overdueTime
+lockTime
+endTime
+```
+
+Do not put employee name, email address, review content, or the entire `ReviewTimeline` object into workflow variables. Workers must query current domain data by `reviewTimelineUuid`.
+
+Derive `preStartTime` from a configurable duration, initially seven days before `startTime`, because the current scheduler sends the notification on March/June/September/December 25 before the next quarter starts. Add:
+
+```yaml
+ems:
+  review-workflow:
+    pre-start-notification-days: 7
+    business-zone: Asia/Kolkata
+    bootstrap-page-size: 500
+```
+
+### Step 1. Add Camunda technical foundation
+
+Change:
+
+- `pom.xml`
+- `src/main/resources/application.yml`
+- environment-specific deployment configuration
+
+Add the Camunda 8 Spring client dependency compatible with the repository's Spring Boot version. This repository currently uses Spring Boot `4.0.5`; verify Camunda's supported Spring Boot compatibility before choosing the client version. Do not force an incompatible Camunda starter into the application.
+
+Configure:
+
+- Zeebe gRPC/REST endpoint
+- authentication for SaaS or self-managed deployment
+- BPMN deployment
+- worker thread count
+- maximum active jobs
+- job timeout
+- retry/backoff defaults
+
+Add a Camunda health check and verify that the application can deploy a BPMN model and register a test worker before migrating review behavior.
+
+### Step 2. Add workflow linkage and idempotency columns
+
+Create a new Liquibase migration:
+
+```text
+src/main/resources/db/changelog/migration/review-timeline-workflow-ddl.xml
+```
+
+Add nullable columns to `review_timeline`:
+
+```text
+workflow_instance_key BIGINT
+workflow_status VARCHAR
+workflow_started_time TIMESTAMP
+```
+
+Add a unique index on `workflow_instance_key` when it is not null. Also add or verify indexes supporting:
+
+```text
+review_timeline(status, start_time)
+review_timeline(employee_period_uuid, type)
+```
+
+Map the new columns in:
+
+- `src/main/java/com/learning/emsmybatisliquibase/entity/ReviewTimeline.java`
+- `src/main/resources/mapper/ReviewTimelineDao.xml`
+
+These columns let the bootstrapper avoid starting duplicate instances and let support staff navigate from the domain record to Camunda Operate.
+
+### Step 3. Split lifecycle mutations from orchestration
+
+Change:
+
+- `src/main/java/com/learning/emsmybatisliquibase/service/ReviewTimelineService.java`
+- `src/main/java/com/learning/emsmybatisliquibase/service/impl/ReviewTimelineServiceImpl.java`
+- `src/main/java/com/learning/emsmybatisliquibase/dao/ReviewTimelineDao.java`
+- `src/main/resources/mapper/ReviewTimelineDao.xml`
+
+Add worker-safe, idempotent domain methods:
+
+```java
+boolean markStarted(UUID timelineUuid);
+boolean markOverdue(UUID timelineUuid);
+boolean lock(UUID timelineUuid);
+boolean complete(UUID timelineUuid);
+```
+
+Implement each transition as a conditional SQL update instead of loading a collection and updating rows in a loop. Examples:
+
+```sql
+UPDATE review_timeline
+SET status = 'STARTED', updated_time = CURRENT_TIMESTAMP
+WHERE uuid = #{uuid}
+  AND status IN ('SCHEDULED', 'NOT_STARTED');
+```
+
+```sql
+UPDATE review_timeline
+SET status = 'OVERDUE', updated_time = CURRENT_TIMESTAMP
+WHERE uuid = #{uuid}
+  AND status = 'STARTED';
+```
+
+```sql
+UPDATE review_timeline
+SET status = 'LOCKED', updated_time = CURRENT_TIMESTAMP
+WHERE uuid = #{uuid}
+  AND status IN ('STARTED', 'OVERDUE');
+```
+
+```sql
+UPDATE review_timeline
+SET status = 'COMPLETED', updated_time = CURRENT_TIMESTAMP
+WHERE uuid = #{uuid}
+  AND status != 'COMPLETED';
+```
+
+A zero-row update must be treated as an idempotent no-op when the timeline is already at or beyond the requested state. It should fail only when the timeline does not exist or the current state represents an invalid transition.
+
+Correct the existing DAO signature while making these changes:
+
+```java
+findByStatusAndReviewType(ReviewTimelineStatus status, ReviewType reviewType)
+```
+
+It currently accepts `PeriodStatus` while filtering `review_timeline.status`.
+
+After workers are live, deprecate and then remove `startTimelinesForQuarter(...)`; it mixes completion, start, loops, and notification orchestration in one service method.
+
+### Step 4. Add a workflow starter and bootstrap query
+
+Create:
+
+```text
+src/main/java/com/learning/emsmybatisliquibase/camunda/workflow/review/QuarterlyReviewWorkflowStarter.java
+src/main/java/com/learning/emsmybatisliquibase/camunda/workflow/review/QuarterlyReviewWorkflowBootstrapper.java
+```
+
+Add DAO methods that page through eligible timelines:
+
+```java
+List<ReviewTimeline> findEligibleForWorkflowStart(int limit, UUID afterUuid);
+int attachWorkflowInstance(UUID timelineUuid, long processInstanceKey);
+```
+
+Eligibility should require:
+
+- timeline has all required dates
+- timeline status is `SCHEDULED` or `NOT_STARTED`
+- active employee period
+- `workflow_instance_key IS NULL`
+
+For each eligible row:
+
+1. validate `preStartTime < startTime < overdueTime < lockTime <= endTime`
+2. start `quarterly-review-lifecycle` using `reviewTimelineUuid` as business key
+3. persist the returned process instance key
+4. record bootstrap failures for retry and monitoring
+
+The starter must be callable immediately after a new timeline is inserted. Also keep a temporary paged reconciliation scheduler so timelines created before the migration or missed after transient failures are eventually started.
+
+### Step 5. Start workflows when timelines are created
+
+Change:
+
+- `src/main/java/com/learning/emsmybatisliquibase/service/impl/EmployeePeriodServiceImpl.java`
+
+The current timeline creation path inserts each timeline through `reviewTimelineDao.insert(...)`. After the surrounding database transaction commits, invoke `QuarterlyReviewWorkflowStarter` for each newly created timeline.
+
+Do not start the Camunda process before the database transaction commits; otherwise a worker can run before the timeline row is visible. Use an after-commit event/listener or an outbox record. For the first rollout, the reconciliation bootstrapper remains the recovery mechanism if an after-commit start fails.
+
+### Step 6. Implement review lifecycle workers
+
+Create:
+
+```text
+src/main/java/com/learning/emsmybatisliquibase/camunda/worker/review/MarkReviewStartedWorker.java
+src/main/java/com/learning/emsmybatisliquibase/camunda/worker/review/MarkReviewOverdueWorker.java
+src/main/java/com/learning/emsmybatisliquibase/camunda/worker/review/LockReviewWorker.java
+src/main/java/com/learning/emsmybatisliquibase/camunda/worker/review/CompleteReviewWorker.java
+src/main/java/com/learning/emsmybatisliquibase/camunda/worker/review/SendReviewPreStartEmailWorker.java
+src/main/java/com/learning/emsmybatisliquibase/camunda/worker/review/SendReviewStartEmailWorker.java
+```
+
+Worker rules:
+
+- accept `reviewTimelineUuid` as the required input
+- call one domain service method
+- contain no direct SQL
+- complete only after the domain operation succeeds
+- throw retryable failures for transient DB/email-provider errors
+- create an incident after configured retries are exhausted
+- treat an already-applied state transition as success
+
+The state workers should be small wrappers around `ReviewTimelineService`. The email workers should call a single-recipient communication method rather than loading and sending an entire quarter in one job.
+
+### Step 7. Refactor notifications for one timeline at a time
+
+Change:
+
+- `src/main/java/com/learning/emsmybatisliquibase/service/CommunicationService.java`
+- `src/main/java/com/learning/emsmybatisliquibase/service/impl/CommunicationServiceImpl.java`
+- `src/main/java/com/learning/emsmybatisliquibase/dao/ReviewTimelineDao.java`
+- `src/main/resources/mapper/ReviewTimelineDao.xml`
+
+Add:
+
+```java
+void sendReviewPreStartNotification(UUID timelineUuid);
+void sendReviewStartNotification(UUID timelineUuid);
+```
+
+Add a DAO query that returns one `NotificationDto` by timeline UUID. Remove the raw `new Thread(...)` behavior from the new methods; Camunda already provides asynchronous execution and retries.
+
+For duplicate-send protection, persist a delivery key such as:
+
+```text
+review:{timelineUuid}:pre-start
+review:{timelineUuid}:start
+```
+
+Reuse or extend the notification table so the worker can detect an already successful delivery before calling the email provider again. Without this, a worker timeout after a successful provider call can send a duplicate email on retry.
+
+Keep the existing bulk notification methods only during the parallel-run period, then remove:
+
+```java
+sendNotificationBeforeStart(List<NotificationDto>, ReviewType)
+sendStartNotification(ReviewType)
+```
+
+### Step 8. Replace the review schedulers safely
+
+Change:
+
+- `src/main/java/com/learning/emsmybatisliquibase/scheduled/ScheduledTasks.java`
+
+Roll out in two stages:
+
+1. Disable business actions in `startTimeline()` and `sendBeforeStartNotification()`, but keep a reconciliation scheduler that starts missing workflow instances.
+2. After at least one complete quarter transition and reconciliation verification, remove both old review scheduler methods.
+
+Do not run the old schedulers and Camunda lifecycle workers as active writers at the same time. Although conditional updates protect status changes, both paths can still send duplicate emails.
+
+Keep unrelated scheduled methods in `ScheduledTasks`, including period, profile, and OTP tasks, until they are migrated separately.
+
+### Step 9. Define handling for changed timeline dates
+
+BPMN timer due dates are created from the variables present when the process reaches each timer. Updating `review_timeline.start_time`, `overdue_time`, `lock_time`, or `end_time` after process start does not automatically update a timer that is already active.
+
+Choose and implement one policy before production rollout:
+
+1. Recommended initial policy: reject lifecycle date edits after `workflow_instance_key` is assigned.
+2. Later policy: publish a timeline-rescheduled command and use a supported Camunda process-instance modification/migration procedure to recreate affected timers.
+
+Document the selected policy in the review timeline update API and validate it in `ReviewTimelineServiceImpl`.
+
+### Step 10. Test the workflow
+
+Add:
+
+```text
+src/test/java/com/learning/emsmybatisliquibase/camunda/workflow/review/QuarterlyReviewWorkflowTest.java
+src/test/java/com/learning/emsmybatisliquibase/camunda/worker/review/ReviewLifecycleWorkerTest.java
+src/test/java/com/learning/emsmybatisliquibase/service/impl/ReviewTimelineServiceImplTest.java
+```
+
+Required test cases:
+
+- starts one process per eligible timeline
+- does not start a second process for an attached timeline
+- converts `Asia/Kolkata` `LocalDateTime` values to the correct offset timestamps
+- sends pre-start and start notification once
+- transitions `SCHEDULED -> STARTED -> OVERDUE -> LOCKED -> COMPLETED`
+- skips overdue/lock transitions when the review is already completed
+- worker retry does not duplicate a state transition or notification
+- invalid or missing dates prevent workflow start and are observable
+- inactive employee-period timelines are not bootstrapped
+- bootstrap pagination processes all eligible rows
+
+Use short timer durations in an integration-test BPMN variant or inject dates close to the test clock. Do not wait for real quarter dates in tests.
+
+### Step 11. Production rollout and acceptance criteria
+
+Rollout sequence:
+
+1. deploy schema and worker code with review workers disabled
+2. deploy and validate the BPMN definition
+3. start workflows for a small controlled set of timelines
+4. verify timers and variables in Camunda Operate
+5. enable workers and verify status transitions and single-recipient emails
+6. run the reconciliation bootstrapper for all open timelines
+7. disable the two legacy review scheduler methods
+8. monitor through one complete quarter transition
+9. remove deprecated bulk orchestration methods
+
+Acceptance criteria:
+
+- every open timeline has exactly one workflow instance key
+- no review lifecycle transition depends on the quarterly cron methods
+- no review email is sent through a bulk loop or raw thread
+- worker retries are idempotent
+- incidents identify the affected `reviewTimelineUuid`
+- support can trace a timeline from PostgreSQL to its Camunda instance
+- reconciliation reports zero eligible timelines without a workflow instance
+
+### File-change summary for the quarterly review migration
+
+Modify:
+
+```text
+pom.xml
+src/main/resources/application.yml
+src/main/java/com/learning/emsmybatisliquibase/entity/ReviewTimeline.java
+src/main/java/com/learning/emsmybatisliquibase/dao/ReviewTimelineDao.java
+src/main/resources/mapper/ReviewTimelineDao.xml
+src/main/java/com/learning/emsmybatisliquibase/service/ReviewTimelineService.java
+src/main/java/com/learning/emsmybatisliquibase/service/impl/ReviewTimelineServiceImpl.java
+src/main/java/com/learning/emsmybatisliquibase/service/CommunicationService.java
+src/main/java/com/learning/emsmybatisliquibase/service/impl/CommunicationServiceImpl.java
+src/main/java/com/learning/emsmybatisliquibase/service/impl/EmployeePeriodServiceImpl.java
+src/main/java/com/learning/emsmybatisliquibase/scheduled/ScheduledTasks.java
+```
+
+Add:
+
+```text
+src/main/resources/bpmn/quarterly-review-lifecycle.bpmn
+src/main/resources/db/changelog/migration/review-timeline-workflow-ddl.xml
+src/main/java/com/learning/emsmybatisliquibase/camunda/workflow/review/QuarterlyReviewVariables.java
+src/main/java/com/learning/emsmybatisliquibase/camunda/workflow/review/QuarterlyReviewWorkflowStarter.java
+src/main/java/com/learning/emsmybatisliquibase/camunda/workflow/review/QuarterlyReviewWorkflowBootstrapper.java
+src/main/java/com/learning/emsmybatisliquibase/camunda/worker/review/MarkReviewStartedWorker.java
+src/main/java/com/learning/emsmybatisliquibase/camunda/worker/review/MarkReviewOverdueWorker.java
+src/main/java/com/learning/emsmybatisliquibase/camunda/worker/review/LockReviewWorker.java
+src/main/java/com/learning/emsmybatisliquibase/camunda/worker/review/CompleteReviewWorker.java
+src/main/java/com/learning/emsmybatisliquibase/camunda/worker/review/SendReviewPreStartEmailWorker.java
+src/main/java/com/learning/emsmybatisliquibase/camunda/worker/review/SendReviewStartEmailWorker.java
+src/test/java/com/learning/emsmybatisliquibase/camunda/workflow/review/QuarterlyReviewWorkflowTest.java
+src/test/java/com/learning/emsmybatisliquibase/camunda/worker/review/ReviewLifecycleWorkerTest.java
+```
+
+Remove after successful rollout:
+
+```text
+ScheduledTasks.startTimeline()
+ScheduledTasks.sendBeforeStartNotification()
+ReviewTimelineService.startTimelinesForQuarter(...)
+CommunicationService.sendNotificationBeforeStart(...)
+CommunicationService.sendStartNotification(...)
+ReviewTimelineDao.getTimelineIdsByReviewType(...)
+```
+
 ### 3. Employee Onboarding Process
 
 Input:

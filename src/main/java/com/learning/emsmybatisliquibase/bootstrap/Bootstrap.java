@@ -60,10 +60,10 @@ public class Bootstrap implements CommandLineRunner {
                     .confirmPassword("Admin@123")
                     .build();
             employeeService.add(employee);
-            employeeRoleService.add(EmployeeRole.builder()
-                    .employeeUuid(employeeService.getByEmail(employee.getEmail()).getUuid())
-                    .role(RoleType.ADMIN)
-                    .build());
+//            employeeRoleService.add(EmployeeRole.builder()
+//                    .employeeUuid(employeeService.getByEmail(employee.getEmail()).getUuid())
+//                    .role(RoleType.ADMIN)
+//                    .build());
 
             var employee1 = AddEmployeeDto.builder()
                     .firstName("venky")

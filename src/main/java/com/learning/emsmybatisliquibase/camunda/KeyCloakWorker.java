@@ -48,6 +48,8 @@ public class KeyCloakWorker {
             roles.add("MANAGER");
         }
         String uuid = keycloakService.create(getUserRepresentation(employee, password), roles);
+        log.info("Created user in keycloak with id: {}", uuid);
+
         UUID employeeUuid = UUID.fromString(uuid);
         employee.setUuid(employeeUuid);
 
@@ -84,9 +86,8 @@ public class KeyCloakWorker {
             throw new InvalidInputException("INVALID_INPUT", "Not a valid input: employeeUuid");
         }
         UUID employeeUuid = objectMapper.convertValue(data.get("employeeUuid"), UUID.class);
-        log.info("compensateDeleteKeycloakUser: Deleting user with id: {}", employeeUuid);
-
         keycloakService.delete(employeeUuid);
+        log.info("Deleted keycloak user with id: {}", employeeUuid);
     }
 
 }

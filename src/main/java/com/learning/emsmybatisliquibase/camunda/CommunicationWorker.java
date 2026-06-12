@@ -8,8 +8,10 @@ import io.camunda.client.annotation.JobWorker;
 import io.camunda.client.api.response.ActivatedJob;
 import io.camunda.client.api.worker.JobClient;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class CommunicationWorker {
@@ -31,6 +33,7 @@ public class CommunicationWorker {
         String password = objectMapper.convertValue(data.get("password"), String.class);
         communicationService.sendSuccessfulEmployeeOnBoard(employee, password);
 
-        client.newCompleteCommand(job.getKey()).send().join();
+        log.info("Notification send successfully to user: {}", employee.getUuid());
+//        client.newCompleteCommand(job.getKey()).send();
     }
 }

@@ -8,6 +8,7 @@ import com.learning.emsmybatisliquibase.dto.NotificationDto;
 import com.learning.emsmybatisliquibase.entity.Employee;
 import com.learning.emsmybatisliquibase.entity.enums.ReviewType;
 import com.learning.emsmybatisliquibase.service.CommunicationService;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import jakarta.annotation.PostConstruct;
@@ -15,11 +16,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientException;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -71,25 +74,24 @@ public class CommunicationServiceImpl implements CommunicationService {
 
     @Override
     public void sendSuccessfulEmployeeOnBoard(Employee employee, String password) {
-        String templateName =emailTemplateNameSuccessfulOnboard;
-        Thread thread = new Thread(() -> {
-            String fullName = employee.getFirstName() + " " + employee.getLastName();
-            Context context = new Context();
-            context.setVariable("name", fullName);
-            context.setVariable("email", employee.getEmail());
-            context.setVariable("phoneNumber", employee.getPhoneNumber());
-            context.setVariable("password", password);
+        String templateName = emailTemplateNameSuccessfulOnboard;
+        String fullName = employee.getFirstName() + " " + employee.getLastName();
+        Context context = new Context();
+        context.setVariable("name", fullName);
+        context.setVariable("email", employee.getEmail());
+        context.setVariable("phoneNumber", employee.getPhoneNumber());
+        context.setVariable("password", password);
 
-            var htmlContent = templateEngine.process(templateName, context);
-            var emailRequestDto = constructEmailRequest(fullName, employee.getEmail(), emailTemplateSuccessfulOnboard, htmlContent);
-            sendEmail(emailRequestDto);
-        });
-        thread.start();
+        var htmlContent = templateEngine.process(templateName, context);
+        var emailRequestDto = constructEmailRequest(fullName, employee.getEmail(),
+                emailTemplateSuccessfulOnboard, htmlContent);
+        sendEmail(employee.getUuid(), emailRequestDto);
+
     }
 
     @Override
     public void sendNotificationBeforeStart(List<NotificationDto> notifications, ReviewType reviewType) {
-        var thread = new Thread(() -> notifications.forEach(employee -> {
+        notifications.forEach(employee -> {
             log.info("Sending notification before start email to colleague {}", employee.getUuid());
             var fullName = employee.getFirstName() + " " + employee.getLastName();
             Context context = new Context();
@@ -99,23 +101,21 @@ public class CommunicationServiceImpl implements CommunicationService {
 
             var htmlContent = templateEngine.process(beforeReviewStartName, context);
             var emailRequest = constructEmailRequest(fullName, employee.getEmail(), beforeReviewStartSubject, htmlContent);
-            sendEmail(emailRequest);
-        }));
-        thread.start();
+            sendEmail(employee.getUuid(), emailRequest);
+        });
     }
 
     @Override
     public void sendStartNotification(ReviewType reviewType) {
         var notifications = reviewTimelineDao.getTimelineIdsByReviewType(reviewType);
-        var thread = new Thread(() -> notifications.forEach(employee -> {
+        notifications.forEach(employee -> {
             log.info("Sending notification start email to colleague {}", employee.getUuid());
             var fullName = employee.getFirstName() + " " + employee.getLastName();
             Context context = reviewStartContext(fullName, employee.getStartTime(), reviewType);
             var htmlContent = templateEngine.process(reviewStartName, context);
             var emailRequest = constructEmailRequest(fullName, employee.getEmail(), reviewStartSubject, htmlContent);
-            sendEmail(emailRequest);
-        }));
-        thread.start();
+            sendEmail(employee.getUuid(), emailRequest);
+        });
     }
 
     private Context reviewStartContext(String name, Object startDate, ReviewType reviewType) {
@@ -141,18 +141,21 @@ public class CommunicationServiceImpl implements CommunicationService {
                 .build();
     }
 
-    private void sendEmail(EmailRequestDto emailRequestDto) {
-        webClient.post()
-                .uri("/email")
-                .header("api-key", apiKey)
-                .bodyValue(emailRequestDto)
-                .retrieve()
-                .onStatus(HttpStatusCode::is4xxClientError, clientResponse -> {
-                    log.error("Error fetching Location: {}", clientResponse.statusCode());
-                    return clientResponse.createException().flatMap(Mono::error);
-                })
-                .bodyToMono(EmailResponseDto.class)
-                .block();
-
+    private void sendEmail(UUID employeeUuid, EmailRequestDto emailRequestDto) {
+        try {
+            webClient.post()
+                    .uri("/email")
+                    .header("api-key", apiKey)
+                    .bodyValue(emailRequestDto)
+                    .retrieve()
+                    .onStatus(HttpStatusCode::is4xxClientError, clientResponse -> {
+                        log.error("Error fetching Location: {}", clientResponse.statusCode());
+                        return clientResponse.createException().flatMap(Mono::error);
+                    })
+                    .bodyToMono(EmailResponseDto.class)
+                    .block();
+        } catch (WebClientException exception) {
+            log.error("Error sending email to user: {}", employeeUuid);
+        }
     }
 }

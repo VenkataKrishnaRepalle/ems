@@ -129,7 +129,6 @@ logging:
         orm:
           jdbc:
             bind: trace
-
 maximum:
   login:
     count: 5

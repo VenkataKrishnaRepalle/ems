@@ -13,6 +13,7 @@ import io.camunda.client.api.response.EvaluateDecisionResponse;
 import io.camunda.client.api.worker.JobClient;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
@@ -20,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class NotificationWorker {
@@ -37,7 +39,7 @@ public class NotificationWorker {
         var variables = job.getVariablesAsMap();
         var employee = objectMapper.convertValue(variables.get("employee"), Employee.class);
         sendNotification("ONBOARDING", "EMPLOYEE", employee, employee.getUuid());
-        client.newCompleteCommand(job.getKey()).send().join();
+        client.newCompleteCommand(job.getKey()).send();
     }
 
     @JobWorker(type = "send-manager-notification")
@@ -53,7 +55,7 @@ public class NotificationWorker {
 
         }
 
-        client.newCompleteCommand(job.getKey()).send().join();
+        client.newCompleteCommand(job.getKey()).send();
     }
 
     @SneakyThrows
@@ -96,6 +98,7 @@ public class NotificationWorker {
                         .build());
             }
         }
+        log.info("Notification sent successfully to user: {}", recipientUuid);
     }
 
     private String processTemplate(String template, Employee employee) {

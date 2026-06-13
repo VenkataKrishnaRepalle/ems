@@ -5,6 +5,7 @@ import com.learning.emsmybatisliquibase.dao.EmployeePeriodDao;
 import com.learning.emsmybatisliquibase.dto.*;
 import com.learning.emsmybatisliquibase.dto.pagination.RequestQuery;
 import com.learning.emsmybatisliquibase.entity.Employee;
+import com.learning.emsmybatisliquibase.entity.camunda.ProcessExecution;
 import com.learning.emsmybatisliquibase.entity.enums.PeriodStatus;
 import com.learning.emsmybatisliquibase.entity.enums.ProfileStatus;
 import com.learning.emsmybatisliquibase.entity.enums.RoleType;
@@ -19,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.keycloak.representations.idm.UserRepresentation;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -66,6 +68,11 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     private final CamundaClient camundaClient;
 
+    private final ProcessExecutionService processExecutionService;
+
+    @Value("${admin.uuid}")
+    UUID adminUuid;
+
     @Override
     @Transactional
     public ApiResponse<?> add(AddEmployeeDto employeeDto) {
@@ -97,7 +104,19 @@ public class EmployeeServiceImpl implements EmployeeService {
                     .bpmnProcessId("onboarding_colleague")
                     .latestVersion()
                     .variables(Map.of("employeeDto", employeeDto, "employee", employee, "password", password))
-                    .send();
+                    .send()
+                    .thenAccept(response -> {
+                        var user = getAuthenticatedUser();
+                        ProcessExecution processExecution = ProcessExecution.builder()
+                                .processInstanceKey(response.getProcessInstanceKey())
+                                .processDefinitionId(String.valueOf(response.getProcessDefinitionKey()))
+                                .processName(response.getBpmnProcessId())
+                                .employeeUuid(employee.getUuid())
+                                .startedBy(user != null ? user : adminUuid)
+                                .build();
+
+                        processExecutionService.insert(processExecution);
+                    });
 
         } catch (Exception e) {
             throw new IntegrityException("ONBOARDING_FAILED", e.getMessage());

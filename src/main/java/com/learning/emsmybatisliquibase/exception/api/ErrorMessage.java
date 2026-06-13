@@ -6,7 +6,7 @@ public class ErrorMessage {
     private ErrorMessage() {
     }
 
-    public static ErrorResponse errorResponse(String error, String dynamicValue) {
+    public static ErrorResponse errorResponse(String error, Object dynamicValue) {
         return ErrorResponse.builder()
                 .status(StatusType.ERROR)
                 .error(Error.builder()

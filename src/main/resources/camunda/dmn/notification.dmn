@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" xmlns:dmndi="https://www.omg.org/spec/DMN/20191111/DMNDI/" xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/" id="notification_dmn" name="Notification" namespace="http://camunda.org/schema/1.0/dmn" exporter="Camunda Modeler" exporterVersion="5.47.0">
+  <decision id="notification-decision" name="Notification Decision">
+    <decisionTable id="DecisionTable_1">
+      <input id="Input_1" label="Notification Type">
+        <inputExpression id="InputExpression_1" typeRef="string">
+          <text>notificationType</text>
+        </inputExpression>
+      </input>
+      <input id="InputClause_1" label="Recipient Role">
+        <inputExpression id="LiteralExpression_1" typeRef="string">
+          <text>recipientRole</text>
+        </inputExpression>
+      </input>
+      <output id="Output_1" label="Title" name="title" typeRef="string" />
+      <output id="OutputClause_1" label="Message" name="message" typeRef="string" />
+      <output id="OutputClause_2" label="Link" name="link" typeRef="string" />
+      <rule id="Rule_1">
+        <inputEntry id="UnaryTests_1">
+          <text>"ONBOARDING"</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_2">
+          <text>"EMPLOYEE"</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_2">
+          <text>"Welcome to the team"</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_3">
+          <text>"Welcome to the team {firstName} {lastName}! Please complete necessary onboarding details"</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_4">
+          <text>null</text>
+        </outputEntry>
+      </rule>
+      <rule id="Rule_2">
+        <inputEntry id="UnaryTests_3">
+          <text>"ONBOARDING"</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_4">
+          <text>"MANAGER"</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_5">
+          <text>"New employee onboarded Name: {firstName} {lastName}"</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_6">
+          <text>"New employee onboarded successfully on {joiningDate} and reporting to you. Please complete necessary onboarding details"</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_7">
+          <text>"view/{employeeUuid}"</text>
+        </outputEntry>
+      </rule>
+      <rule id="Rule_3">
+        <inputEntry id="UnaryTests_5">
+          <text>"REVIEW_SUBMITTED"</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_6">
+          <text>"MANAGER"</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_8">
+          <text>"Review Submitted by {employeeName}"</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_9">
+          <text>"{employeeName} has submitted their performance review for {reviewCycle}. Please review and provide feedback."</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_10">
+          <text>"reviews/{reviewId}"</text>
+        </outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+  <dmndi:DMNDI>
+    <dmndi:DMNDiagram>
+      <dmndi:DMNShape id="Decision_12ftx91_di" dmnElementRef="notification-decision">
+        <dc:Bounds height="80" width="180" x="160" y="100" />
+      </dmndi:DMNShape>
+    </dmndi:DMNDiagram>
+  </dmndi:DMNDI>
+</definitions>

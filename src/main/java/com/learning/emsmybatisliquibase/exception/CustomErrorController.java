@@ -43,7 +43,7 @@ public class CustomErrorController {
 
     @ExceptionHandler(FoundException.class)
     public ResponseEntity<ErrorResponse> handleCustomerAlreadyPresentExceptionError(FoundException exception) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+        return ResponseEntity.status(HttpStatus.FOUND)
                 .body(ErrorMessage.errorResponse(exception.getErrorCode(), exception.getDynamicValue()));
     }
 

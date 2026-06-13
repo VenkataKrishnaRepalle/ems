@@ -11,6 +11,7 @@ import com.learning.emsmybatisliquibase.service.EmployeeRoleService;
 import com.learning.emsmybatisliquibase.service.PeriodService;
 import com.learning.emsmybatisliquibase.service.EmployeeService;
 import lombok.RequiredArgsConstructor;
+import org.jspecify.annotations.NonNull;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
@@ -38,7 +39,7 @@ public class Bootstrap implements CommandLineRunner {
     private static final String WALMART = "Walmart";
 
     @Override
-    public void run(String... args) {
+    public void run(String @NonNull ... args) {
         if (periodDao.getByStatus(PeriodStatus.STARTED) == null) {
             var cycle = periodService.createPeriod(Calendar.getInstance().get(Calendar.YEAR));
             periodService.updateStatus(cycle.getUuid(), PeriodStatus.STARTED);
@@ -58,11 +59,11 @@ public class Bootstrap implements CommandLineRunner {
                     .password("Admin@123")
                     .confirmPassword("Admin@123")
                     .build();
-            var employeeResponse = employeeService.add(employee);
-            employeeRoleService.add(EmployeeRole.builder()
-                    .employeeUuid(employeeResponse.getUuid())
-                    .role(RoleType.ADMIN)
-                    .build());
+            employeeService.add(employee);
+//            employeeRoleService.add(EmployeeRole.builder()
+//                    .employeeUuid(employeeService.getByEmail(employee.getEmail()).getUuid())
+//                    .role(RoleType.ADMIN)
+//                    .build());
 
             var employee1 = AddEmployeeDto.builder()
                     .firstName("venky")
@@ -78,7 +79,7 @@ public class Bootstrap implements CommandLineRunner {
                     .password("Venky@123")
                     .confirmPassword("Venky@123")
                     .build();
-            var employee1Response = employeeService.add(employee1);
+            employeeService.add(employee1);
 
             var employee2 = AddEmployeeDto.builder()
                     .firstName("chandu")
@@ -89,7 +90,6 @@ public class Bootstrap implements CommandLineRunner {
                     .joiningDate(Date.valueOf("2019-07-04").toLocalDate())
                     .gender(Gender.MALE)
                     .isManager("F")
-                    .managerUuid(employee1Response.getUuid())
                     .departmentName(TESCO)
                     .jobTitle(JobTitleType.TECHNICAL_LEAD.toString())
                     .password("Chandu@123")
@@ -106,7 +106,6 @@ public class Bootstrap implements CommandLineRunner {
                     .joiningDate(Date.valueOf("2020-07-04").toLocalDate())
                     .gender(Gender.MALE)
                     .isManager("F")
-                    .managerUuid(employee1Response.getUuid())
                     .departmentName(TESCO)
                     .jobTitle(JobTitleType.SENIOR_SOFTWARE_ENGINEER.toString())
                     .password("Sujith@123")
@@ -124,13 +123,12 @@ public class Bootstrap implements CommandLineRunner {
                     .joiningDate(Date.valueOf("2021-07-04").toLocalDate())
                     .gender(Gender.MALE)
                     .isManager("T")
-                    .managerUuid(employee1Response.getUuid())
                     .departmentName(WALMART)
                     .jobTitle(JobTitleType.PROJECT_MANAGER.toString())
                     .password("Veeranji@123")
                     .confirmPassword("Veeranji@123")
                     .build();
-            var employee4Response = employeeService.add(employee4);
+            employeeService.add(employee4);
 
             var employee5 = AddEmployeeDto.builder()
                     .firstName("lakshman")
@@ -141,7 +139,6 @@ public class Bootstrap implements CommandLineRunner {
                     .joiningDate(Date.valueOf("2022-07-04").toLocalDate())
                     .gender(Gender.MALE)
                     .isManager("F")
-                    .managerUuid(employee4Response.getUuid())
                     .departmentName(WALMART)
                     .jobTitle(JobTitleType.SOFTWARE_ENGINEER.toString())
                     .password("Lakshman@123")

@@ -122,7 +122,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String email = jwt.getClaimAsString("email");
             String preferredUsername = jwt.getClaimAsString("preferred_username");
 
-            if (!StringUtils.hasText(email) && !StringUtils.hasText(preferredUsername)) {
+            if (!StringUtils.hasText(email) || !StringUtils.hasText(preferredUsername)) {
                 request.setAttribute("not_authorized", true);
                 return;
             }

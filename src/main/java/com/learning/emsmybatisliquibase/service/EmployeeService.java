@@ -11,7 +11,7 @@ import java.util.UUID;
 
 public interface EmployeeService {
 
-    AddEmployeeResponseDto add(AddEmployeeDto employeeDto);
+    ApiResponse<?> add(AddEmployeeDto employeeDto);
 
     Employee getById(UUID id);
 
@@ -20,6 +20,8 @@ public interface EmployeeService {
     Optional<Employee> findByEmail(String email);
 
     Optional<Employee> findByUsername(String username);
+
+    Employee insert(Employee employee);
 
     void updateLeavingDate(UUID id, UpdateLeavingDateDto updateLeavingDate);
 
@@ -44,4 +46,8 @@ public interface EmployeeService {
     List<EmployeeDetailsDto> getByNameOrEmail(String name);
 
     List<EmployeeEtmsDetails> getAllForEtms();
+
+    void delete(UUID uuid);
+
+    UUID getAuthenticatedUser();
 }

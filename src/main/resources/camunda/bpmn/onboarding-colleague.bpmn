@@ -128,15 +128,12 @@
       <bpmn:incoming>Flow_0zbvx2t</bpmn:incoming>
       <bpmn:incoming>Flow_0x2hppq</bpmn:incoming>
       <bpmn:incoming>Flow_082hn43</bpmn:incoming>
-      <bpmn:outgoing>Flow_14zuy2h</bpmn:outgoing>
+      <bpmn:outgoing>Flow_1obvjhk</bpmn:outgoing>
     </bpmn:parallelGateway>
     <bpmn:sequenceFlow id="Flow_0zbvx2t" sourceRef="send_welcome_notification" targetRef="Gateway_1u0xywu" />
     <bpmn:sequenceFlow id="Flow_0x2hppq" sourceRef="send_onboarding_communication" targetRef="Gateway_1u0xywu" />
     <bpmn:sequenceFlow id="Flow_082hn43" sourceRef="send_manager_notification" targetRef="Gateway_1u0xywu" />
-    <bpmn:endEvent id="Event_0a88qq5">
-      <bpmn:incoming>Flow_14zuy2h</bpmn:incoming>
-    </bpmn:endEvent>
-    <bpmn:sequenceFlow id="Flow_14zuy2h" sourceRef="Gateway_1u0xywu" targetRef="Event_0a88qq5" />
+    <bpmn:endEvent id="Event_0a88qq5" />
     <bpmn:boundaryEvent id="Event_1rozpsa" attachedToRef="save_employee_data">
       <bpmn:outgoing>Flow_13yhb8x</bpmn:outgoing>
       <bpmn:errorEventDefinition id="ErrorEventDefinition_0i3cq2i" errorRef="Error_Keycloak" />
@@ -173,6 +170,18 @@
       <bpmn:outgoing>Flow_1tygalm</bpmn:outgoing>
     </bpmn:serviceTask>
     <bpmn:sequenceFlow id="Flow_1tygalm" sourceRef="compensate-keycloak" targetRef="Event_0oj93pb" />
+    <bpmn:sequenceFlow id="Flow_1obvjhk" sourceRef="Gateway_1u0xywu" targetRef="complete-process-execution" />
+    <bpmn:serviceTask id="complete-process-execution" name="Complete Process Execution">
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="complete-process-execution" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_1obvjhk</bpmn:incoming>
+      <bpmn:outgoing>Flow_08zlbbt</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:endEvent id="Event_1481fvy">
+      <bpmn:incoming>Flow_08zlbbt</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_08zlbbt" sourceRef="complete-process-execution" targetRef="Event_1481fvy" />
   </bpmn:process>
   <bpmn:error id="Error_Keycloak" name="KEYCLOAK_ERROR" errorCode="compensate-delete-keycloak-user" />
   <bpmn:error id="Error_1k85hcm" name="Error_17kh2m1" />
@@ -225,6 +234,13 @@
       <bpmndi:BPMNShape id="Activity_0f421kc_di" bpmnElement="compensate-keycloak">
         <dc:Bounds x="450" y="480" width="100" height="80" />
         <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1r8snlz_di" bpmnElement="complete-process-execution">
+        <dc:Bounds x="1370" y="210" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1481fvy_di" bpmnElement="Event_1481fvy">
+        <dc:Bounds x="1572" y="232" width="36" height="36" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Event_1a8fe0t_di" bpmnElement="Event_1a8fe0t">
         <dc:Bounds x="762" y="372" width="36" height="36" />
@@ -304,10 +320,6 @@
         <di:waypoint x="1250" y="370" />
         <di:waypoint x="1250" y="275" />
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_14zuy2h_di" bpmnElement="Flow_14zuy2h">
-        <di:waypoint x="1275" y="250" />
-        <di:waypoint x="1372" y="250" />
-      </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_16xh5b5_di" bpmnElement="Flow_16xh5b5">
         <di:waypoint x="780" y="408" />
         <di:waypoint x="780" y="520" />
@@ -333,6 +345,14 @@
         <di:waypoint x="500" y="560" />
         <di:waypoint x="500" y="630" />
         <di:waypoint x="602" y="630" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1obvjhk_di" bpmnElement="Flow_1obvjhk">
+        <di:waypoint x="1275" y="250" />
+        <di:waypoint x="1370" y="250" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_08zlbbt_di" bpmnElement="Flow_08zlbbt">
+        <di:waypoint x="1470" y="250" />
+        <di:waypoint x="1572" y="250" />
       </bpmndi:BPMNEdge>
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>

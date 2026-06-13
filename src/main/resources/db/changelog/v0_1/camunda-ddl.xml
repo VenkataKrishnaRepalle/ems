@@ -6,9 +6,7 @@
             <column name="process_key" type="BIGINT">
                 <constraints primaryKey="true" primaryKeyName="process_key_pk"/>
             </column>
-            <column name="employee_uuid" type="${uuid_type}">
-                <constraints nullable="false"/>
-            </column>
+            <column name="employee_uuid" type="${uuid_type}"/>
             <column name="process_definition_id" type="VARCHAR">
                 <constraints nullable="false"/>
             </column>
@@ -22,7 +20,9 @@
             <column name="error_code" type="VARCHAR"/>
             <column name="error_message" type="VARCHAR"/>
             <column name="started_by" type="${uuid_type}"/>
-            <column name="started_time" type="TIMESTAMPTZ"/>
+            <column name="started_time" type="TIMESTAMPTZ">
+                <constraints nullable="false"/>
+            </column>
             <column name="completed_time" type="TIMESTAMPTZ"/>
         </createTable>
 
@@ -36,10 +36,33 @@
             <column name="description" type="VARCHAR"/>
         </createTable>
 
-        <addForeignKeyConstraint baseTableName="camunda_process_execution" baseColumnNames="employee_uuid"
-                                 constraintName="employee_uuid_fk" deferrable="false"
-                                 initiallyDeferred="false" onUpdate="CASCADE" onDelete="CASCADE"
-                                 referencedTableName="employee" referencedColumnNames="uuid"/>
+        <insert tableName="process_execution_status">
+            <column name="id" value="1"/>
+            <column name="name" value="IN_PROGRESS"/>
+            <column name="description" value="Status in progress"/>
+        </insert>
+
+        <insert tableName="process_execution_status">
+            <column name="id" value="2"/>
+            <column name="name" value="COMPLETED"/>
+            <column name="description" value="Status Completed"/>
+        </insert>
+        <insert tableName="process_execution_status">
+            <column name="id" value="3"/>
+            <column name="name" value="FAILED"/>
+            <column name="description" value="Status FAILED"/>
+        </insert>
+        <insert tableName="process_execution_status">
+            <column name="id" value="4"/>
+            <column name="name" value="COMPENSATED"/>
+            <column name="description" value="Status COMPENSATED"/>
+        </insert>
+        <insert tableName="process_execution_status">
+            <column name="id" value="5"/>
+            <column name="name" value="CANCELLED"/>
+            <column name="description" value="Status CANCELLED"/>
+        </insert>
+
         <addForeignKeyConstraint baseTableName="camunda_process_execution" baseColumnNames="status_id"
                                  constraintName="status_fk" deferrable="false"
                                  initiallyDeferred="false" onUpdate="CASCADE" onDelete="CASCADE"

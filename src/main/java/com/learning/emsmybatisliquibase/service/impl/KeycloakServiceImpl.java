@@ -43,6 +43,10 @@ public class KeycloakServiceImpl implements KeycloakService {
     public String create(UserRepresentation userDto) {
         Response response = realmResource.users().create(userDto);
         String keycloakUserId = extractUserId(response);
+        if (keycloakUserId == null) {
+            log.error("Failed to create keycloak user");
+            throw new IntegrityException("KEYCLOCK_ACCOUNT_CREATE_FAILED", "Failed to create keycloak user");
+        }
         log.info("User created successfully in Keycloak with id={}", keycloakUserId);
         return keycloakUserId;
     }
@@ -103,22 +107,26 @@ public class KeycloakServiceImpl implements KeycloakService {
 
     private String extractUserId(Response response) {
         if (response == null) {
-            throw new IllegalStateException("Keycloak create user response was empty");
+            log.error("Keycloak create user response was empty");
+            return null;
         }
 
         URI location = response.getLocation();
         if (location == null) {
-            throw new IllegalStateException("Keycloak create user response missing Location header");
+            log.error("Keycloak create user response missing Location header");
+            return null;
         }
 
         String path = location.getPath();
         if (!StringUtils.hasText(path) || !path.contains("/")) {
-            throw new IllegalStateException("Keycloak create user response had invalid Location header: " + location);
+            log.error("Keycloak create user response had invalid Location header: {}", location);
+            return null;
         }
 
         String userId = path.substring(path.lastIndexOf('/') + 1);
         if (!StringUtils.hasText(userId)) {
-            throw new IllegalStateException("Failed to extract Keycloak user id from Location header: " + location);
+            log.error("Failed to extract Keycloak user id from Location header: {}", location);
+            return null;
         }
         return userId;
     }

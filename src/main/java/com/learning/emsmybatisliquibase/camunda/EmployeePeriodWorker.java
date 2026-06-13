@@ -3,6 +3,7 @@ package com.learning.emsmybatisliquibase.camunda;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.learning.emsmybatisliquibase.exception.InvalidInputException;
 import com.learning.emsmybatisliquibase.service.EmployeePeriodService;
+import com.learning.emsmybatisliquibase.service.ProcessExecutionService;
 import io.camunda.client.annotation.JobWorker;
 import io.camunda.client.api.response.ActivatedJob;
 import io.camunda.client.api.worker.JobClient;
@@ -19,6 +20,8 @@ import java.util.UUID;
 public class EmployeePeriodWorker {
 
     private final EmployeePeriodService employeePeriodService;
+
+    private final ProcessExecutionService processExecutionService;
 
     private final ObjectMapper objectMapper;
 
@@ -40,6 +43,11 @@ public class EmployeePeriodWorker {
                     .errorMessage("Employee assignment failed for employee: " + employeeUuid)
                     .send()
                     .join();
+
+            processExecutionService.updateErrorDetails(job.getProcessInstanceKey(),
+                    "assign-employee-period",
+                    "EMPLOYEE_PERIOD_ASSIGNMENT_FAILED",
+                    "Failed to assign employee period for employee: " + employeeUuid);
         }
     }
 }

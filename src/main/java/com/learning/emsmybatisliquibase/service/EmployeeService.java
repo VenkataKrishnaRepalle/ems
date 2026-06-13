@@ -48,4 +48,6 @@ public interface EmployeeService {
     List<EmployeeEtmsDetails> getAllForEtms();
 
     void delete(UUID uuid);
+
+    UUID getAuthenticatedUser();
 }

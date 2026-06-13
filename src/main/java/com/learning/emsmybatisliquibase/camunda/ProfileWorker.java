@@ -9,6 +9,7 @@ import com.learning.emsmybatisliquibase.entity.enums.JobTitleType;
 import com.learning.emsmybatisliquibase.entity.enums.ProfileStatus;
 import com.learning.emsmybatisliquibase.exception.InvalidInputException;
 import com.learning.emsmybatisliquibase.service.DepartmentService;
+import com.learning.emsmybatisliquibase.service.ProcessExecutionService;
 import com.learning.emsmybatisliquibase.service.ProfileService;
 import io.camunda.client.annotation.JobWorker;
 import io.camunda.client.api.response.ActivatedJob;
@@ -30,6 +31,8 @@ public class ProfileWorker {
     private final ProfileService profileService;
 
     private final DepartmentService departmentService;
+
+    private final ProcessExecutionService processExecutionService;
 
     private final ObjectMapper objectMapper;
 
@@ -65,6 +68,11 @@ public class ProfileWorker {
                     .errorCode("compensate-keycloak-employee-error")
                     .errorMessage("Invalid job title: " + employeeDto.getJobTitle())
                     .send();
+
+            processExecutionService.updateErrorDetails(job.getProcessInstanceKey(),
+                    "create-profile",
+                    "PROFILE_CREATE_FAILED",
+                    "Failed to insert profile for employee: " + employeeUuid);
         }
     }
 

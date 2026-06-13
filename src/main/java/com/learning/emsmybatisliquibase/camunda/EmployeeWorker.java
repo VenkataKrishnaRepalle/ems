@@ -6,6 +6,7 @@ import com.learning.emsmybatisliquibase.exception.IntegrityException;
 import com.learning.emsmybatisliquibase.exception.InvalidInputException;
 import com.learning.emsmybatisliquibase.service.EmployeeService;
 import com.learning.emsmybatisliquibase.service.KeycloakService;
+import com.learning.emsmybatisliquibase.service.ProcessExecutionService;
 import io.camunda.client.annotation.JobWorker;
 import io.camunda.client.api.response.ActivatedJob;
 import io.camunda.client.api.worker.JobClient;
@@ -24,6 +25,8 @@ public class EmployeeWorker {
 
     private final KeycloakService keycloakService;
 
+    private final ProcessExecutionService processExecutionService;
+
     private final ObjectMapper objectMapper;
 
     @JobWorker(type = "save-employee-data", autoComplete = true)
@@ -41,6 +44,10 @@ public class EmployeeWorker {
                     .errorCode("compensate-delete-keycloak-user")
                     .errorMessage("Employee onboarding failed for email: " + employee.getEmail())
                     .send();
+            processExecutionService.updateErrorDetails(job.getProcessInstanceKey(),
+                    "save-employee-data",
+                    "EMPLOYEE_INSERT_FAILED",
+                    "Failed to create employee: " + employee.getEmail());
         }
     }
 

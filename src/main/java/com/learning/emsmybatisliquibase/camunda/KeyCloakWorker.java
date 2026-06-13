@@ -2,8 +2,11 @@ package com.learning.emsmybatisliquibase.camunda;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.learning.emsmybatisliquibase.entity.Employee;
+import com.learning.emsmybatisliquibase.entity.camunda.ProcessExecution;
 import com.learning.emsmybatisliquibase.exception.InvalidInputException;
+import com.learning.emsmybatisliquibase.service.EmployeeService;
 import com.learning.emsmybatisliquibase.service.KeycloakService;
+import com.learning.emsmybatisliquibase.service.ProcessExecutionService;
 import io.camunda.client.annotation.JobWorker;
 import io.camunda.client.api.response.ActivatedJob;
 import io.camunda.client.api.worker.JobClient;
@@ -12,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
 import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -27,9 +31,16 @@ public class KeyCloakWorker {
 
     private final KeycloakService keycloakService;
 
+    private final EmployeeService employeeService;
+
+    private final ProcessExecutionService processExecutionService;
+
     private final ObjectMapper objectMapper;
 
     private static final String EMPLOYEE = "employee";
+
+    @Value("${admin.uuid}")
+    UUID adminUuid;
 
     @JobWorker(type = "create-keycloak-user")
     public void createKeycloakUser(final JobClient client, final ActivatedJob job) {
@@ -40,7 +51,19 @@ public class KeyCloakWorker {
         if (!data.containsKey("password")) {
             throw new InvalidInputException("INVALID_INPUT", "Not a valid input: password");
         }
+
         Employee employee = objectMapper.convertValue(data.get(EMPLOYEE), Employee.class);
+        var user = employeeService.getAuthenticatedUser();
+        ProcessExecution processExecution = ProcessExecution.builder()
+                .processInstanceKey(job.getProcessInstanceKey())
+                .processDefinitionId(String.valueOf(job.getProcessDefinitionKey()))
+                .processName(job.getBpmnProcessId())
+                .employeeUuid(employee.getUuid())
+                .startedBy(user != null ? user : adminUuid)
+                .build();
+
+        processExecutionService.insert(processExecution);
+
         String password = (String) data.get("password");
 
         List<String> roles = new ArrayList<>(List.of("EMPLOYEE"));
@@ -52,6 +75,8 @@ public class KeyCloakWorker {
 
         UUID employeeUuid = UUID.fromString(uuid);
         employee.setUuid(employeeUuid);
+
+        processExecutionService.updateEmployee(job.getProcessInstanceKey(), employeeUuid);
 
         Map<String, Object> variables = new HashMap<>();
         variables.put(EMPLOYEE, employee);

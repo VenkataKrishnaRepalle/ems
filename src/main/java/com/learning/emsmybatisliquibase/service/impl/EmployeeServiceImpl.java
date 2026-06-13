@@ -13,12 +13,7 @@ import com.learning.emsmybatisliquibase.exception.IntegrityException;
 import com.learning.emsmybatisliquibase.exception.InvalidInputException;
 import com.learning.emsmybatisliquibase.exception.NotFoundException;
 import com.learning.emsmybatisliquibase.mapper.EmployeeMapper;
-import com.learning.emsmybatisliquibase.service.EmployeeService;
-import com.learning.emsmybatisliquibase.service.EmployeePeriodService;
-import com.learning.emsmybatisliquibase.service.EmployeeRoleService;
-import com.learning.emsmybatisliquibase.service.KeycloakService;
-import com.learning.emsmybatisliquibase.service.PeriodService;
-import com.learning.emsmybatisliquibase.service.ProfileService;
+import com.learning.emsmybatisliquibase.service.*;
 import io.camunda.client.CamundaClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -103,6 +98,7 @@ public class EmployeeServiceImpl implements EmployeeService {
                     .latestVersion()
                     .variables(Map.of("employeeDto", employeeDto, "employee", employee, "password", password))
                     .send();
+
         } catch (Exception e) {
             throw new IntegrityException("ONBOARDING_FAILED", e.getMessage());
         }
@@ -274,9 +270,10 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     public EmployeeResponseDto getMe() {
-        var employeeUuid = UUID.fromString(SecurityContextHolder.getContext()
-                .getAuthentication()
-                .getName());
+        var employeeUuid = getAuthenticatedUser();
+        if (employeeUuid == null) {
+            throw new InvalidInputException("AUTHENTICATION_FAILED", "Authentication failed for user. Please login again.");
+        }
         var employee = employeeDao.getEmployee(employeeUuid);
         var roles = employeeRoleService.getRolesByEmployeeUuid(employee.getUuid())
                 .stream()
@@ -286,6 +283,18 @@ public class EmployeeServiceImpl implements EmployeeService {
             employee.setRoles(roles);
         }
         return employee;
+    }
+
+    @Override
+    public UUID getAuthenticatedUser() {
+        var authentication =
+                SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication != null && authentication.getName() != null) {
+            return UUID.fromString(authentication.getName());
+        }
+
+        return null;
     }
 
     @Override

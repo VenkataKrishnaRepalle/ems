@@ -55,8 +55,17 @@ public class SpringSecurityConfig {
     public SecurityFilterChain apiSecurityFilterChain(HttpSecurity http) throws Exception {
         http
             .securityMatcher("/api/**")
-            .csrf(AbstractHttpConfigurer::disable)
-            .authorizeHttpRequests(authorize -> 
+            .csrf(csrf -> csrf
+                .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                .ignoringRequestMatchers(
+                    "/api/auth/**",
+                    "/api/spark/**",
+                    "/api/password/**",
+                    "/api/employeeSession/**",
+                    "/api/otp/**"
+                )
+            )
+            .authorizeHttpRequests(authorize ->
                 authorize
                     .requestMatchers(
                         "/api/auth/**",
@@ -67,7 +76,7 @@ public class SpringSecurityConfig {
                     ).permitAll()
                     .anyRequest().authenticated()
             )
-            .exceptionHandling(exception -> 
+            .exceptionHandling(exception ->
                 exception.authenticationEntryPoint(authenticationEntryPoint)
             )
             .addFilterBefore(authenticationFilter, UsernamePasswordAuthenticationFilter.class)

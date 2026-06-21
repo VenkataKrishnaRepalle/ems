@@ -17,7 +17,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -38,7 +37,7 @@ public class NotificationWorker {
     public void sendWelcomeNotification(final JobClient client, final ActivatedJob job) {
         var variables = job.getVariablesAsMap();
         var employee = objectMapper.convertValue(variables.get("employee"), Employee.class);
-        sendNotification("ONBOARDING", "EMPLOYEE", employee, employee.getUuid());
+        sendNotification("EMPLOYEE", employee, employee.getUuid());
         client.newCompleteCommand(job.getKey()).send();
     }
 
@@ -50,7 +49,7 @@ public class NotificationWorker {
         if (employee.getManagerUuid() != null) {
             var manager = employeeDao.get(employee.getManagerUuid());
             if (manager != null) {
-                sendNotification("ONBOARDING", "MANAGER", employee, employee.getManagerUuid());
+                sendNotification("MANAGER", employee, employee.getManagerUuid());
             }
 
         }
@@ -59,9 +58,9 @@ public class NotificationWorker {
     }
 
     @SneakyThrows
-    private void sendNotification(String notificationType, String recipientRole, Employee employeeContext, UUID recipientUuid) {
+    private void sendNotification(String recipientRole, Employee employeeContext, UUID recipientUuid) {
         Map<String, Object> dmnVariables = Map.of(
-                "notificationType", notificationType,
+                "notificationType", "ONBOARDING",
                 "recipientRole", recipientRole
         );
 

@@ -37,8 +37,8 @@
       <bpmn:incoming>Flow_18i1zgs</bpmn:incoming>
       <bpmn:incoming>Flow_0cnouyu</bpmn:incoming>
       <bpmn:outgoing>Flow_6</bpmn:outgoing>
-      <bpmn:outgoing>Flow_7</bpmn:outgoing>
-      <bpmn:outgoing>Flow_8</bpmn:outgoing>
+      <bpmn:outgoing>Flow_1ea57r2</bpmn:outgoing>
+      <bpmn:outgoing>Flow_0udqocg</bpmn:outgoing>
     </bpmn:parallelGateway>
     <bpmn:serviceTask id="save_employee_data" name="Save Employee Data">
       <bpmn:extensionElements>
@@ -82,7 +82,6 @@
       <bpmn:incoming>Flow_6</bpmn:incoming>
       <bpmn:outgoing>Flow_0x2hppq</bpmn:outgoing>
     </bpmn:serviceTask>
-    <bpmn:sequenceFlow id="Flow_7" sourceRef="Gateway_Split" targetRef="send_welcome_notification" />
     <bpmn:serviceTask id="send_welcome_notification" name="Send Welcome Notification">
       <bpmn:extensionElements>
         <zeebe:taskDefinition type="send-welcome-notification" />
@@ -90,7 +89,7 @@
           <zeebe:input source="=employee" target="employee" />
         </zeebe:ioMapping>
       </bpmn:extensionElements>
-      <bpmn:incoming>Flow_7</bpmn:incoming>
+      <bpmn:incoming>Flow_02f9dvp</bpmn:incoming>
       <bpmn:outgoing>Flow_0zbvx2t</bpmn:outgoing>
     </bpmn:serviceTask>
     <bpmn:boundaryEvent id="Event_1pcxufu" cancelActivity="false" attachedToRef="send_onboarding_communication">
@@ -99,7 +98,6 @@
     <bpmn:boundaryEvent id="Event_1syxewr" cancelActivity="false" attachedToRef="send_welcome_notification">
       <bpmn:messageEventDefinition id="MessageEventDefinition_0hll5p4" messageRef="Message_WelcomeFailure" />
     </bpmn:boundaryEvent>
-    <bpmn:sequenceFlow id="Flow_8" sourceRef="Gateway_Split" targetRef="send_manager_notification" />
     <bpmn:serviceTask id="send_manager_notification" name="Send Manager Notification">
       <bpmn:extensionElements>
         <zeebe:taskDefinition type="send-manager-notification" />
@@ -107,7 +105,7 @@
           <zeebe:input source="=employee" target="employee" />
         </zeebe:ioMapping>
       </bpmn:extensionElements>
-      <bpmn:incoming>Flow_8</bpmn:incoming>
+      <bpmn:incoming>Flow_1cykh2g</bpmn:incoming>
       <bpmn:outgoing>Flow_082hn43</bpmn:outgoing>
     </bpmn:serviceTask>
     <bpmn:boundaryEvent id="Event_06izcs6" cancelActivity="false" attachedToRef="send_manager_notification">
@@ -133,7 +131,6 @@
     <bpmn:sequenceFlow id="Flow_0zbvx2t" sourceRef="send_welcome_notification" targetRef="Gateway_1u0xywu" />
     <bpmn:sequenceFlow id="Flow_0x2hppq" sourceRef="send_onboarding_communication" targetRef="Gateway_1u0xywu" />
     <bpmn:sequenceFlow id="Flow_082hn43" sourceRef="send_manager_notification" targetRef="Gateway_1u0xywu" />
-    <bpmn:endEvent id="Event_0a88qq5" />
     <bpmn:boundaryEvent id="Event_1rozpsa" attachedToRef="save_employee_data">
       <bpmn:outgoing>Flow_13yhb8x</bpmn:outgoing>
       <bpmn:errorEventDefinition id="ErrorEventDefinition_0i3cq2i" errorRef="Error_Keycloak" />
@@ -182,6 +179,32 @@
       <bpmn:incoming>Flow_08zlbbt</bpmn:incoming>
     </bpmn:endEvent>
     <bpmn:sequenceFlow id="Flow_08zlbbt" sourceRef="complete-process-execution" targetRef="Event_1481fvy" />
+    <bpmn:sequenceFlow id="Flow_1ea57r2" sourceRef="Gateway_Split" targetRef="Activity_1ni9vma" />
+    <bpmn:businessRuleTask id="Activity_1ni9vma" name="Employee notification details">
+      <bpmn:extensionElements>
+        <zeebe:calledDecision decisionId="notification-decision" resultVariable="dmnResult" />
+        <zeebe:ioMapping>
+          <zeebe:input source="ONBOARDING" target="notificationType" />
+          <zeebe:input source="EMPLOYEE" target="recipientRole" />
+        </zeebe:ioMapping>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_1ea57r2</bpmn:incoming>
+      <bpmn:outgoing>Flow_02f9dvp</bpmn:outgoing>
+    </bpmn:businessRuleTask>
+    <bpmn:sequenceFlow id="Flow_02f9dvp" sourceRef="Activity_1ni9vma" targetRef="send_welcome_notification" />
+    <bpmn:sequenceFlow id="Flow_0udqocg" sourceRef="Gateway_Split" targetRef="Activity_1f2mk5h" />
+    <bpmn:sequenceFlow id="Flow_1cykh2g" sourceRef="Activity_1f2mk5h" targetRef="send_manager_notification" />
+    <bpmn:businessRuleTask id="Activity_1f2mk5h" name="Manager Notification details">
+      <bpmn:extensionElements>
+        <zeebe:calledDecision decisionId="notification-decision" resultVariable="dmnResult" />
+        <zeebe:ioMapping>
+          <zeebe:input source="ONBOARDING" target="notificationType" />
+          <zeebe:input source="MANAGER" target="recipientRole" />
+        </zeebe:ioMapping>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0udqocg</bpmn:incoming>
+      <bpmn:outgoing>Flow_1cykh2g</bpmn:outgoing>
+    </bpmn:businessRuleTask>
   </bpmn:process>
   <bpmn:error id="Error_Keycloak" name="KEYCLOAK_ERROR" errorCode="compensate-delete-keycloak-user" />
   <bpmn:error id="Error_1k85hcm" name="Error_17kh2m1" />
@@ -194,9 +217,6 @@
       <bpmndi:BPMNShape id="Activity_05ppp4f_di" bpmnElement="create_keycloak_user">
         <dc:Bounds x="280" y="220" width="100" height="80" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Gateway_0mpw9pf_di" bpmnElement="Gateway_Split" isMarkerVisible="true">
-        <dc:Bounds x="885" y="225" width="50" height="50" />
-      </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Activity_13wl524_di" bpmnElement="save_employee_data">
         <dc:Bounds x="450" y="220" width="100" height="80" />
       </bpmndi:BPMNShape>
@@ -206,34 +226,8 @@
       <bpmndi:BPMNShape id="Activity_1nf0hsf_di" bpmnElement="assign_employee_period">
         <dc:Bounds x="730" y="310" width="100" height="80" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Activity_1nqkddp_di" bpmnElement="send_onboarding_communication">
-        <dc:Bounds x="1030" y="80" width="100" height="80" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Activity_1d0gwu3_di" bpmnElement="send_welcome_notification">
-        <dc:Bounds x="1030" y="210" width="100" height="80" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Activity_17v2b18_di" bpmnElement="send_manager_notification">
-        <dc:Bounds x="1030" y="330" width="100" height="80" />
-      </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Gateway_06a62z1_di" bpmnElement="Gateway_06a62z1">
         <dc:Bounds x="625" y="235" width="50" height="50" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Gateway_1u0xywu_di" bpmnElement="Gateway_1u0xywu">
-        <dc:Bounds x="1225" y="225" width="50" height="50" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Event_0a88qq5_di" bpmnElement="Event_0a88qq5">
-        <dc:Bounds x="1372" y="232" width="36" height="36" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Activity_0f421kc_di" bpmnElement="compensate-keycloak">
-        <dc:Bounds x="450" y="480" width="100" height="80" />
-        <bpmndi:BPMNLabel />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Activity_1r8snlz_di" bpmnElement="complete-process-execution">
-        <dc:Bounds x="1370" y="210" width="100" height="80" />
-        <bpmndi:BPMNLabel />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Event_1481fvy_di" bpmnElement="Event_1481fvy">
-        <dc:Bounds x="1572" y="232" width="36" height="36" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Activity_16wfwvh_di" bpmnElement="compensate-keycloa">
         <dc:Bounds x="730" y="480" width="100" height="80" />
@@ -241,6 +235,40 @@
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Event_0oj93pb_di" bpmnElement="Event_0oj93pb">
         <dc:Bounds x="612" y="612" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0f421kc_di" bpmnElement="compensate-keycloak">
+        <dc:Bounds x="450" y="480" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1481fvy_di" bpmnElement="Event_1481fvy">
+        <dc:Bounds x="1682" y="232" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1r8snlz_di" bpmnElement="complete-process-execution">
+        <dc:Bounds x="1480" y="210" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1nqkddp_di" bpmnElement="send_onboarding_communication">
+        <dc:Bounds x="1100" y="80" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_09e3dgq_di" bpmnElement="Activity_1ni9vma">
+        <dc:Bounds x="1010" y="210" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1d0gwu3_di" bpmnElement="send_welcome_notification">
+        <dc:Bounds x="1210" y="210" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_17vjuug_di" bpmnElement="Activity_1f2mk5h">
+        <dc:Bounds x="1010" y="340" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_0mpw9pf_di" bpmnElement="Gateway_Split" isMarkerVisible="true">
+        <dc:Bounds x="915" y="225" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_17v2b18_di" bpmnElement="send_manager_notification">
+        <dc:Bounds x="1210" y="340" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_1u0xywu_di" bpmnElement="Gateway_1u0xywu">
+        <dc:Bounds x="1365" y="225" width="50" height="50" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Event_1a8fe0t_di" bpmnElement="Event_1a8fe0t">
         <dc:Bounds x="762" y="372" width="36" height="36" />
@@ -251,32 +279,23 @@
       <bpmndi:BPMNShape id="Event_1rozpsa_di" bpmnElement="Event_1rozpsa">
         <dc:Bounds x="482" y="282" width="36" height="36" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Event_06izcs6_di" bpmnElement="Event_06izcs6">
-        <dc:Bounds x="1062" y="392" width="36" height="36" />
+      <bpmndi:BPMNShape id="Event_1pcxufu_di" bpmnElement="Event_1pcxufu">
+        <dc:Bounds x="1132" y="142" width="36" height="36" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Event_1syxewr_di" bpmnElement="Event_1syxewr">
-        <dc:Bounds x="1062" y="272" width="36" height="36" />
+        <dc:Bounds x="1242" y="272" width="36" height="36" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Event_1pcxufu_di" bpmnElement="Event_1pcxufu">
-        <dc:Bounds x="1062" y="142" width="36" height="36" />
+      <bpmndi:BPMNShape id="Event_06izcs6_di" bpmnElement="Event_06izcs6">
+        <dc:Bounds x="1242" y="402" width="36" height="36" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="Flow_1szhu6a_di" bpmnElement="Flow_1">
         <di:waypoint x="188" y="260" />
         <di:waypoint x="280" y="260" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_02apvwb_di" bpmnElement="Flow_6">
-        <di:waypoint x="910" y="225" />
-        <di:waypoint x="910" y="120" />
-        <di:waypoint x="1030" y="120" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_15hf7fj_di" bpmnElement="Flow_7">
-        <di:waypoint x="935" y="250" />
-        <di:waypoint x="1030" y="250" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_0qlbo2w_di" bpmnElement="Flow_8">
-        <di:waypoint x="910" y="275" />
-        <di:waypoint x="910" y="370" />
-        <di:waypoint x="1030" y="370" />
+        <di:waypoint x="940" y="225" />
+        <di:waypoint x="940" y="120" />
+        <di:waypoint x="1100" y="120" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_05u5gs8_di" bpmnElement="Flow_05u5gs8">
         <di:waypoint x="380" y="260" />
@@ -298,27 +317,27 @@
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_18i1zgs_di" bpmnElement="Flow_18i1zgs">
         <di:waypoint x="830" y="350" />
-        <di:waypoint x="910" y="350" />
-        <di:waypoint x="910" y="275" />
+        <di:waypoint x="940" y="350" />
+        <di:waypoint x="940" y="275" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_0cnouyu_di" bpmnElement="Flow_0cnouyu">
         <di:waypoint x="830" y="160" />
-        <di:waypoint x="910" y="160" />
-        <di:waypoint x="910" y="225" />
+        <di:waypoint x="940" y="160" />
+        <di:waypoint x="940" y="225" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_0zbvx2t_di" bpmnElement="Flow_0zbvx2t">
-        <di:waypoint x="1130" y="250" />
-        <di:waypoint x="1225" y="250" />
+        <di:waypoint x="1310" y="250" />
+        <di:waypoint x="1365" y="250" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_0x2hppq_di" bpmnElement="Flow_0x2hppq">
-        <di:waypoint x="1130" y="120" />
-        <di:waypoint x="1250" y="120" />
-        <di:waypoint x="1250" y="225" />
+        <di:waypoint x="1200" y="120" />
+        <di:waypoint x="1390" y="120" />
+        <di:waypoint x="1390" y="225" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_082hn43_di" bpmnElement="Flow_082hn43">
-        <di:waypoint x="1130" y="370" />
-        <di:waypoint x="1250" y="370" />
-        <di:waypoint x="1250" y="275" />
+        <di:waypoint x="1310" y="380" />
+        <di:waypoint x="1390" y="380" />
+        <di:waypoint x="1390" y="275" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_16xh5b5_di" bpmnElement="Flow_16xh5b5">
         <di:waypoint x="780" y="408" />
@@ -346,12 +365,29 @@
         <di:waypoint x="612" y="630" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_1obvjhk_di" bpmnElement="Flow_1obvjhk">
-        <di:waypoint x="1275" y="250" />
-        <di:waypoint x="1370" y="250" />
+        <di:waypoint x="1415" y="250" />
+        <di:waypoint x="1480" y="250" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_08zlbbt_di" bpmnElement="Flow_08zlbbt">
-        <di:waypoint x="1470" y="250" />
-        <di:waypoint x="1572" y="250" />
+        <di:waypoint x="1580" y="250" />
+        <di:waypoint x="1682" y="250" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1ea57r2_di" bpmnElement="Flow_1ea57r2">
+        <di:waypoint x="965" y="250" />
+        <di:waypoint x="1010" y="250" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_02f9dvp_di" bpmnElement="Flow_02f9dvp">
+        <di:waypoint x="1110" y="250" />
+        <di:waypoint x="1210" y="250" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0udqocg_di" bpmnElement="Flow_0udqocg">
+        <di:waypoint x="940" y="275" />
+        <di:waypoint x="940" y="380" />
+        <di:waypoint x="1010" y="380" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1cykh2g_di" bpmnElement="Flow_1cykh2g">
+        <di:waypoint x="1110" y="380" />
+        <di:waypoint x="1210" y="380" />
       </bpmndi:BPMNEdge>
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>

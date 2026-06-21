@@ -1,6 +1,5 @@
 package com.learning.emsmybatisliquibase.camunda;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.learning.emsmybatisliquibase.dao.EmployeeDao;
 import com.learning.emsmybatisliquibase.entity.Employee;
@@ -9,7 +8,6 @@ import com.learning.emsmybatisliquibase.service.NotificationService;
 import io.camunda.client.CamundaClient;
 import io.camunda.client.annotation.JobWorker;
 import io.camunda.client.api.response.ActivatedJob;
-import io.camunda.client.api.response.EvaluateDecisionResponse;
 import io.camunda.client.api.worker.JobClient;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -37,8 +35,17 @@ public class NotificationWorker {
     public void sendWelcomeNotification(final JobClient client, final ActivatedJob job) {
         var variables = job.getVariablesAsMap();
         var employee = objectMapper.convertValue(variables.get("employee"), Employee.class);
-        sendNotification("EMPLOYEE", employee, employee.getUuid());
-        client.newCompleteCommand(job.getKey()).send();
+        Map<String, String> dmnResult = objectMapper.convertValue(variables.get("dmnResult"), Map.class);
+
+        String title = processTemplate(dmnResult.get("title"), employee);
+        String message = processTemplate(dmnResult.get("message"), employee);
+        
+        if(title == null || message == null) {
+            log.error("Invalid decision result. Failed to send onboarding notification to employee: {}", employee.getUuid());
+            return;
+        }
+
+        sendNotification(title, message, null, employee.getUuid());
     }
 
     @JobWorker(type = "send-manager-notification")
@@ -47,56 +54,33 @@ public class NotificationWorker {
         var employee = objectMapper.convertValue(variables.get("employee"), Employee.class);
 
         if (employee.getManagerUuid() != null) {
-            var manager = employeeDao.get(employee.getManagerUuid());
-            if (manager != null) {
-                sendNotification("MANAGER", employee, employee.getManagerUuid());
+            Map<String, String> dmnResult = objectMapper.convertValue(variables.get("dmnResult"), Map.class);
+
+            String title = processTemplate(dmnResult.get("title"), employee);
+            String message = processTemplate(dmnResult.get("message"), employee);
+            String link = processTemplate(dmnResult.get("link"), employee);
+
+            if(title == null || message == null || link == null) {
+                log.error("Invalid decision result. Failed to send onboarding notification to manager: {}", employee.getUuid());
+                return;
             }
 
+            sendNotification(title, message, link, employee.getManagerUuid());
         }
-
-        client.newCompleteCommand(job.getKey()).send();
     }
 
     @SneakyThrows
-    private void sendNotification(String recipientRole, Employee employeeContext, UUID recipientUuid) {
-        Map<String, Object> dmnVariables = Map.of(
-                "notificationType", "ONBOARDING",
-                "recipientRole", recipientRole
-        );
-
-        EvaluateDecisionResponse decisionResponse = camundaClient.newEvaluateDecisionCommand()
-                .decisionId("notification-decision")
-                .variables(dmnVariables)
-                .send()
-                .join();
-
-        String dmnOutputJson = decisionResponse.getDecisionOutput();
-
-        if (dmnOutputJson != null && !dmnOutputJson.isEmpty()) {
-            Map<String, String> dmnResult = objectMapper.readValue(dmnOutputJson, new TypeReference<>() {
-            });
-
-            if (!dmnResult.isEmpty()) {
-                String titleTemplate = dmnResult.get("title");
-                String messageTemplate = dmnResult.get("message");
-                String linkTemplate = dmnResult.get("link");
-
-                String title = processTemplate(titleTemplate, employeeContext);
-                String message = processTemplate(messageTemplate, employeeContext);
-                String link = processTemplate(linkTemplate, employeeContext);
-
-                notificationService.send(Notification.builder()
-                        .uuid(UUID.randomUUID())
-                        .employeeUuid(recipientUuid)
-                        .title(title)
-                        .message(message)
-                        .link(link)
-                        .status(Notification.Status.UNREAD)
-                        .createdTime(LocalDateTime.now())
-                        .updatedTime(LocalDateTime.now())
-                        .build());
-            }
-        }
+    private void sendNotification(String title, String message, String link, UUID recipientUuid) {
+        notificationService.send(Notification.builder()
+                .uuid(UUID.randomUUID())
+                .employeeUuid(recipientUuid)
+                .title(title)
+                .message(message)
+                .link(link)
+                .status(Notification.Status.UNREAD)
+                .createdTime(LocalDateTime.now())
+                .updatedTime(LocalDateTime.now())
+                .build());
         log.info("Notification sent successfully to user: {}", recipientUuid);
     }
 

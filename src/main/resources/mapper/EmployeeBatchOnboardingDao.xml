@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.learning.emsmybatisliquibase.dao.EmployeeBatchOnboardingDao">
+    <resultMap id="employeeBatchOnboardingMap" type="com.learning.emsmybatisliquibase.entity.EmployeeBatchOnboarding">
+        <id property="id" column="id" javaType="java.util.UUID" jdbcType="VARCHAR"
+            typeHandler="com.learning.emsmybatisliquibase.handler.UuidTypeHandler"/>
+        <result property="importId" column="import_id"/>
+        <result property="batchNo" column="batch_no"/>
+        <result property="employees" column="employees"
+                typeHandler="com.learning.emsmybatisliquibase.handler.ListTypeHandler"/>
+        <result property="totalCount" column="total_employee_count"/>
+        <result property="status" column="status"/>
+        <result property="createdBy" column="created_by" javaType="java.util.UUID" jdbcType="VARCHAR"
+                typeHandler="com.learning.emsmybatisliquibase.handler.UuidTypeHandler"/>
+        <result property="createdAt" column="created_at"/>
+    </resultMap>
+    <insert id="insert" flushCache="true">
+        INSERT INTO employee_batch_onboarding(id, import_id, batch_no, employees, total_employee_count, status,
+                                              created_by,
+                                              created_at)
+        VALUES (#{ebo.id}, #{ebo.importId}, #{ebo.batchNo}, #{ebo.employees, jdbcType=OTHER, typeHandler=com.learning.emsmybatisliquibase.handler.ListTypeHandler}, #{ebo.totalCount}, #{ebo.status},
+                #{ebo.createdBy}, #{ebo.createdAt})
+    </insert>
+
+    <update id="updateStatus" flushCache="true">
+        UPDATE employee_batch_onboarding
+        SET status = #{status}
+        WHERE id = #{uuid}
+    </update>
+
+    <select id="get" resultMap="employeeBatchOnboardingMap">
+        SELECT * FROM employee_batch_onboarding
+        <if test="rq != null and rq.properties != null">
+            <trim prefix="WHERE" prefixOverrides="AND|OR">
+                <include refid="applyFilters"/>
+            </trim>
+        </if>
+    </select>
+    <select id="getCount" resultType="long">
+        SELECT count(*) FROM employee_batch_onboarding
+        <if test="rq != null and rq.properties != null">
+            <trim prefix="WHERE" prefixOverrides="AND|OR">
+                <include refid="applyFilters"/>
+            </trim>
+        </if>
+    </select>
+
+    <sql id="applyFilters">
+        <if test="rq.properties.id != null">
+            AND id = #{rq.properties.id}
+        </if>
+        <if test="rq.properties.importId != null">
+            AND import_id = #{rq.properties.importId}
+        </if>
+        <if test="rq.properties.batchNo != null">
+            AND batch_no = #{rq.properties.batchNo}
+        </if>
+        <if test="rq.properties.status != null">
+            AND status = #{rq.properties.status}
+        </if>
+        <if test="rq.properties.totalCount != null">
+            AND total_employee_count = #{rq.properties.totalCount}
+        </if>
+    </sql>
+</mapper>

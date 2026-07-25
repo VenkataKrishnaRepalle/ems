@@ -5,4 +5,5 @@
     <include file="employee-ddl.xml" relativeToChangelogFile="true"/>
     <includeAll path="migration" relativeToChangelogFile="true"/>
     <includeAll path="v0_1" relativeToChangelogFile="true"/>
+    <includeAll path="v0_2" relativeToChangelogFile="true"/>
 </databaseChangeLog>

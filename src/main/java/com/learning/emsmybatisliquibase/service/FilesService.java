@@ -1,13 +1,14 @@
 package com.learning.emsmybatisliquibase.service;
 
-import com.learning.emsmybatisliquibase.dto.SuccessResponseDto;
+import com.learning.emsmybatisliquibase.dto.ApiResponse;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicLong;
 
 public interface FilesService {
 
-    SuccessResponseDto colleagueOnboard(MultipartFile file) throws IOException;
+    ApiResponse<AtomicLong> colleagueOnboard(MultipartFile file) throws IOException;
 
     void managerAccess(MultipartFile file) throws IOException;
 

@@ -8,7 +8,6 @@ import com.learning.emsmybatisliquibase.dto.NotificationDto;
 import com.learning.emsmybatisliquibase.entity.Employee;
 import com.learning.emsmybatisliquibase.entity.enums.ReviewType;
 import com.learning.emsmybatisliquibase.service.CommunicationService;
-import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import jakarta.annotation.PostConstruct;
@@ -32,6 +31,9 @@ public class CommunicationServiceImpl implements CommunicationService {
     private final TemplateEngine templateEngine;
 
     private final ReviewTimelineDao reviewTimelineDao;
+
+    @Value("${default.send.email.enable}")
+    boolean enableMailNotifications;
 
     @Value("${default.send.email.address}")
     String defaultEmail;
@@ -74,6 +76,9 @@ public class CommunicationServiceImpl implements CommunicationService {
 
     @Override
     public void sendSuccessfulEmployeeOnBoard(Employee employee, String password) {
+        if(!enableMailNotifications) {
+            return;
+        }
         String templateName = emailTemplateNameSuccessfulOnboard;
         String fullName = employee.getFirstName() + " " + employee.getLastName();
         Context context = new Context();
@@ -91,6 +96,9 @@ public class CommunicationServiceImpl implements CommunicationService {
 
     @Override
     public void sendNotificationBeforeStart(List<NotificationDto> notifications, ReviewType reviewType) {
+        if(!enableMailNotifications) {
+            return;
+        }
         notifications.forEach(employee -> {
             log.info("Sending notification before start email to colleague {}", employee.getUuid());
             var fullName = employee.getFirstName() + " " + employee.getLastName();
@@ -107,6 +115,9 @@ public class CommunicationServiceImpl implements CommunicationService {
 
     @Override
     public void sendStartNotification(ReviewType reviewType) {
+        if(!enableMailNotifications) {
+            return;
+        }
         var notifications = reviewTimelineDao.getTimelineIdsByReviewType(reviewType);
         notifications.forEach(employee -> {
             log.info("Sending notification start email to colleague {}", employee.getUuid());

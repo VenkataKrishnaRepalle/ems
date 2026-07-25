@@ -2,6 +2,8 @@ package com.learning.emsmybatisliquibase.utils;
 
 import com.learning.emsmybatisliquibase.dto.pagination.RequestQuery;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -22,6 +24,9 @@ public class UtilityService {
 
     public static final String STATUS = "status";
 
+    @Value("${admin.uuid}")
+    static UUID DEFAULT_ADMIN_UUID;
+
     public static Map<String, String> getLocationInfo(RequestQuery requestQuery) {
         var location = requestQuery.getPropertyValue(LOCATION);
         if (location instanceof Map<?, ?>) {
@@ -33,6 +38,21 @@ public class UtilityService {
         }
 
         return Collections.emptyMap();
+    }
+
+    public static UUID getAuthenticatedUser() {
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication != null && authentication.getName() != null) {
+            return UUID.fromString(authentication.getName());
+        }
+
+        return null;
+    }
+
+    public static UUID getAuthenticatedUserOrDefaultAdmin() {
+        var uuid = getAuthenticatedUser();
+        return uuid == null ? DEFAULT_ADMIN_UUID : uuid;
     }
 
     public static String getPlatform(RequestQuery requestQuery) {

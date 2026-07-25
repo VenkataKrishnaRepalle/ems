@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="1" author="Venkata Krishna Repalle">
+        <createTable tableName="employee_batch_onboarding">
+            <column name="id" type="${uuid_type}">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="import_id" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="batch_no" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="employees" type="JSONB">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="VARCHAR(30)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="total_employee_count" type="NUMBER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_by" type="${uuid_type}">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"/>
+        </createTable>
+
+        <createIndex tableName="employee_batch_onboarding" indexName="idx_import_batch">
+            <column name="import_id"/>
+            <column name="batch_no"/>
+        </createIndex>
+
+    </changeSet>
+</databaseChangeLog>

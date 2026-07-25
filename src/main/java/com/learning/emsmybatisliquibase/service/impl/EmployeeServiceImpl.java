@@ -15,6 +15,7 @@ import com.learning.emsmybatisliquibase.exception.InvalidInputException;
 import com.learning.emsmybatisliquibase.exception.NotFoundException;
 import com.learning.emsmybatisliquibase.mapper.EmployeeMapper;
 import com.learning.emsmybatisliquibase.service.*;
+import com.learning.emsmybatisliquibase.utils.UtilityService;
 import io.camunda.client.CamundaClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,7 +23,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -42,6 +42,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Slf4j
 @Service
@@ -99,6 +100,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 
         String password = validatePasswords(employeeDto.getPassword(), employeeDto.getConfirmPassword()) ?
                 employeeDto.getPassword() : generateRandomPassword();
+        AtomicLong processInstanceKey = new AtomicLong();
         try {
             camundaClient.newCreateInstanceCommand()
                     .bpmnProcessId("onboarding_colleague")
@@ -114,14 +116,14 @@ public class EmployeeServiceImpl implements EmployeeService {
                                 .employeeUuid(employee.getUuid())
                                 .startedBy(user != null ? user : adminUuid)
                                 .build();
-
+                        processInstanceKey.set(response.getProcessInstanceKey());
                         processExecutionService.insert(processExecution);
                     });
 
         } catch (Exception e) {
             throw new IntegrityException("ONBOARDING_FAILED", e.getMessage());
         }
-        return ApiResponse.success("Employee onboarded successfully");
+        return ApiResponse.success(processInstanceKey, "Employee onboarded successfully");
     }
 
     @Override
@@ -289,7 +291,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     public EmployeeResponseDto getMe() {
-        var employeeUuid = getAuthenticatedUser();
+        var employeeUuid = UtilityService.getAuthenticatedUser();
         if (employeeUuid == null) {
             throw new InvalidInputException("AUTHENTICATION_FAILED", "Authentication failed for user. Please login again.");
         }
@@ -306,14 +308,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     public UUID getAuthenticatedUser() {
-        var authentication =
-                SecurityContextHolder.getContext().getAuthentication();
-
-        if (authentication != null && authentication.getName() != null) {
-            return UUID.fromString(authentication.getName());
-        }
-
-        return null;
+        return UtilityService.getAuthenticatedUser();
     }
 
     @Override

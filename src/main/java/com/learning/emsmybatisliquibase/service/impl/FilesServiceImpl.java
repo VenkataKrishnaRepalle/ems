@@ -1,25 +1,32 @@
 package com.learning.emsmybatisliquibase.service.impl;
 
+import com.google.common.collect.Lists;
+import com.learning.emsmybatisliquibase.batch.EmployeeBatchService;
 import com.learning.emsmybatisliquibase.dao.DepartmentDao;
+import com.learning.emsmybatisliquibase.dao.EmployeeBatchOnboardingDao;
 import com.learning.emsmybatisliquibase.dao.ProfileDao;
-import com.learning.emsmybatisliquibase.dto.AddDepartmentDto;
-import com.learning.emsmybatisliquibase.dto.FileType;
-import com.learning.emsmybatisliquibase.dto.SuccessResponseDto;
+import com.learning.emsmybatisliquibase.dto.*;
+import com.learning.emsmybatisliquibase.dto.pagination.RequestQuery;
 import com.learning.emsmybatisliquibase.entity.Employee;
+import com.learning.emsmybatisliquibase.entity.EmployeeBatchOnboarding;
 import com.learning.emsmybatisliquibase.entity.Notification;
 import com.learning.emsmybatisliquibase.entity.Profile;
+import com.learning.emsmybatisliquibase.entity.camunda.ProcessExecution;
+import com.learning.emsmybatisliquibase.entity.enums.Gender;
+import com.learning.emsmybatisliquibase.exception.FoundException;
 import com.learning.emsmybatisliquibase.exception.IntegrityException;
 import com.learning.emsmybatisliquibase.exception.InvalidInputException;
 import com.learning.emsmybatisliquibase.exception.NotFoundException;
-import com.learning.emsmybatisliquibase.service.DepartmentService;
-import com.learning.emsmybatisliquibase.service.EmployeeService;
-import com.learning.emsmybatisliquibase.service.FilesService;
-import com.learning.emsmybatisliquibase.service.NotificationService;
+import com.learning.emsmybatisliquibase.service.*;
+import com.learning.emsmybatisliquibase.utils.UtilityService;
+import io.camunda.client.CamundaClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.analysis.function.Add;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
+import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
@@ -29,9 +36,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.text.DecimalFormat;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static com.learning.emsmybatisliquibase.exception.errorcodes.DepartmentErrorCodes.PROFILE_NOT_UPDATED;
 import static com.learning.emsmybatisliquibase.exception.errorcodes.EmployeeErrorCodes.*;
@@ -53,7 +66,9 @@ public class FilesServiceImpl implements FilesService {
 
     private final NotificationService notificationService;
 
-    private final com.learning.emsmybatisliquibase.batch.EmployeeBatchService employeeBatchService;
+    private final CamundaClient camundaClient;
+
+    private final ProcessExecutionService processExecutionService;
 
     private static final String ACTION = "action";
 
@@ -61,20 +76,139 @@ public class FilesServiceImpl implements FilesService {
 
     private static final String REMOVE = "remove";
 
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
+    private static final DecimalFormat DECIMAL_FORMAT = new DecimalFormat("0");
+
+    static {
+        DECIMAL_FORMAT.setMaximumFractionDigits(0);
+    }
+
+    private final EmployeeBatchOnboardingDao employeeBatchOnboardingDao;
+
+
     @Override
-    public SuccessResponseDto colleagueOnboard(MultipartFile file) throws IOException {
+    public ApiResponse<AtomicLong> colleagueOnboard(MultipartFile file) throws IOException {
         var rowDatas = fileProcess(file, FileType.COLLEAGUE_ONBOARD);
 
-        try {
-            List<UUID> employeeUuids = employeeBatchService.processEmployeeBatch(rowDatas);
+        var user = UtilityService.getAuthenticatedUserOrDefaultAdmin();
+        var importId = createImportId(user.toString(), rowDatas.size());
 
-            return SuccessResponseDto.builder()
-                    .success(Boolean.TRUE)
-                    .data(String.valueOf(employeeUuids))
+        var existingCount = employeeBatchOnboardingDao.getCount(new RequestQuery(Map.of("importId", importId,
+                "totalCount", rowDatas.size())));
+        if (existingCount > 0) {
+            throw new FoundException("FILE_ALREADY_IMPORTED",
+                    "File already imported and may be processing. Please check status with different API");
+        }
+
+        List<List<AddEmployeeDto>> partitions = Lists.partition(readEmployeeData(rowDatas), 50);
+        int batchNumber = 0;
+        for (List<AddEmployeeDto> employeeDtos : partitions) {
+            EmployeeBatchOnboarding onboarding = EmployeeBatchOnboarding.builder()
+                    .id(UUID.randomUUID())
+                    .importId(importId)
+                    .batchNo(++batchNumber)
+                    .employees(employeeDtos)
+                    .createdBy(user)
+                    .totalCount(rowDatas.size())
+                    .status("PROCESSING")
+                    .createdAt(LocalDateTime.now())
                     .build();
+            insertToBatchOnboarding(onboarding);
+        }
+
+        Map<String, Object> variables = Map.of("import_id", importId,
+                "batch_size", batchNumber,
+                "current_batch", 1);
+
+        AtomicLong processInstanceKey = new AtomicLong();
+
+        try {
+            camundaClient.newCreateInstanceCommand()
+                    .bpmnProcessId("bulk-onboarding")
+                    .latestVersion()
+                    .variables(variables)
+                    .send()
+                    .thenAccept(response -> {
+                        ProcessExecution processExecution = ProcessExecution.builder()
+                                .processInstanceKey(response.getProcessInstanceKey())
+                                .processDefinitionId(String.valueOf(response.getProcessDefinitionKey()))
+                                .processName(response.getBpmnProcessId())
+                                .employeeUuid(user)
+                                .startedBy(user)
+                                .build();
+                        processInstanceKey.set(response.getProcessInstanceKey());
+                        processExecutionService.insert(processExecution);
+                    });
         } catch (Exception e) {
-            log.error("Batch processing failed: {}", e.getMessage(), e);
-            throw new RuntimeException("Failed to process employee batch", e);
+            throw new IntegrityException("BULK_ONBOARDING_FAILED", e.getCause().getMessage());
+        }
+        return ApiResponse.success(processInstanceKey, "Bulk onboarding successful");
+    }
+
+    private String createImportId(String user, int totalCount) {
+        user = user.replace("-", "");
+        return "import-" + user + totalCount;
+    }
+
+    private void insertToBatchOnboarding(EmployeeBatchOnboarding employeeBatchOnboarding) {
+        try {
+            if (0 == employeeBatchOnboardingDao.insert(employeeBatchOnboarding)) {
+                throw new IntegrityException("BATCH_ONBOARDING_INSERTION_FAILED_FOR_BATCH" + employeeBatchOnboarding.getBatchNo(),
+                        "Batch onboarding insertion failed for batch no: " + employeeBatchOnboarding.getBatchNo());
+            }
+        } catch (DataIntegrityViolationException exception) {
+            throw new IntegrityException("BATCH_ONBOARDING_INSERTION_FAILED_FOR_BATCH" + employeeBatchOnboarding.getBatchNo(),
+                    exception.getCause().getMessage());
+        }
+    }
+
+    private List<AddEmployeeDto> readEmployeeData(List<List<String>> data) {
+        List<AddEmployeeDto> employeeData = new ArrayList<>();
+        for (List<String> row : data) {
+            if (row.size() != 14) {
+                log.warn("Skipping invalid row with {} columns", row.size());
+                continue;
+            }
+
+            try {
+                employeeData.add(AddEmployeeDto.builder()
+                        .firstName(row.get(0))
+                        .lastName(row.get(1))
+                        .email(row.get(2))
+                        .gender(getGender(row.get(3)))
+                        .dateOfBirth(parseDate(row.get(4)))
+                        .phoneNumber(row.get(5).trim())
+                        .joiningDate(parseDate(row.get(6)))
+                        .leavingDate(parseDate(row.get(7)))
+                        .departmentName(row.get(8).trim())
+                        .isManager(row.get(9).trim())
+                        .managerUuid(row.get(10).trim().isEmpty() ? null : UUID.fromString(row.get(10).trim()))
+                        .jobTitle(row.get(11))
+                        .password(row.get(12).trim())
+                        .confirmPassword(row.get(13).trim())
+                        .build());
+            } catch (Exception e) {
+                log.error("Error parsing employee: {}", e.getMessage());
+            }
+        }
+        return employeeData;
+    }
+
+    private LocalDate parseDate(String dateString) {
+        if (dateString == null || dateString.trim().isEmpty()) {
+            return null;
+        }
+        return LocalDate.parse(dateString, DATE_FORMATTER);
+    }
+
+    private Gender getGender(String value) {
+        if ("M".equalsIgnoreCase(value) || "male".equalsIgnoreCase(value)) {
+            return Gender.MALE;
+        } else if ("F".equalsIgnoreCase(value) || "female".equalsIgnoreCase(value)) {
+            return Gender.FEMALE;
+        } else {
+            return Gender.OTHERS;
         }
     }
 
@@ -171,7 +305,7 @@ public class FilesServiceImpl implements FilesService {
     }
 
     private void validateManagerAccess(Employee manager) {
-        if (!manager.getIsManager()) {
+        if (Boolean.FALSE.equals(manager.getIsManager())) {
             throw new InvalidInputException(MANAGER_ACCESS_NOT_FOUND.code(),
                     "Manager access not granted for email: " + manager.getEmail());
         }
@@ -281,9 +415,10 @@ public class FilesServiceImpl implements FilesService {
 
     private String getCellValue(Cell cell) {
         if (cell == null) return "";
+        DataFormatter formatter = new DataFormatter();
         return switch (cell.getCellType()) {
             case STRING -> cell.getStringCellValue().trim();
-            case NUMERIC -> String.valueOf(cell.getNumericCellValue());
+            case NUMERIC -> formatter.formatCellValue(cell);
             case BOOLEAN -> String.valueOf(cell.getBooleanCellValue());
             case FORMULA -> cell.getCellFormula();
             default -> "";

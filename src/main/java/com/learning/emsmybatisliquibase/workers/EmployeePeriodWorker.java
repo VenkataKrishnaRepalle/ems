@@ -1,4 +1,4 @@
-package com.learning.emsmybatisliquibase.camunda;
+package com.learning.emsmybatisliquibase.workers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.learning.emsmybatisliquibase.exception.InvalidInputException;

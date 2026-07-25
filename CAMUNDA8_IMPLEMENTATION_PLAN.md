@@ -559,9 +559,9 @@ Initial BPMN files:
 Add Java packages:
 
 ```text
-com.learning.emsmybatisliquibase.camunda.config
-com.learning.emsmybatisliquibase.camunda.worker
-com.learning.emsmybatisliquibase.camunda.workflow
+com.learning.emsmybatisliquibase.workers.config
+com.learning.emsmybatisliquibase.workers.worker
+com.learning.emsmybatisliquibase.workers.workflow
 ```
 
 Responsibilities:

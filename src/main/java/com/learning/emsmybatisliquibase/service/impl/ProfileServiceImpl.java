@@ -1,6 +1,6 @@
 package com.learning.emsmybatisliquibase.service.impl;
 
-import com.learning.emsmybatisliquibase.Kafka.EmployeeDetailsEtmsProducer;
+import com.learning.emsmybatisliquibase.kafka.EmployeeDetailsEtmsProducer;
 import com.learning.emsmybatisliquibase.dao.EmployeeDao;
 import com.learning.emsmybatisliquibase.dao.ProfileDao;
 import com.learning.emsmybatisliquibase.dto.EmployeeEtmsDetails;

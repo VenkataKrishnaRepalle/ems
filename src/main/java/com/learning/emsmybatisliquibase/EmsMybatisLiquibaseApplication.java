@@ -1,5 +1,6 @@
 package com.learning.emsmybatisliquibase;
 
+import io.camunda.client.annotation.Deployment;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -10,6 +11,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @MapperScan("com.learning.emsmybatisliquibase.dao")
 @EnableScheduling
 @EnableAsync
+@Deployment(resources = "classpath*:camunda/**/*.*")
 public class EmsMybatisLiquibaseApplication {
 
     public static void main(String[] args) {

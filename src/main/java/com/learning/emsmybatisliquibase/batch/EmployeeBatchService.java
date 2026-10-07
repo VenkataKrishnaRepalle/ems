@@ -25,8 +25,11 @@ import java.util.UUID;
 public class EmployeeBatchService {
 
     private final JobLauncher jobLauncher;
+
     private final JobRepository jobRepository;
+
     private final PlatformTransactionManager transactionManager;
+
     private final EmployeeWriter employeeWriter;
     
     private static final int CHUNK_SIZE = 10;

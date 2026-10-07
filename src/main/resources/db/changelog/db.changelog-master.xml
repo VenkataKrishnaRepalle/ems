@@ -4,4 +4,5 @@
     <property name="uuid_type" value="uuid" dbms="postgresql" global="true"/>
     <include file="employee-ddl.xml" relativeToChangelogFile="true"/>
     <includeAll path="migration" relativeToChangelogFile="true"/>
+    <includeAll path="v0_1" relativeToChangelogFile="true"/>
 </databaseChangeLog>

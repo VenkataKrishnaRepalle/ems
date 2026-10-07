@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.learning.emsmybatisliquibase.dao.ProcessExecutionDao">
+    <resultMap id="processExecutionMap" type="com.learning.emsmybatisliquibase.entity.camunda.ProcessExecution">
+        <id property="processInstanceKey" column="process_key"/>
+        <result property="employeeUuid" column="employee_uuid" javaType="java.util.UUID" jdbcType="VARCHAR"
+                typeHandler="com.learning.emsmybatisliquibase.handler.UuidTypeHandler"/>
+        <result property="processDefinitionId" column="process_definition_id"/>
+        <result property="processName" column="process_name"/>
+        <result property="status" column="status_id"/>
+        <result property="failedStep" column="failed_step"/>
+        <result property="errorCode" column="error_code"/>
+        <result property="errorMessage" column="error_message"/>
+        <result property="startedBy" column="started_by" javaType="java.util.UUID" jdbcType="VARCHAR"
+                typeHandler="com.learning.emsmybatisliquibase.handler.UuidTypeHandler"/>
+        <result property="startedTime" column="started_time"/>
+        <result property="completedTime" column="completed_time"/>
+    </resultMap>
+
+    <select id="getByProcessInstanceId" resultMap="processExecutionMap">
+        SELECT *
+        FROM camunda_process_execution
+        WHERE process_key = #{id}
+    </select>
+
+    <select id="getByEmployeeId" resultMap="processExecutionMap">
+        SELECT *
+        FROM camunda_process_execution
+        WHERE employee_uuid = #{employeeUuid}
+    </select>
+
+    <insert id="insert" flushCache="true">
+        INSERT INTO camunda_process_execution(process_key, employee_uuid, process_definition_id, process_name,
+                                              status_id, failed_step, error_code, error_message, started_by,
+                                              started_time, completed_time)
+        VALUES (#{pe.processInstanceKey}, #{pe.employeeUuid}, #{pe.processDefinitionId}, #{pe.processName},
+                #{pe.status}, #{pe.failedStep}, #{pe.errorCode}, #{pe.errorMessage}, #{pe.startedBy}, #{pe.startedTime},
+                #{pe.completedTime})
+    </insert>
+
+    <update id="update" flushCache="true">
+        UPDATE camunda_process_execution
+        SET employee_uuid         = #{pe.employeeUuid},
+            process_definition_id = #{pe.processDefinitionId},
+            process_name          = #{pe.processName},
+            status_id             = #{pe.status},
+            failed_step           = #{pe.failedStep},
+            error_code            = #{pe.errorCode},
+            error_message         = #{pe.errorMessage},
+            completed_time        = #{pe.completedTime}
+        WHERE process_key = #{pe.processInstanceKey}
+    </update>
+
+    <update id="updateStatus">
+        UPDATE camunda_process_execution
+        SET status_id = #{status}
+        <if test="status.id == 2">
+            , completed_time = CURRENT_TIMESTAMP
+        </if>
+        WHERE process_key = #{id}
+    </update>
+    <update id="updateEmployee">
+        UPDATE camunda_process_execution
+        SET employee_uuid = #{employeeUuid}
+        WHERE process_key = #{id}
+    </update>
+
+    <delete id="deleteByProcessId" flushCache="true">
+        DELETE
+        FROM camunda_process_execution
+        WHERE process_key = #{id}
+    </delete>
+
+    <delete id="deleteByEmployeeId" flushCache="true">
+        DELETE
+        FROM camunda_process_execution
+        WHERE employee_uuid = #{employeeUuid}
+    </delete>
+
+</mapper>

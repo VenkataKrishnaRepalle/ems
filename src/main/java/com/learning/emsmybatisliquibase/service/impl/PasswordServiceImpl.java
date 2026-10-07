@@ -129,8 +129,7 @@ public class PasswordServiceImpl implements PasswordService {
 
         }
 
-        Thread t = new Thread(() -> keycloakService.update(userRepresentation));
-        t.start();
+        keycloakService.update(userRepresentation);
     }
 
     @Transactional

@@ -189,7 +189,7 @@ class AttendanceServiceImplTest {
         when(employeeService.getById(EMPLOYEE_UUID)).thenReturn(employee);
         when(attendanceDao.getByEmployeeUuid(EMPLOYEE_UUID, null, null)).thenReturn(attendanceList);
 
-        ViewEmployeeAttendanceDto response = attendanceService.getEmployeeAttendance(EMPLOYEE_UUID, null, null);
+        ViewEmployeeAttendanceDto response = attendanceService.getEmployeeAttendance(EMPLOYEE_UUID, 2025L, 4);
 
         assertNotNull(response);
         assertEquals(employee.getUuid(), response.getEmployeeUuid());

@@ -21,6 +21,11 @@
     </resultMap>
 
     <resultMap id="uuidResultMap" type="java.util.UUID"/>
+    <delete id="delete" flushCache="true">
+        DELETE
+        FROM employee
+        WHERE uuid = #{uuid}
+    </delete>
 
     <select id="get" resultMap="employeeResult">
         select *

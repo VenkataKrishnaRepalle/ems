@@ -4,6 +4,10 @@ import java.text.MessageFormat;
 import java.util.ResourceBundle;
 
 public class ErrorMessageUtil {
+    private ErrorMessageUtil() {
+        /* This utility class should not be instantiated */
+    }
+
 
     private static final ResourceBundle RESOURCE_BUNDLE = ResourceBundle.getBundle("error_messages");
 

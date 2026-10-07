@@ -52,6 +52,8 @@ public interface EmployeeDao {
 
     List<EmployeeDetailsDto> getByNameOrEmail(@Param("name") String name);
 
+    int delete(@Param("uuid") UUID uuid);
+
     EmployeeEtmsDetails getEtmsById(@Param("uuid") UUID uuid);
 
     List<EmployeeEtmsDetails> getAllForEtms();

@@ -104,6 +104,10 @@ springdoc:
       client-id: ${KEYCLOAK_SWAGGER_CLIENT_ID:${KEYCLOAK_FRONTEND_CLIENT_ID:ems-frontend}}
       use-pkce-with-authorization-code-grant: true
 
+  api-docs:
+    querydsl:
+      enabled: false
+
 management:
   endpoints:
     web:
@@ -125,7 +129,6 @@ logging:
         orm:
           jdbc:
             bind: trace
-
 maximum:
   login:
     count: 5
@@ -176,3 +179,25 @@ resilience4j.circuitbreaker:
         - org.springframework.web.reactive.function.client.WebClientResponseException
 
 kind: Application
+
+#global:
+#  identity:
+#    auth:
+#      enabled: true
+#      publicIssuerUrl: http://localhost:8080/realms/ems
+#      issuerBackendUrl: http://localhost:8080/realms/ems
+#      authUrl: http://localhost:8080/realms/ems/protocol/openid-connect/auth
+#      tokenUrl: http://localhost:8080/realms/ems/protocol/openid-connect/token
+#      jwksUrl: http://localhost:8080/realms/ems/protocol/openid-connect/certs
+#      identity:
+#        clientId: ems-frontend
+#    security:
+#      authentication:
+#        method: oidc
+
+camunda:
+  client:
+    enabled: ${CAMUNDA_ENABLED:true}
+    mode: self-managed
+    grpc-address: ${CAMUNDA_GRPC_ADDRESS:http://localhost:26500}
+    rest-address: ${CAMUNDA_REST_ADDRESS:http://localhost:9000}

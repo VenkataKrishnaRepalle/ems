@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:zeebe="http://camunda.org/schema/zeebe/1.0" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_1w3o83e" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.48.0" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.2.0">
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:zeebe="http://camunda.org/schema/zeebe/1.0" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_1w3o83e" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.49.0" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.9.0">
   <bpmn:message id="Message_OnboardingFailure" name="OnboardingCommunicationFailure">
     <bpmn:extensionElements>
       <zeebe:subscription correlationKey="=employeeUuid" />
@@ -182,7 +182,7 @@
     <bpmn:sequenceFlow id="Flow_1ea57r2" sourceRef="Gateway_Split" targetRef="Activity_1ni9vma" />
     <bpmn:businessRuleTask id="Activity_1ni9vma" name="Employee notification details">
       <bpmn:extensionElements>
-        <zeebe:calledDecision decisionId="notification-decision" resultVariable="dmnResult" />
+        <zeebe:calledDecision decisionId="onboarding-notification-decision" resultVariable="dmnResult" />
         <zeebe:ioMapping>
           <zeebe:input source="ONBOARDING" target="notificationType" />
           <zeebe:input source="EMPLOYEE" target="recipientRole" />
@@ -196,7 +196,7 @@
     <bpmn:sequenceFlow id="Flow_1cykh2g" sourceRef="Activity_1f2mk5h" targetRef="send_manager_notification" />
     <bpmn:businessRuleTask id="Activity_1f2mk5h" name="Manager Notification details">
       <bpmn:extensionElements>
-        <zeebe:calledDecision decisionId="notification-decision" resultVariable="dmnResult" />
+        <zeebe:calledDecision decisionId="onboarding-notification-decision" resultVariable="dmnResult" />
         <zeebe:ioMapping>
           <zeebe:input source="ONBOARDING" target="notificationType" />
           <zeebe:input source="MANAGER" target="recipientRole" />
@@ -217,6 +217,9 @@
       <bpmndi:BPMNShape id="Activity_05ppp4f_di" bpmnElement="create_keycloak_user">
         <dc:Bounds x="280" y="220" width="100" height="80" />
       </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_0mpw9pf_di" bpmnElement="Gateway_Split" isMarkerVisible="true">
+        <dc:Bounds x="915" y="225" width="50" height="50" />
+      </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Activity_13wl524_di" bpmnElement="save_employee_data">
         <dc:Bounds x="450" y="220" width="100" height="80" />
       </bpmndi:BPMNShape>
@@ -226,8 +229,20 @@
       <bpmndi:BPMNShape id="Activity_1nf0hsf_di" bpmnElement="assign_employee_period">
         <dc:Bounds x="730" y="310" width="100" height="80" />
       </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1nqkddp_di" bpmnElement="send_onboarding_communication">
+        <dc:Bounds x="1100" y="80" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1d0gwu3_di" bpmnElement="send_welcome_notification">
+        <dc:Bounds x="1210" y="210" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_17v2b18_di" bpmnElement="send_manager_notification">
+        <dc:Bounds x="1210" y="340" width="100" height="80" />
+      </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Gateway_06a62z1_di" bpmnElement="Gateway_06a62z1">
         <dc:Bounds x="625" y="235" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_1u0xywu_di" bpmnElement="Gateway_1u0xywu">
+        <dc:Bounds x="1365" y="225" width="50" height="50" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Activity_16wfwvh_di" bpmnElement="compensate-keycloa">
         <dc:Bounds x="730" y="480" width="100" height="80" />
@@ -240,35 +255,20 @@
         <dc:Bounds x="450" y="480" width="100" height="80" />
         <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Event_1481fvy_di" bpmnElement="Event_1481fvy">
-        <dc:Bounds x="1682" y="232" width="36" height="36" />
-      </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Activity_1r8snlz_di" bpmnElement="complete-process-execution">
         <dc:Bounds x="1480" y="210" width="100" height="80" />
         <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Activity_1nqkddp_di" bpmnElement="send_onboarding_communication">
-        <dc:Bounds x="1100" y="80" width="100" height="80" />
+      <bpmndi:BPMNShape id="Event_1481fvy_di" bpmnElement="Event_1481fvy">
+        <dc:Bounds x="1682" y="232" width="36" height="36" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Activity_09e3dgq_di" bpmnElement="Activity_1ni9vma">
         <dc:Bounds x="1010" y="210" width="100" height="80" />
         <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Activity_1d0gwu3_di" bpmnElement="send_welcome_notification">
-        <dc:Bounds x="1210" y="210" width="100" height="80" />
-      </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Activity_17vjuug_di" bpmnElement="Activity_1f2mk5h">
         <dc:Bounds x="1010" y="340" width="100" height="80" />
         <bpmndi:BPMNLabel />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Gateway_0mpw9pf_di" bpmnElement="Gateway_Split" isMarkerVisible="true">
-        <dc:Bounds x="915" y="225" width="50" height="50" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Activity_17v2b18_di" bpmnElement="send_manager_notification">
-        <dc:Bounds x="1210" y="340" width="100" height="80" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Gateway_1u0xywu_di" bpmnElement="Gateway_1u0xywu">
-        <dc:Bounds x="1365" y="225" width="50" height="50" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Event_1a8fe0t_di" bpmnElement="Event_1a8fe0t">
         <dc:Bounds x="762" y="372" width="36" height="36" />
@@ -279,14 +279,14 @@
       <bpmndi:BPMNShape id="Event_1rozpsa_di" bpmnElement="Event_1rozpsa">
         <dc:Bounds x="482" y="282" width="36" height="36" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Event_1pcxufu_di" bpmnElement="Event_1pcxufu">
-        <dc:Bounds x="1132" y="142" width="36" height="36" />
+      <bpmndi:BPMNShape id="Event_06izcs6_di" bpmnElement="Event_06izcs6">
+        <dc:Bounds x="1242" y="402" width="36" height="36" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Event_1syxewr_di" bpmnElement="Event_1syxewr">
         <dc:Bounds x="1242" y="272" width="36" height="36" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Event_06izcs6_di" bpmnElement="Event_06izcs6">
-        <dc:Bounds x="1242" y="402" width="36" height="36" />
+      <bpmndi:BPMNShape id="Event_1pcxufu_di" bpmnElement="Event_1pcxufu">
+        <dc:Bounds x="1132" y="142" width="36" height="36" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="Flow_1szhu6a_di" bpmnElement="Flow_1">
         <di:waypoint x="188" y="260" />

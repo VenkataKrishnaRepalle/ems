@@ -3,6 +3,7 @@ package com.learning.emsmybatisliquibase.service;
 import com.learning.emsmybatisliquibase.dto.EmployeeCycleAndTimelineResponseDto;
 import com.learning.emsmybatisliquibase.dto.FullEmployeePeriodDto;
 import com.learning.emsmybatisliquibase.dto.SuccessResponseDto;
+import com.learning.emsmybatisliquibase.entity.Period;
 import com.learning.emsmybatisliquibase.entity.enums.PeriodStatus;
 
 import java.util.List;
@@ -12,6 +13,8 @@ import java.util.UUID;
 
 public interface EmployeePeriodService {
     SuccessResponseDto periodAssignment(List<UUID> employeeIds);
+
+    SuccessResponseDto periodAssignment(List<UUID> employeeIds, Period period);
 
     SuccessResponseDto updateEmployeePeriodStatus(UUID employeePeriodId, PeriodStatus status);
 

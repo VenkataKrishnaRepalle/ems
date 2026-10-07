@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" xmlns:dmndi="https://www.omg.org/spec/DMN/20191111/DMNDI/" xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/" xmlns:modeler="http://camunda.org/schema/modeler/1.0" xmlns:biodi="http://bpmn.io/schema/dmn/biodi/2.0" id="Definitions_1whajzj" name="DRD" namespace="http://camunda.org/schema/1.0/dmn" exporter="Camunda Modeler" exporterVersion="5.51.1" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.9.0">
+  <decision id="review-notification-decision" name="Review Notification">
+    <decisionTable id="DecisionTable_0u7p220">
+      <input id="Input_1" label="Review Type" biodi:width="192">
+        <inputExpression id="InputExpression_1" typeRef="string">
+          <text>reviewType</text>
+        </inputExpression>
+      </input>
+      <input id="InputClause_0sqp7kk" label="Review Status">
+        <inputExpression id="LiteralExpression_1pmx4bk" typeRef="string">
+          <text>reviewStatus</text>
+        </inputExpression>
+      </input>
+      <input id="InputClause_0kob1wh" label="Recipient Role">
+        <inputExpression id="LiteralExpression_107e17z" typeRef="string">
+          <text>recipientRole</text>
+        </inputExpression>
+      </input>
+      <output id="Output_1" label="Title" name="title" typeRef="string" />
+      <output id="OutputClause_17l7vxf" label="Message" name="message" typeRef="string" />
+      <output id="OutputClause_1t3spk3" name="Link" typeRef="string" />
+      <rule id="DecisionRule_0uq7xqd">
+        <inputEntry id="UnaryTests_1n13z90">
+          <text>"Q1","Q2","Q3","Q4"</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1c1x1po">
+          <text>"WAITING_FOR_APPROVAL"</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0ol2hem">
+          <text>"EMPLOYEE"</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_0020m6m">
+          <text>"You have been submitted your {reviewType} review"</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_00jwj1v">
+          <text>"Hello {firstName}, \n \n you have submitted your {reviewType} on {currentDateTime}. \n Your manager {managerFirstName} will review your submitted review and will get back to you if any concerns. \n Thank you for using this app"</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_1uwbf9z">
+          <text>"review/{reviewId}"</text>
+        </outputEntry>
+      </rule>
+      <rule id="DecisionRule_0rec42t">
+        <inputEntry id="UnaryTests_0onjc7f">
+          <text>"Q1","Q2","Q3","Q4"</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0oaxzav">
+          <text>"WAITING_FOR_APPROVAL"</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0gvehp3">
+          <text>"MANAGER"</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_0a03ivp">
+          <text>"Your direct reportee {firstName} has submitted his {reviewType} review"</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_1uoecnd">
+          <text>"Hello {managerFirstName}, \n \n your direct reportee {firstName} {lastName} have submitted his {reviewType} review. \n please review and complete the review as soon as possible. \n \n Thank yopu for using the app."</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_1mum2k3">
+          <text>"review/{reviewId}"</text>
+        </outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+  <dmndi:DMNDI>
+    <dmndi:DMNDiagram>
+      <dmndi:DMNShape id="Decision_0y2is0z_di" dmnElementRef="review-notification-decision">
+        <dc:Bounds height="80" width="180" x="160" y="100" />
+      </dmndi:DMNShape>
+    </dmndi:DMNDiagram>
+  </dmndi:DMNDI>
+</definitions>

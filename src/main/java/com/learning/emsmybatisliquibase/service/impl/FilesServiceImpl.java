@@ -101,7 +101,7 @@ public class FilesServiceImpl implements FilesService {
                     "File already imported and may be processing. Please check status with different API");
         }
 
-        List<List<AddEmployeeDto>> partitions = Lists.partition(readEmployeeData(rowDatas), 50);
+        List<List<AddEmployeeDto>> partitions = Lists.partition(readEmployeeData(rowDatas), 100);
         int batchNumber = 0;
         for (List<AddEmployeeDto> employeeDtos : partitions) {
             EmployeeBatchOnboarding onboarding = EmployeeBatchOnboarding.builder()

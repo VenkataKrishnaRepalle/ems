@@ -16,5 +16,7 @@ public interface PeriodService {
 
     SuccessResponseDto updateStatus(UUID periodId, PeriodStatus status);
 
+    Period update(Period period);
+
     Period getCurrentActivePeriod();
 }

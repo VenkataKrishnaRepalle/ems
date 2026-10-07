@@ -48,6 +48,26 @@
         where uuid = #{reviewTimeline.uuid}
     </update>
 
+    <update id="updateStatus" flushCache="true">
+        WITH batch AS (
+            SELECT rt.uuid
+            FROM review_timeline rt
+            JOIN employee_period ep ON ep.uuid = rt.employee_period_uuid
+            JOIN employee e ON e.uuid = ep.employee_uuid
+            JOIN profile p ON p.employee_uuid = e.uuid
+            WHERE rt.type = #{reviewType.id}
+            AND p.profile_status IN (1, 2)
+            AND ep.period_uuid = #{periodUuid}
+            AND rt.status <> #{reviewStatus.id}
+            ORDER BY rt.uuid
+            LIMIT 5000
+        )
+        UPDATE review_timeline rt
+        SET status = #{reviewStatus.id}
+        FROM batch
+        WHERE rt.uuid = batch.uuid;
+    </update>
+
     <select id="findByStatusAndReviewType" resultMap="reviewTimelineStructure">
         SELECT t.*
         from employee_period ep
@@ -106,5 +126,13 @@
                  join review_timeline rt on ep.uuid = rt.employee_period_uuid
         where ep.uuid = #{employeePeriodId}
           and rt.type = #{reviewType}
+    </select>
+    <select id="getAllTimelineUuidsByReviewType" resultType="java.util.UUID">
+        SELECT rt.uuid
+        FROM review_timeline rt
+                 JOIN employee_period ep on ep.uuid = rt.employee_period_uuid and ep.period_uuid = ${periodUuid}
+                 JOIN employee e on e.uuid = ep.employee_uuid
+                 JOIN profile p on p.employee_uuid = e.uuid AND p.profile_status in (1, 2)
+        WHERE rt.type = #{reviewType.id}
     </select>
 </mapper>

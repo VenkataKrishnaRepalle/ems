@@ -43,6 +43,21 @@
         WHERE ep.employee_uuid = #{employeeId}
     </select>
 
+    <select id="getAllByEmployeeUuidsByPeriodId" resultType="java.util.UUID">
+
+        SELECT e.uuid
+        FROM employee e
+                 JOIN profile p
+                      ON p.employee_uuid = e.uuid
+                          AND p.profile_status = 1
+        WHERE NOT EXISTS (SELECT 1
+                          FROM employee_period ep
+                          WHERE ep.employee_uuid = e.uuid
+                            AND ep.period_uuid = #{periodId})
+        ORDER BY e.uuid
+        LIMIT #{limit}
+    </select>
+
     <sql id="applyFilter">
         <if test="request.properties.uuid != null">
             AND uuid = #{request.properties.uuid}

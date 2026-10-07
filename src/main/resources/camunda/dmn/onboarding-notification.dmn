@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" xmlns:dmndi="https://www.omg.org/spec/DMN/20191111/DMNDI/" xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/" id="notification_dmn" name="Notification" namespace="http://camunda.org/schema/1.0/dmn" exporter="Camunda Modeler" exporterVersion="5.47.0">
-  <decision id="notification-decision" name="Notification Decision">
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" xmlns:dmndi="https://www.omg.org/spec/DMN/20191111/DMNDI/" xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/" id="notification_dmn" name="Notification" namespace="http://camunda.org/schema/1.0/dmn" exporter="Camunda Modeler" exporterVersion="5.49.0">
+  <decision id="onboarding-notification-decision" name="Onboarding Notification">
     <decisionTable id="DecisionTable_1">
       <input id="Input_1" label="Notification Type">
         <inputExpression id="InputExpression_1" typeRef="string">
@@ -66,11 +66,28 @@
           <text>"reviews/{reviewId}"</text>
         </outputEntry>
       </rule>
+      <rule id="DecisionRule_117lx9l">
+        <inputEntry id="UnaryTests_11otgqq">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1xf90df">
+          <text></text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_1x2m0re">
+          <text></text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_0i7sbi3">
+          <text></text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_0jlm1om">
+          <text></text>
+        </outputEntry>
+      </rule>
     </decisionTable>
   </decision>
   <dmndi:DMNDI>
     <dmndi:DMNDiagram>
-      <dmndi:DMNShape id="Decision_12ftx91_di" dmnElementRef="notification-decision">
+      <dmndi:DMNShape id="Decision_12ftx91_di" dmnElementRef="onboarding-notification-decision">
         <dc:Bounds height="80" width="180" x="160" y="100" />
       </dmndi:DMNShape>
     </dmndi:DMNDiagram>

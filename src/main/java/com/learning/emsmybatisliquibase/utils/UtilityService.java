@@ -100,4 +100,24 @@ public class UtilityService {
         return inputMap.get(key).toString();
     }
 
+    public static void setBatchSizeAndDelay(Long count, Map<String, Object> variables) {
+        int batchCount;
+        String batchDelay;
+        if(count > 100000) {
+            batchCount = 500;
+            batchDelay = "PT30S";
+        } else if (count > 50000) {
+            batchCount = 300;
+            batchDelay = "PT20S";
+        } else if (count > 10000) {
+            batchCount = 200;
+            batchDelay = "PT15S";
+        } else {
+            batchCount = 150;
+            batchDelay = "PT10S";
+        }
+
+        variables.put("batchSize", batchCount);
+        variables.put("batchDelay", batchDelay);
+    }
 }

@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:zeebe="http://camunda.org/schema/zeebe/1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_1b77c4t" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.49.0" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.9.0">
+  <bpmn:process id="assign-employee-period" name="Assign employee period" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_1">
+      <bpmn:outgoing>Flow_07nikf3</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="Flow_07nikf3" sourceRef="StartEvent_1" targetRef="Activity_158z4c9" />
+    <bpmn:exclusiveGateway id="Gateway_0oxkkom">
+      <bpmn:incoming>Flow_0u8trpb</bpmn:incoming>
+      <bpmn:outgoing>Flow_11ousmq</bpmn:outgoing>
+      <bpmn:outgoing>Flow_041557m</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="Flow_0u8trpb" sourceRef="Activity_158z4c9" targetRef="Gateway_0oxkkom" />
+    <bpmn:sequenceFlow id="Flow_11ousmq" sourceRef="Gateway_0oxkkom" targetRef="Activity_0uujb45">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=not(has_more_colleagues)</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:intermediateCatchEvent id="Event_1ourtdz" name="sleep">
+      <bpmn:incoming>Flow_041557m</bpmn:incoming>
+      <bpmn:outgoing>Flow_0njcknu</bpmn:outgoing>
+      <bpmn:timerEventDefinition id="TimerEventDefinition_0grzrmm">
+        <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">=batchDelay</bpmn:timeDuration>
+      </bpmn:timerEventDefinition>
+    </bpmn:intermediateCatchEvent>
+    <bpmn:sequenceFlow id="Flow_041557m" sourceRef="Gateway_0oxkkom" targetRef="Event_1ourtdz">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=has_more_colleagues</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_0njcknu" sourceRef="Event_1ourtdz" targetRef="Activity_158z4c9" />
+    <bpmn:callActivity id="Activity_0uujb45" name="Review timeline process">
+      <bpmn:extensionElements>
+        <zeebe:calledElement processId="review-timeline-status" propagateAllChildVariables="false" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_11ousmq</bpmn:incoming>
+      <bpmn:outgoing>Flow_05n6xpg</bpmn:outgoing>
+    </bpmn:callActivity>
+    <bpmn:intermediateCatchEvent id="Event_1qxo56s" name="Waiting for close date">
+      <bpmn:incoming>Flow_05n6xpg</bpmn:incoming>
+      <bpmn:outgoing>Flow_1x9hz58</bpmn:outgoing>
+      <bpmn:timerEventDefinition id="TimerEventDefinition_1saxpyk">
+        <bpmn:timeDate xsi:type="bpmn:tFormalExpression">=closeDate</bpmn:timeDate>
+      </bpmn:timerEventDefinition>
+    </bpmn:intermediateCatchEvent>
+    <bpmn:sequenceFlow id="Flow_05n6xpg" sourceRef="Activity_0uujb45" targetRef="Event_1qxo56s" />
+    <bpmn:sequenceFlow id="Flow_1x9hz58" sourceRef="Event_1qxo56s" targetRef="Activity_1f8n52q" />
+    <bpmn:serviceTask id="Activity_1f8n52q" name="Prepare requested data for assignment">
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="prepare-assign-period-data" />
+        <zeebe:ioMapping>
+          <zeebe:input source="COMPLETED" target="status" />
+        </zeebe:ioMapping>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_1x9hz58</bpmn:incoming>
+      <bpmn:outgoing>Flow_1e6thqb</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="Flow_1e6thqb" sourceRef="Activity_1f8n52q" targetRef="Activity_0peolok" />
+    <bpmn:serviceTask id="Activity_0peolok" name="Update the status">
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="update-period-status" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_1e6thqb</bpmn:incoming>
+      <bpmn:incoming>Flow_1bpsqa7</bpmn:incoming>
+      <bpmn:outgoing>Flow_0u7xv4s</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="Gateway_10dd6vf">
+      <bpmn:incoming>Flow_0u7xv4s</bpmn:incoming>
+      <bpmn:outgoing>Flow_0kfeblt</bpmn:outgoing>
+      <bpmn:outgoing>Flow_1eq5mng</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="Flow_0u7xv4s" sourceRef="Activity_0peolok" targetRef="Gateway_10dd6vf" />
+    <bpmn:sequenceFlow id="Flow_0kfeblt" sourceRef="Gateway_10dd6vf" targetRef="Activity_0s4bh6s">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=not(has_more_colleagues_to_update_status)</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:intermediateCatchEvent id="Event_1c03qdv" name="sleep">
+      <bpmn:incoming>Flow_1eq5mng</bpmn:incoming>
+      <bpmn:outgoing>Flow_1bpsqa7</bpmn:outgoing>
+      <bpmn:timerEventDefinition id="TimerEventDefinition_1p8tah6">
+        <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT30S</bpmn:timeDuration>
+      </bpmn:timerEventDefinition>
+    </bpmn:intermediateCatchEvent>
+    <bpmn:sequenceFlow id="Flow_1eq5mng" sourceRef="Gateway_10dd6vf" targetRef="Event_1c03qdv">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=has_more_colleagues_to_update_status</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_1bpsqa7" sourceRef="Event_1c03qdv" targetRef="Activity_0peolok" />
+    <bpmn:serviceTask id="Activity_158z4c9" name="Assign employee Period">
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="assign-employee-period-bulk" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0njcknu</bpmn:incoming>
+      <bpmn:incoming>Flow_07nikf3</bpmn:incoming>
+      <bpmn:outgoing>Flow_0u8trpb</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="Activity_0s4bh6s" name="Notify business as period completed">
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="notify-business" />
+        <zeebe:ioMapping>
+          <zeebe:input source="COMPLETED" target="status" />
+        </zeebe:ioMapping>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0kfeblt</bpmn:incoming>
+      <bpmn:outgoing>Flow_15mwi5m</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:endEvent id="Event_0voie7x">
+      <bpmn:incoming>Flow_15mwi5m</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_15mwi5m" sourceRef="Activity_0s4bh6s" targetRef="Event_0voie7x" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="assign-employee-period">
+      <bpmndi:BPMNShape id="Gateway_0oxkkom_di" bpmnElement="Gateway_0oxkkom" isMarkerVisible="true">
+        <dc:Bounds x="505" y="95" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1ourtdz_di" bpmnElement="Event_1ourtdz">
+        <dc:Bounds x="422" y="222" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="427" y="265" width="27" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0uujb45_di" bpmnElement="Activity_0uujb45">
+        <dc:Bounds x="670" y="80" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1qxo56s_di" bpmnElement="Event_1qxo56s">
+        <dc:Bounds x="862" y="102" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="840" y="145" width="81" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_19iuymc_di" bpmnElement="Activity_1f8n52q">
+        <dc:Bounds x="980" y="80" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0s74fql_di" bpmnElement="Activity_0peolok">
+        <dc:Bounds x="1180" y="80" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_10dd6vf_di" bpmnElement="Gateway_10dd6vf" isMarkerVisible="true">
+        <dc:Bounds x="1385" y="95" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1c03qdv_di" bpmnElement="Event_1c03qdv">
+        <dc:Bounds x="1292" y="202" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1298" y="245" width="27" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_04t2qi9_di" bpmnElement="Activity_158z4c9">
+        <dc:Bounds x="290" y="80" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1se6i5y_di" bpmnElement="Activity_0s4bh6s">
+        <dc:Bounds x="1530" y="80" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0voie7x_di" bpmnElement="Event_0voie7x">
+        <dc:Bounds x="1702" y="102" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="StartEvent_1_di" bpmnElement="StartEvent_1">
+        <dc:Bounds x="152" y="102" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_07nikf3_di" bpmnElement="Flow_07nikf3">
+        <di:waypoint x="188" y="120" />
+        <di:waypoint x="290" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0u8trpb_di" bpmnElement="Flow_0u8trpb">
+        <di:waypoint x="390" y="120" />
+        <di:waypoint x="505" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_11ousmq_di" bpmnElement="Flow_11ousmq">
+        <di:waypoint x="555" y="120" />
+        <di:waypoint x="670" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_041557m_di" bpmnElement="Flow_041557m">
+        <di:waypoint x="530" y="145" />
+        <di:waypoint x="530" y="240" />
+        <di:waypoint x="458" y="240" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0njcknu_di" bpmnElement="Flow_0njcknu">
+        <di:waypoint x="422" y="240" />
+        <di:waypoint x="340" y="240" />
+        <di:waypoint x="340" y="160" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_05n6xpg_di" bpmnElement="Flow_05n6xpg">
+        <di:waypoint x="770" y="120" />
+        <di:waypoint x="862" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1x9hz58_di" bpmnElement="Flow_1x9hz58">
+        <di:waypoint x="898" y="120" />
+        <di:waypoint x="980" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1e6thqb_di" bpmnElement="Flow_1e6thqb">
+        <di:waypoint x="1080" y="120" />
+        <di:waypoint x="1180" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0u7xv4s_di" bpmnElement="Flow_0u7xv4s">
+        <di:waypoint x="1280" y="120" />
+        <di:waypoint x="1385" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0kfeblt_di" bpmnElement="Flow_0kfeblt">
+        <di:waypoint x="1435" y="120" />
+        <di:waypoint x="1530" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1eq5mng_di" bpmnElement="Flow_1eq5mng">
+        <di:waypoint x="1410" y="145" />
+        <di:waypoint x="1410" y="220" />
+        <di:waypoint x="1328" y="220" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1bpsqa7_di" bpmnElement="Flow_1bpsqa7">
+        <di:waypoint x="1292" y="220" />
+        <di:waypoint x="1230" y="220" />
+        <di:waypoint x="1230" y="160" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_15mwi5m_di" bpmnElement="Flow_15mwi5m">
+        <di:waypoint x="1630" y="120" />
+        <di:waypoint x="1702" y="120" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

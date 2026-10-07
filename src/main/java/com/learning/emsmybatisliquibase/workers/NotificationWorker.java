@@ -1,14 +1,11 @@
 package com.learning.emsmybatisliquibase.workers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.learning.emsmybatisliquibase.dao.EmployeeDao;
 import com.learning.emsmybatisliquibase.entity.Employee;
 import com.learning.emsmybatisliquibase.entity.Notification;
 import com.learning.emsmybatisliquibase.service.NotificationService;
-import io.camunda.client.CamundaClient;
 import io.camunda.client.annotation.JobWorker;
 import io.camunda.client.api.response.ActivatedJob;
-import io.camunda.client.api.worker.JobClient;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -25,14 +22,10 @@ public class NotificationWorker {
 
     private final NotificationService notificationService;
 
-    private final CamundaClient camundaClient;
-
     private final ObjectMapper objectMapper;
 
-    private final EmployeeDao employeeDao;
-
     @JobWorker(type = "send-welcome-notification")
-    public void sendWelcomeNotification(final JobClient client, final ActivatedJob job) {
+    public void sendWelcomeNotification(final ActivatedJob job) {
         var variables = job.getVariablesAsMap();
         var employee = objectMapper.convertValue(variables.get("employee"), Employee.class);
         Map<String, String> dmnResult = objectMapper.convertValue(variables.get("dmnResult"), Map.class);
@@ -49,7 +42,7 @@ public class NotificationWorker {
     }
 
     @JobWorker(type = "send-manager-notification")
-    public void sendManagerOnboardingNotification(final JobClient client, final ActivatedJob job) {
+    public void sendManagerOnboardingNotification(final ActivatedJob job) {
         var variables = job.getVariablesAsMap();
         var employee = objectMapper.convertValue(variables.get("employee"), Employee.class);
 

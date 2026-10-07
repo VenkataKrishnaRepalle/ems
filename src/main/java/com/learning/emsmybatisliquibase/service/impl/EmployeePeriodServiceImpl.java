@@ -71,15 +71,20 @@ public class EmployeePeriodServiceImpl implements EmployeePeriodService {
         if (employeeIds.isEmpty()) {
             throw new NotFoundException("INPUT_REQUIRED", "Provide uuids input for assignment");
         }
-        for (var employeeId : employeeIds) {
-            handleEmployeePeriodAssignment(employeeId, period);
-        }
+        periodAssignment(employeeIds, period);
 
         return successResponse();
     }
 
+    @Override
+    public SuccessResponseDto periodAssignment(List<UUID> employeeIds, Period period) {
+        for (var employeeId : employeeIds) {
+            handleEmployeePeriodAssignment(employeeId, period);
+        }
+        return successResponse();
+    }
+
     private void handleEmployeePeriodAssignment(UUID employeeId, Period period) {
-        System.out.println("Assign Employee Period");
         var isEmployeePeriodExists = employeePeriodDao.get(new RequestQuery(
                 Map.of(EMPLOYEE_UUID, employeeId, PERIOD_UUID, period.getUuid())));
         if (!isEmployeePeriodExists.isEmpty()) {

@@ -24,4 +24,6 @@ public interface ReviewTimelineService {
     ReviewTimeline getByEmployeePeriodIdAndReviewType(UUID employeePeriodUuid, ReviewType reviewType);
 
     TimelineAndReviewResponseDto getByEmployeePeriodAndReviewType(UUID employeePeriodUuid, ReviewType reviewType);
+
+    int update(UUID periodUuid, ReviewType reviewType, ReviewTimelineStatus reviewTimelineStatus);
 }

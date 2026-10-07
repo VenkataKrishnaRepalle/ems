@@ -51,6 +51,10 @@ public class KeyCloakWorker {
         if (Boolean.TRUE.equals(employee.getIsManager())) {
             roles.add("MANAGER");
         }
+
+        if (employee.getEmail().equalsIgnoreCase("admin@gmail.com")) {
+            roles.add("ADMIN");
+        }
         String uuid = keycloakService.create(getUserRepresentation(employee, password), roles);
         log.info("Created user in keycloak with id: {}", uuid);
 

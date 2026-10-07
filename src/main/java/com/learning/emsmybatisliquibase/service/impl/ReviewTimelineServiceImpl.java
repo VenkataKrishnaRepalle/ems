@@ -18,6 +18,7 @@ import com.learning.emsmybatisliquibase.mapper.ReviewTimelineMapper;
 import com.learning.emsmybatisliquibase.service.CommunicationService;
 import com.learning.emsmybatisliquibase.service.ReviewTimelineService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
@@ -32,6 +33,7 @@ import static com.learning.emsmybatisliquibase.exception.errorcodes.TimelineErro
 import static com.learning.emsmybatisliquibase.utils.UtilityService.EMPLOYEE_UUID;
 import static com.learning.emsmybatisliquibase.utils.UtilityService.STATUS;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ReviewTimelineServiceImpl implements ReviewTimelineService {
@@ -124,6 +126,18 @@ public class ReviewTimelineServiceImpl implements ReviewTimelineService {
         var response = reviewTimelineMapper.timelineToTimelineAndReviewResponseDto(timeline);
         response.setReview(review);
         return response;
+    }
+
+    @Override
+    public int update(UUID periodUuid, ReviewType reviewType, ReviewTimelineStatus reviewTimelineStatus) {
+        int rows = 0;
+
+        try {
+            rows = reviewTimelineDao.updateStatus(periodUuid, reviewType, reviewTimelineStatus);
+        } catch (DataIntegrityViolationException ex) {
+            log.error(ex.getMessage(), ex);
+        }
+        return rows;
     }
 
     @Override

@@ -11,6 +11,8 @@ import com.learning.emsmybatisliquibase.exception.NotFoundException;
 import com.learning.emsmybatisliquibase.service.PeriodService;
 import com.learning.emsmybatisliquibase.service.EmployeePeriodService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -23,6 +25,7 @@ import java.util.UUID;
 
 import static com.learning.emsmybatisliquibase.exception.errorcodes.PeriodErrorCodes.*;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -32,10 +35,10 @@ public class PeriodServiceImpl implements PeriodService {
 
     private final EmployeePeriodService employeePeriodService;
 
-    private static final UUID ADMIN_UUID = UUID.fromString("018fb996-a741-73ce-ac0d-79916b15ac0f");
-
     private static final String PERIOD_NOT_UPDATED_MESSAGE = "Period not updated for periodId: ";
 
+    @Value("${admin.uuid}")
+    UUID DEFAULT_ADMIN_UUID;
 
     @Override
     public Period createPeriod(int year) {
@@ -71,7 +74,7 @@ public class PeriodServiceImpl implements PeriodService {
                 .startTime(startDateTime)
                 .endTime(endDateTime)
                 .status(PeriodStatus.SCHEDULED)
-                .createdBy(SecurityContextHolder.getContext().getAuthentication() == null ? ADMIN_UUID :
+                .createdBy(SecurityContextHolder.getContext().getAuthentication() == null ? DEFAULT_ADMIN_UUID :
                         UUID.fromString(SecurityContextHolder.getContext().getAuthentication().getName()))
                 .createdTime(LocalDateTime.now())
                 .updatedTime(LocalDateTime.now())
@@ -82,7 +85,7 @@ public class PeriodServiceImpl implements PeriodService {
                 throw new IntegrityException(PERIOD_NOT_CREATED.code(), "Period not created");
             }
         } catch (DataIntegrityViolationException exception) {
-            throw new IntegrityException(PERIOD_NOT_CREATED.code(), "Period not created");
+            throw new IntegrityException(PERIOD_NOT_CREATED.code(), exception.getCause().getMessage());
         }
 
         return period;
@@ -126,7 +129,9 @@ public class PeriodServiceImpl implements PeriodService {
         return successResponse();
     }
 
-    private void update(Period period) {
+    @Override
+    public Period update(Period period) {
+        period.setUpdatedTime(LocalDateTime.now());
         try {
             if (0 == periodDao.update(period)) {
                 throw new IntegrityException(PERIOD_NOT_UPDATED.code(), PERIOD_NOT_UPDATED_MESSAGE + period.getUuid());
@@ -134,6 +139,9 @@ public class PeriodServiceImpl implements PeriodService {
         } catch (DataIntegrityViolationException exception) {
             throw new IntegrityException(PERIOD_NOT_UPDATED.code(), exception.getCause().getMessage());
         }
+        log.info("Updated period with id {}", period.getUuid());
+
+        return period;
     }
 
     @Override

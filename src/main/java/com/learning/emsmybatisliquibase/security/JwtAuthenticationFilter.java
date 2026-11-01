@@ -1,13 +1,18 @@
 package com.learning.emsmybatisliquibase.security;
 
+import com.learning.emsmybatisliquibase.entity.enums.SessionStatus;
 import com.learning.emsmybatisliquibase.service.EmployeeService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.learning.emsmybatisliquibase.service.EmployeeSessionService;
+import com.learning.emsmybatisliquibase.utils.Constants;
+import com.learning.emsmybatisliquibase.utils.HashUtil;
+import com.learning.emsmybatisliquibase.utils.UtilityService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -25,38 +30,52 @@ import org.springframework.security.oauth2.jwt.JwtException;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.Base64;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     private final JwtTokenProvider jwtTokenProvider;
+
     private final UserDetailsService userDetailsService;
+
     private final ObjectProvider<JwtDecoder> keycloakJwtDecoderProvider;
+
     private final EmployeeService employeeService;
+
+    private final EmployeeSessionService employeeSessionService;
 
 
     public JwtAuthenticationFilter(JwtTokenProvider jwtTokenProvider,
                                    UserDetailsService userDetailsService,
                                    ObjectProvider<JwtDecoder> keycloakJwtDecoderProvider,
-                                   EmployeeService employeeService) {
+                                   EmployeeService employeeService, EmployeeSessionService employeeSessionService) {
         this.jwtTokenProvider = jwtTokenProvider;
         this.userDetailsService = userDetailsService;
         this.keycloakJwtDecoderProvider = keycloakJwtDecoderProvider;
         this.employeeService = employeeService;
+        this.employeeSessionService = employeeSessionService;
+    }
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        return request.getServletPath().contains("/api/auth");
     }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     @NonNull HttpServletResponse response,
                                     @NonNull FilterChain filterChain) throws ServletException, IOException {
-        if (request.getMethod().equals("OPTIONS")) {
+        String path = request.getRequestURI();
+        if (path.startsWith(Constants.AUTH)) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+        if (request.getMethod().equals(Constants.REQUEST_METHOD_OPTIONS)) {
             filterChain.doFilter(request, response);
             return;
         }
@@ -64,23 +83,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
             return;
         }
-        String token = null;
-        Cookie[] cookies = request.getCookies();
-        if (cookies != null) {
-            for (var cookie : cookies) {
-                if (cookie.getName().equals("token")) {
-                    token = cookie.getValue();
-                }
-            }
-        }
+
+        var token = UtilityService.getCookieValue(request, Constants.ACCESS_TOKEN);
         if (token == null) {
             token = getTokenFromRequest(request);
         }
 
-        if (StringUtils.hasText(token)) {
-            if (isKeycloakToken(token)) {
-                authenticateWithKeycloakJwtIfPossible(token, request);
-            } else if (jwtTokenProvider.validateToken(token, request)) {
+        if (StringUtils.hasText(token) && jwtTokenProvider.validateToken(token, request)) {
                 String username = jwtTokenProvider.getUsername(token);
 
                 UserDetails userDetails = userDetailsService.loadUserByUsername(username);
@@ -93,12 +102,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authenticationToken);
             }
-        }
+
         filterChain.doFilter(request, response);
     }
 
     private String getTokenFromRequest(HttpServletRequest request) {
-        String bearerToken = request.getHeader("Authorization");
+        String bearerToken = request.getHeader(Constants.AUTHORIZATION);
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
             return bearerToken.substring(7);
         }
@@ -113,7 +122,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private void authenticateWithKeycloakJwtIfPossible(String rawToken, HttpServletRequest request) {
         JwtDecoder jwtDecoder = keycloakJwtDecoderProvider.getIfAvailable();
         if (jwtDecoder == null) {
-            request.setAttribute("not_authorized", true);
+            request.setAttribute(Constants.NOT_AUTHORIZED, true);
             return;
         }
 
@@ -123,7 +132,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String preferredUsername = jwt.getClaimAsString("preferred_username");
 
             if (!StringUtils.hasText(email) && !StringUtils.hasText(preferredUsername)) {
-                request.setAttribute("not_authorized", true);
+                request.setAttribute(Constants.NOT_AUTHORIZED, true);
                 return;
             }
 
@@ -132,8 +141,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     : employeeService.findByUsername(preferredUsername);
 
             var employee = employeeOptional.orElse(null);
-            if (employee == null) {
-                request.setAttribute("not_authorized", true);
+            var sessionId = UtilityService.getCookieValue(request, Constants.SESSION_ID);
+            log.info("Session Id: {} for employee: {}", sessionId, employee.getEmail());
+            var employeeSession = employeeSessionService
+                    .getBySessionId(Objects.requireNonNull(HashUtil.hash(sessionId)), List.of(SessionStatus.ACTIVE),
+                            UtilityService.getDeviceDetails(request));
+
+            if (employee == null || employeeSession == null || employeeSession.getStatus().getId() != 1) {
+                request.setAttribute(Constants.NOT_AUTHORIZED, true);
                 return;
             }
 
@@ -161,7 +176,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             SecurityContextHolder.getContext().setAuthentication(authenticationToken);
 
         } catch (JwtException ex) {
-            request.setAttribute("not_authorized", true);
+            request.setAttribute(Constants.NOT_AUTHORIZED, true);
         }
     }
 

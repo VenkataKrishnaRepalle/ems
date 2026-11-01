@@ -1,27 +1,24 @@
 package com.learning.emsmybatisliquibase.service.impl;
 
 import com.learning.emsmybatisliquibase.dao.EmployeeDao;
-import com.learning.emsmybatisliquibase.dao.EmployeeSessionDao;
 import com.learning.emsmybatisliquibase.dao.PasswordDao;
 import com.learning.emsmybatisliquibase.dto.EmployeeResponseDto;
 import com.learning.emsmybatisliquibase.dto.LoginDto;
 import com.learning.emsmybatisliquibase.dto.SuccessResponseDto;
 import com.learning.emsmybatisliquibase.dto.pagination.RequestQuery;
-import com.learning.emsmybatisliquibase.entity.*;
+import com.learning.emsmybatisliquibase.entity.Employee;
 import com.learning.emsmybatisliquibase.entity.enums.PasswordStatus;
 import com.learning.emsmybatisliquibase.entity.enums.ProfileStatus;
 import com.learning.emsmybatisliquibase.entity.enums.RoleType;
+import com.learning.emsmybatisliquibase.entity.enums.SessionStatus;
 import com.learning.emsmybatisliquibase.exception.FoundException;
 import com.learning.emsmybatisliquibase.exception.IntegrityException;
 import com.learning.emsmybatisliquibase.exception.InvalidInputException;
 import com.learning.emsmybatisliquibase.security.JwtTokenProvider;
-import com.learning.emsmybatisliquibase.service.EmployeeService;
-import com.learning.emsmybatisliquibase.service.PasswordService;
-import com.learning.emsmybatisliquibase.service.EmployeeRoleService;
-import com.learning.emsmybatisliquibase.service.ProfileService;
-import com.learning.emsmybatisliquibase.service.AuthService;
+import com.learning.emsmybatisliquibase.service.*;
+import com.learning.emsmybatisliquibase.utils.Constants;
+import com.learning.emsmybatisliquibase.utils.HashUtil;
 import com.learning.emsmybatisliquibase.utils.UtilityService;
-import eu.bitwalker.useragentutils.UserAgent;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -29,27 +26,32 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Mono;
+import tools.jackson.databind.ObjectMapper;
 
 import static com.learning.emsmybatisliquibase.exception.errorcodes.EmployeeErrorCodes.PASSWORD_NOT_MATCHED;
 
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
-import java.util.UUID;
+import java.time.Duration;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -72,23 +74,19 @@ public class AuthServiceImpl implements AuthService {
 
     private final ProfileService profileService;
 
-    private final EmployeeSessionDao employeeSessionDao;
+    private final EmployeeSessionService employeeSessionService;
 
     private final WebClient webClient;
 
     private final EmployeeDao employeeDao;
+
+    private final ObjectMapper objectMapper;
 
     @Value("${maximum.login.count}")
     private Integer maxLoginCount;
 
     @Value("${api.location.key}")
     String key;
-
-    @Value("${app.jwt-expiration-milliseconds}")
-    private Long jwtExpiryTimeMs;
-
-    @Value("${app.refresh-token-expiration-milliseconds}")
-    private Long refreshTokenExpiryTimeMs;
 
     @Override
     @Transactional
@@ -101,8 +99,7 @@ public class AuthServiceImpl implements AuthService {
             throw new InvalidInputException("NOT_AUTHORIZED_USER", "You're not eligible to access this application");
         }
 
-        var passwords = passwordDao.getByEmployeeUuidAndStatus(employee.getUuid(),
-                PasswordStatus.ACTIVE);
+        var passwords = passwordDao.getByEmployeeUuidAndStatus(employee.getUuid(), PasswordStatus.ACTIVE);
         if (passwords.size() != 1) {
             throw new InvalidInputException("ACCOUNT_LOCKED", "Account Locked, Please reset password");
         }
@@ -121,30 +118,80 @@ public class AuthServiceImpl implements AuthService {
             throw new InvalidInputException(PASSWORD_NOT_MATCHED.code(), "Entered Password in Incorrect");
         }
 
-        var sessions = employeeSessionDao.getByEmployeeUuid(employee.getUuid());
-        if (sessions.size() >= maxLoginCount) {
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(String.valueOf(employee.getUuid()), loginDto.getPassword()));
+
+        return commonAuthenticationValidation(request, response, authentication, employee.getUuid(), loginDto.getPassword());
+    }
+
+    @Override
+    public EmployeeResponseDto keycloakLogin(Jwt jwt, HttpServletRequest request, HttpServletResponse response) {
+        String email = jwt.getClaimAsString("email");
+        String username = jwt.getClaimAsString("preferred_username");
+
+        Employee employee = (StringUtils.hasText(email)
+                ? employeeService.findByEmail(email)
+                : employeeService.findByUsername(username))
+                .orElseThrow(() -> {
+                    log.error("Invalid email or preferred_username");
+                    return new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+                });
+
+        var password = passwordDao.getByEmployeeUuidAndStatus(employee.getUuid(), PasswordStatus.ACTIVE)
+                .getFirst();
+        if (password == null) {
+            log.error("Invalid password / Password not set");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+        }
+
+        Map<String, Object> realmAccess = jwt.getClaim("realm_access");
+
+        List<String> roles = Collections.emptyList();
+
+        if (realmAccess != null) {
+            var rolesObject = realmAccess.get("roles");
+            if (rolesObject instanceof List<?> roleList) {
+                roles = roleList.stream()
+                        .map(String.class::cast)
+                        .toList();
+            }
+        }
+
+        Set<GrantedAuthority> authorities = roles.stream()
+                .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
+                .collect(Collectors.toSet());
+
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(String.valueOf(employee.getUuid()), null, authorities));
+
+        return commonAuthenticationValidation(request, response, authentication, employee.getUuid(), null);
+    }
+
+    private EmployeeResponseDto commonAuthenticationValidation(HttpServletRequest request, HttpServletResponse response,
+                                                               Authentication authentication, UUID employeeUuid, String password) {
+        var sessionCount = employeeSessionService.count(new RequestQuery(
+                Map.of("employee_uuid", employeeUuid,
+                        "status", SessionStatus.ACTIVE,
+                        "device_type", UtilityService.getDeviceDetails(request))));
+
+        if (sessionCount >= maxLoginCount) {
             throw new FoundException("MAX_LOGIN_ATTEMPT_REACHED", "Max login attempts of " + maxLoginCount +
                     " reached to your account");
         }
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        String.valueOf(employee.getUuid()),
-                        loginDto.getPassword()
-                ));
+
+        String sessionId = HashUtil.generateSessionId();
+        String sessionIdHash = HashUtil.hash(sessionId);
+
+        employeeSessionService.insert(request, sessionIdHash, employeeUuid);
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
-        String token = jwtTokenProvider.generateToken(authentication);
-        String refreshToken = jwtTokenProvider.generateRefreshToken(authentication);
+        String accessToken = jwtTokenProvider.generateAccessToken(sessionId, authentication);
+        String refreshToken = jwtTokenProvider.generateRefreshToken(sessionId, authentication);
 
-        addAuthCookie(response, "token", token, jwtExpiryTimeMs);
-        addAuthCookie(response, "refreshToken", refreshToken, refreshTokenExpiryTimeMs);
+        addAuthCookies(response, sessionId, accessToken, refreshToken);
 
-        if (null != loginDto.getRequestQuery()) {
-            saveSession(request, employee, loginDto.getRequestQuery(), token);
-        }
-
-        var employeeResponse = employeeDao.getEmployee(employee.getUuid());
-        employeeResponse.setRoles(getRoles(employee.getUuid()));
+        var employeeResponse = employeeDao.getEmployee(employeeUuid);
+        employeeResponse.setRoles(getRoles(employeeUuid));
         return employeeResponse;
     }
 
@@ -155,59 +202,29 @@ public class AuthServiceImpl implements AuthService {
                 .toList();
     }
 
-    private void addAuthCookie(HttpServletResponse response, String name, String value, long maxAgeMillis) {
-        Cookie cookie = new Cookie(name, value);
-        cookie.setHttpOnly(true);
-        cookie.setPath("/");
-        cookie.setMaxAge(toCookieMaxAgeSeconds(maxAgeMillis));
-        response.addCookie(cookie);
+    private void addAuthCookies(HttpServletResponse response, String sessionId,
+                                String accessToken, String refreshToken) {
+        if (sessionId != null) {
+            addCookie(response, Constants.SESSION_ID, sessionId, Duration.ofHours(8), "/");
+        }
+        if (accessToken != null) {
+            addCookie(response, Constants.ACCESS_TOKEN, accessToken, Duration.ofMinutes(15), "/");
+        }
+        if (refreshToken != null) {
+            addCookie(response, Constants.REFRESH_TOKEN, refreshToken, Duration.ofHours(8), "/api/auth/refresh-token");
+        }
     }
 
-    private int toCookieMaxAgeSeconds(long maxAgeMillis) {
-        if (maxAgeMillis <= 0) {
-            return -1;
-        }
-        long seconds = TimeUnit.MILLISECONDS.toSeconds(maxAgeMillis);
-        if (seconds <= 0) {
-            seconds = 1;
-        }
-        return (int) Math.min(Integer.MAX_VALUE, seconds);
-    }
-
-    private void saveSession(HttpServletRequest request, Employee employee, RequestQuery requestQuery, String token) {
-        var userAgentString = request.getHeader("User-Agent");
-        var userAgent = UserAgent.parseUserAgentString(userAgentString);
-        var browser = userAgent.getBrowser();
-        var os = userAgent.getOperatingSystem();
-        var geoLocations = UtilityService.getLocationInfo(requestQuery);
-        var longitude = geoLocations.get("longitude");
-        var latitude = geoLocations.get("latitude");
-        var location = getLocation(longitude, latitude);
-        var platform = UtilityService.getPlatform(requestQuery);
-        if (location == null || location.getProperties().isEmpty()) {
-            return;
-        }
-        EmployeeSession session = EmployeeSession.builder()
-                .uuid(UUID.randomUUID())
-                .employeeUuid(employee.getUuid())
-                .token(token)
-                .longitude(longitude)
-                .latitude(latitude)
-                .browserName(browser.getName())
-                .platform(platform)
-                .osName(os.getName())
-                .isActive(true)
-                .location(UtilityService.extractAddressInfo(location))
-                .loginTime(LocalDateTime.now())
+    private void addCookie(HttpServletResponse response, String name, String value,
+                           Duration maxAge, String path) {
+        ResponseCookie cookie = ResponseCookie.from(name, value)
+                .httpOnly(true)
+                .secure(true)
+                .sameSite("Strict")     // see note below about Vercel
+                .path(path)
+                .maxAge(maxAge)
                 .build();
-        try {
-            if (0 == employeeSessionDao.insert(session)) {
-                throw new IntegrityException("EMPLOYEE_SESSION_NOT_INSERTED",
-                        "Employee Session not created for employee : " + employee.getUuid());
-            }
-        } catch (DataIntegrityViolationException exception) {
-            throw new IntegrityException("EMPLOYEE_SESSION_NOT_INSERTED", exception.getCause().getMessage());
-        }
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
     }
 
     @Override
@@ -220,46 +237,41 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public Map<String, Boolean> validateToken(String token, String refreshToken, HttpServletRequest request) {
-        token = extractToken(token);
-        refreshToken = extractToken(refreshToken);
-        var isValidToken = token != null && jwtTokenProvider.validateToken(token);
-        var isValidRefreshToken = refreshToken != null && jwtTokenProvider.validateRefreshToken(refreshToken);
-        return Map.of("tokenActive", isValidToken, "refreshTokenActive", isValidRefreshToken);
-    }
-
-    private String extractToken(String token) {
-        if (null == token) {
-            return null;
-        }
-        if (token.startsWith("Bearer ") || token.startsWith("bearer ")) {
-            return token.substring(7);
-        }
-        return token;
-    }
-
-    @Override
     public EmployeeResponseDto refreshToken(String refreshToken, HttpServletRequest request, HttpServletResponse response) {
+        var tokenFromCookie = UtilityService.getCookieValue(request, Constants.REFRESH_TOKEN);
+        log.info("Token from Refresh Token Cookie: {}", tokenFromCookie);
+        if (refreshToken == null && tokenFromCookie != null) {
+            refreshToken = tokenFromCookie;
+        }
+
         if (!StringUtils.hasText(refreshToken)) {
             throw new InvalidInputException("TOKEN_NOT_PROVIDED", "Token not provided");
         }
         if (refreshToken.startsWith("Bearer ")) {
             refreshToken = refreshToken.substring(7);
         }
-        boolean isValid = jwtTokenProvider.validateRefreshToken(refreshToken);
-        if (isValid) {
-            var employeeId = UUID.fromString(jwtTokenProvider.getUsernameForRefreshToken(refreshToken));
+
+        var claims = jwtTokenProvider.extractRefreshTokenAllClaims(refreshToken);
+        log.info("Claims info from refresh token: {}", claims.toString());
+        var sessionId = objectMapper.readValue(claims.get(Constants.SESSION_ID).toString(), String.class);
+        var session = employeeSessionService.getBySessionId(HashUtil.hash(sessionId),
+                List.of(SessionStatus.ACTIVE), UtilityService.getDeviceDetails(request));
+        if (session == null) {
+            throw new IntegrityException("INVALID_SESSION", "Invalid session id : " + sessionId);
+        }
+        if (claims.getExpiration().before(new Date())) {
+            var employeeId = UUID.fromString(claims.getSubject());
             var employee = employeeService.getById(employeeId);
             var passwords = passwordDao.getByEmployeeUuidAndStatus(employeeId, PasswordStatus.ACTIVE);
             if (passwords.size() != 1) {
                 throw new InvalidInputException("ACCOUNT_LOCKED", "Account Locked, Please reset password");
             }
-            String token = jwtTokenProvider.generateToken(
+            String accessToken = jwtTokenProvider.generateAccessToken(sessionId,
                     new UsernamePasswordAuthenticationToken(
                             String.valueOf(employee.getUuid()),
                             passwords.getFirst().getPassword()));
 
-            addAuthCookie(response, "token", token, jwtExpiryTimeMs);
+            addAuthCookies(response, null, accessToken, null);
             var employeeResponse = employeeDao.getEmployee(employeeId);
             employeeResponse.setRoles(getRoles(employeeId));
 
@@ -271,8 +283,11 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public void logout(HttpServletRequest request, HttpServletResponse response) {
-        removeAuthCookie(response, "token");
-        removeAuthCookie(response, "refreshToken");
+        var sessionId = UtilityService.getCookieValue(request, Constants.SESSION_ID);
+        employeeSessionService.deleteBySessionId(Objects.requireNonNull(HashUtil.hash(sessionId)));
+        removeAuthCookie(response, Constants.SESSION_ID);
+        removeAuthCookie(response, Constants.ACCESS_TOKEN);
+        removeAuthCookie(response, Constants.REFRESH_TOKEN);
     }
 
     private void removeAuthCookie(HttpServletResponse response, String name) {

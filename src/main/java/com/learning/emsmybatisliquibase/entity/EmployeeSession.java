@@ -1,5 +1,7 @@
 package com.learning.emsmybatisliquibase.entity;
 
+import com.learning.emsmybatisliquibase.entity.enums.DeviceType;
+import com.learning.emsmybatisliquibase.entity.enums.SessionStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -18,21 +20,19 @@ public class EmployeeSession {
 
     private UUID employeeUuid;
 
-    private String token;
+    private String sessionIdHash;
 
-    private String latitude;
+    private String userAgentHash;
 
-    private String longitude;
+    private SessionStatus status;
 
-    private String browserName;
+    private DeviceType deviceType;
 
-    private String osName;
+    private String ipAddress;
 
-    private String platform;
+    private LocalDateTime lastAccessedAt;
 
-    private String location;
+    private LocalDateTime expiredAt;
 
-    private Boolean isActive;
-
-    private LocalDateTime loginTime;
+    private LocalDateTime createdAt;
 }

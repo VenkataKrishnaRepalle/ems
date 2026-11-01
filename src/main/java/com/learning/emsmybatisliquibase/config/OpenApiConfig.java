@@ -35,11 +35,11 @@ import org.springframework.context.annotation.Configuration;
         servers = {
                 @Server(
                         description = "Dev",
-                        url = "http://localhost:8082"
+                        url = "http://localhost:8081"
                 ),
                 @Server(
                         description = "Test",
-                        url = "http://localhost:8082"
+                        url = "http://localhost:8081"
                 ),
                 @Server(
                         description = "Production",

@@ -63,6 +63,9 @@ public class CommunicationServiceImpl implements CommunicationService {
     @Value("${email.template.review.start.subject}")
     String reviewStartSubject;
 
+    @Value("${email.disable}")
+    boolean disableCommunication;
+
     private WebClient webClient;
 
     @PostConstruct
@@ -74,6 +77,9 @@ public class CommunicationServiceImpl implements CommunicationService {
 
     @Override
     public void sendSuccessfulEmployeeOnBoard(Employee employee, String password, int capacity) {
+        if(disableCommunication) {
+            return;
+        }
         String templateName = capacity == 1 ? emailTemplateNameSuccessfulOnboard :
                 getEmailTemplateNameSuccessfulOnboardTempPassword;
         Thread thread = new Thread(() -> {
@@ -93,6 +99,9 @@ public class CommunicationServiceImpl implements CommunicationService {
 
     @Override
     public void sendNotificationBeforeStart(List<NotificationDto> notifications, ReviewType reviewType) {
+        if(disableCommunication) {
+            return;
+        }
         var thread = new Thread(() -> notifications.forEach(employee -> {
             log.info("Sending notification before start email to colleague {}", employee.getUuid());
             var fullName = employee.getFirstName() + " " + employee.getLastName();
@@ -110,6 +119,9 @@ public class CommunicationServiceImpl implements CommunicationService {
 
     @Override
     public void sendStartNotification(ReviewType reviewType) {
+        if(disableCommunication) {
+            return;
+        }
         var notifications = reviewTimelineDao.getTimelineIdsByReviewType(reviewType);
         var thread = new Thread(() -> notifications.forEach(employee -> {
             log.info("Sending notification start email to colleague {}", employee.getUuid());

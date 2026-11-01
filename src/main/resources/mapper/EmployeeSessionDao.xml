@@ -6,15 +6,13 @@
             typeHandler="com.learning.emsmybatisliquibase.handler.UuidTypeHandler"/>
         <result property="employeeUuid" column="employee_uuid" javaType="java.util.UUID" jdbcType="VARCHAR"
                 typeHandler="com.learning.emsmybatisliquibase.handler.UuidTypeHandler"/>
-        <result property="token" column="token"/>
-        <result property="latitude" column="latitude"/>
-        <result property="longitude" column="longitude"/>
-        <result property="browserName" column="browser_name"/>
-        <result property="osName" column="os_name"/>
-        <result property="platform" column="platform"/>
-        <result property="location" column="location"/>
-        <result property="isActive" column="is_active"/>
-        <result property="loginTime" column="login_timestamp"/>
+        <result property="sessionIdHash" column="session_id_hash"/>
+        <result property="userAgentHash" column="user_agent_hash"/>
+        <result property="deviceType" column="device_type"/>
+        <result property="ipAddress" column="ip_address"/>
+        <result property="lastAccessedAt" column="last_accessed_at"/>
+        <result property="expiredAt" column="expired_at"/>
+        <result property="createdAt" column="created_at"/>
     </resultMap>
 
     <sql id="getEmployeeSessions">
@@ -29,47 +27,85 @@
         </if>
     </select>
 
-    <select id="getByEmployeeUuidAndStatus" resultMap="employeeSessionResult">
-        <if test="employeeUuid != null">
-            <include refid="getEmployeeSessions"/>
-        </if>
-        <if test="isActive != null">
-            AND is_active = #{isActive}
-        </if>
-    </select>
 
     <select id="getById" resultMap="employeeSessionResult">
         SELECT *
         FROM employee_session
         WHERE uuid = #{uuid}
     </select>
+    <select id="getBySessionId" resultMap="employeeSessionResult">
+        SELECT *
+        FROM employee_session
+        WHERE session_id_hash = #{sessionId}
+        <if test="deviceType != null">
+            AND device_type = #{deviceType.id}
+        </if>
+        <if test="sessionStatusList != null and !sessionStatusList.isEmpty()">
+            <foreach collection="sessionStatusList" item="status" open="(" separator="," close=")">
+                AND status_id IN (status.id)
+            </foreach>
+        </if>
+    </select>
+    <select id="count" resultType="int">
+        SELECT COUNT(*) FROM employee_session
+        <if test="rq != null and rq.getProperties() != null">
+            <trim prefix="WHERE" prefixOverrides="AND|OR" suffixOverrides="AND|OR">
+                <include refid="applyFilters"/>
+            </trim>
+        </if>
+    </select>
+
+    <sql id="applyFilters">
+        <if test="rq.properties.uuid != null">
+            AND uuid = #{rq.properties.uuid}
+        </if>
+        <if test="rq.properties.employee_uuid != null">
+            AND employee_uuid = #{rq.properties.employee_uuid}
+        </if>
+        <if test="rq.properties.session_id_hash != null">
+            AND session_id_hash = #{rq.properties.session_id_hash}
+        </if>
+        <if test="rq.properties.device_type != null">
+            AND device_type = #{rq.properties.device_type.id}
+        </if>
+        <if test="rq.properties.status != null">
+            AND status_id = #{rq.properties.status.id}
+        </if>
+        <if test="rq.properties.statuses != null and !rq.properties.statuses.isEmpty()">
+            AND status_id IN
+            <foreach collection="rq.properties.statuses" item="status" open="(" separator="," close=")">
+                #{status.id}
+            </foreach>
+        </if>
+    </sql>
 
     <insert id="insert" flushCache="true">
-        INSERT INTO employee_session(uuid, employee_uuid, browser_name, token, longitude, latitude, os_name, platform,
-                                     location, is_active,
-                                     login_timestamp)
-        VALUES (#{session.uuid}, #{session.employeeUuid}, #{session.browserName}, #{session.token},
-                #{session.longitude}, #{session.latitude}, #{session.osName},
-                #{session.platform}, #{session.location}, #{session.isActive}, #{session.loginTime})
+        INSERT INTO employee_session(uuid, employee_uuid, session_id_hash, user_agent_hash, ip_address, status_id,
+                                     device_type, last_accessed_at, expired_at, created_at)
+        VALUES (#{session.uuid}, #{session.employeeUuid}, #{session.sessionIdHash}, #{session.userAgentHash},
+                #{session.ipAddress}, #{session.status.id}, #{session.deviceType.id}, #{session.lastAccessedAt},
+                #{session.expiredAt}, #{session.createdAt})
     </insert>
 
     <update id="update" flushCache="true">
         UPDATE employee_session
-        SET employee_uuid = #{session.employeeUuid},
-            token         = #{session.token},
-            longitude     = #{session.longitude},
-            latitude      = #{session.latitude},
-            browser_name  = #{session.browserName},
-            os_name       = #{session.osName},
-            platform      = #{session.location},
-            is_active     = #{session.isActive}
+        SET last_accessed_at = #{session.lastAccessedAt},
+            status_id        = #{session.status.id},
+            expired_at       = #{session.expiredAt}
         where uuid = #{session.uuid}
     </update>
 
-    <delete id="delete" flushCache="true">
+    <delete id="deleteByEmployeeUuid" flushCache="true">
         DELETE
         FROM employee_session
-        WHERE uuid = #{uuid}
+        WHERE employee_uuid = #{employeeUuid}
+          AND device_type = #{device_type.id}
+    </delete>
+
+    <delete id="deleteBySessionId" flushCache="true">
+        DELETE
+        FROM employee_session
+        WHERE session_id_hash = #{sessionId}
     </delete>
 
 </mapper>

@@ -1,7 +1,19 @@
 server:
-  port: 8082
+  port: 8081
   tomcat:
     max-http-form-post-size: 2147483647
+
+  servlet:
+    session:
+      timeout: 30m
+      cookie:
+        name: SESSION_ID
+        http-only: true
+        secure: true
+        same-site: strict
+        path: /
+
+  forward-headers-strategy: native
 
 api:
   location:
@@ -155,6 +167,7 @@ default:
       url: ${EMAIL_API_URL}
 
 email:
+  disable: true
   template:
     successful-onboard:
       name: colleague-successful-onboard-mail

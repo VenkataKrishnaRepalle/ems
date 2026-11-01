@@ -1,16 +1,16 @@
 package com.learning.emsmybatisliquibase.utils;
 
-import com.learning.emsmybatisliquibase.dto.pagination.RequestQuery;
+import com.learning.emsmybatisliquibase.entity.enums.DeviceType;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
-
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Slf4j
 public class UtilityService {
+    private UtilityService() {
+        /* This utility class should not be instantiated */
+    }
 
-    public static final String LOCATION = "location";
 
     public static final String EMPLOYEE_UUID = "employeeUuid";
 
@@ -22,62 +22,30 @@ public class UtilityService {
 
     public static final String STATUS = "status";
 
-    public static Map<String, String> getLocationInfo(RequestQuery requestQuery) {
-        var location = requestQuery.getPropertyValue(LOCATION);
-        if (location instanceof Map<?, ?>) {
-            Map<String, String> result = new LinkedHashMap<>();
-            for (Map.Entry<?, ?> entry : ((Map<?, ?>) location).entrySet()) {
-                result.put(String.valueOf(entry.getKey()), String.valueOf(entry.getValue()));
-            }
-            return result;
-        }
+    public static DeviceType getDeviceDetails(HttpServletRequest request) {
+        String ua = request.getHeader("User-Agent");
+        if (ua == null) return DeviceType.UNKNOWN;
+        ua = ua.toLowerCase();
 
-        return Collections.emptyMap();
+        if (ua.contains("ipad") || ua.contains("tablet") || (ua.contains("android") && !ua.contains("mobile"))) {
+            return DeviceType.TABLET;
+        }
+        if (ua.contains("mobi") || ua.contains("iphone") || ua.contains("android")) {
+            return DeviceType.MOBILE;
+        }
+        return DeviceType.WEB;
     }
 
-    public static String getPlatform(RequestQuery requestQuery) {
-        var platform = requestQuery.getPropertyValue("platform");
-        if (platform instanceof String) {
-            return (String) platform;
+    public static String getCookieValue(HttpServletRequest request, String cookieName) {
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for (var cookie : cookies) {
+                log.info("Cookie name: {} Cookie Value: {}", cookie.getName(), cookie.getValue());
+                if (cookie.getName().equals(cookieName)) {
+                    return cookie.getValue();
+                }
+            }
         }
         return null;
     }
-
-    public static String extractAddressInfo(RequestQuery requestQuery) {
-        var resultsObj = requestQuery.getPropertyValue("results");
-        log.info(resultsObj.toString());
-        if (!(resultsObj instanceof List<?> results)) {
-            return null;
-        }
-        if (results.isEmpty()) {
-            return null;
-        }
-        var result = results.getFirst();
-        if (!(result instanceof Map<?, ?> resultMap)) {
-            return null;
-        }
-        var componentsObj = resultMap.get("components");
-        if (!(componentsObj instanceof Map<?, ?> components)) {
-            return null;
-        }
-        var residential = extractValueFromMap(components, "residential");
-        var road = extractValueFromMap(components, "road");
-        var city = extractValueFromMap(components, "city");
-        var district = extractValueFromMap(components, "district");
-        var state = extractValueFromMap(components, "state");
-        var postcode = extractValueFromMap(components, "postcode");
-        var country = extractValueFromMap(components, "country");
-
-        return Stream.of(residential, road, city, district, state, postcode, country)
-                .filter(Objects::nonNull)
-                .collect(Collectors.joining(", "));
-    }
-
-    public static String extractValueFromMap(Map<?, ?> inputMap, String key) {
-        if (!inputMap.containsKey(key)) {
-            return null;
-        }
-        return inputMap.get(key).toString();
-    }
-
 }

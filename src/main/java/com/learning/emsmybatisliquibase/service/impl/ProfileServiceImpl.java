@@ -51,7 +51,7 @@ public class ProfileServiceImpl implements ProfileService {
             throw new IntegrityException(PROFILE_NOT_CREATED.code(),
                     exception.getCause().getMessage());
         }
-        sendEventToEtms(profile.getEmployeeUuid(), profile.getProfileStatus());
+//        sendEventToEtms(profile.getEmployeeUuid(), profile.getProfileStatus());
         return profile;
     }
 
@@ -67,7 +67,7 @@ public class ProfileServiceImpl implements ProfileService {
             throw new IntegrityException(PROFILE_NOT_UPDATED.code(),
                     exception.getCause().getMessage());
         }
-        sendEventToEtms(profileDto.getEmployeeUuid(), profileDto.getProfileStatus());
+//        sendEventToEtms(profileDto.getEmployeeUuid(), profileDto.getProfileStatus());
         return profileDto;
     }
 

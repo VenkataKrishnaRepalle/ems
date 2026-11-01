@@ -11,6 +11,7 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -39,9 +40,9 @@ public class SpringSecurityConfig {
     @Bean
     @Order(0)
     @ConditionalOnProperty(prefix = "app.keycloak", name = "enabled", havingValue = "true")
-    public SecurityFilterChain keycloakLoginSecurityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain keycloakLoginSecurityFilterChain(HttpSecurity http) {
         http
-            .securityMatcher("/api/keycloak/login-keycloak")
+            .securityMatcher("/api/auth/keycloak-login")
             .csrf(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(authorize -> authorize.anyRequest().permitAll())
             .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> {}))
@@ -81,6 +82,8 @@ public class SpringSecurityConfig {
     public SecurityFilterChain webSecurityFilterChain(HttpSecurity http) throws Exception {
         http
             .securityMatcher("/**")
+                .sessionManagement(sm ->
+                        sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .csrf(csrf -> csrf
                 .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
             )

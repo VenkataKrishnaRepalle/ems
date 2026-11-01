@@ -9,23 +9,28 @@
             <column name="employee_uuid" type="${uuid_type}">
                 <constraints nullable="false"/>
             </column>
-            <column name="token" type="VARCHAR">
+            <column name="session_id_hash" type="VARCHAR">
                 <constraints nullable="false"/>
             </column>
-            <column name="latitude" type="VARCHAR">
+            <column name="user_agent_hash" type="VARCHAR">
                 <constraints nullable="false"/>
             </column>
-            <column name="longitude" type="VARCHAR">
+            <column name="ip_address" type="VARCHAR">
                 <constraints nullable="false"/>
             </column>
-            <column name="browser_name" type="VARCHAR"/>
-            <column name="os_name" type="VARCHAR"/>
-            <column name="platform" type="VARCHAR"/>
-            <column name="location" type="VARCHAR"/>
-            <column name="is_active" type="BOOLEAN">
+            <column name="status_id" type="INTEGER">
                 <constraints nullable="false"/>
             </column>
-            <column name="login_timestamp" type="TIMESTAMP">
+            <column name="device_type" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_accessed_at" type="timestamptz">
+                <constraints nullable="false"/>
+            </column>
+            <column name="expired_at" type="timestamptz">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="timestamptz">
                 <constraints nullable="false"/>
             </column>
         </createTable>
@@ -33,5 +38,67 @@
                                  constraintName="employee_fk" initiallyDeferred="false"
                                  deferrable="false" onDelete="CASCADE" onUpdate="CASCADE"
                                  referencedTableName="employee" referencedColumnNames="uuid"/>
+
+        <createTable tableName="session_status">
+            <column name="id" type="INTEGER">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="session_status_pk"/>
+            </column>
+            <column name="name" type="VARCHAR">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <insert tableName="session_status">
+            <column name="id" value="1"/>
+            <column name="name" value="ACTIVE"/>
+        </insert>
+        <insert tableName="session_status">
+            <column name="id" value="2"/>
+            <column name="name" value="LOGGED_OUT"/>
+        </insert>
+        <insert tableName="session_status">
+            <column name="id" value="3"/>
+            <column name="name" value="REVOKED"/>
+        </insert>
+        <insert tableName="session_status">
+            <column name="id" value="4"/>
+            <column name="name" value="EXPIRED"/>
+        </insert>
+
+        <addForeignKeyConstraint baseTableName="employee_session" baseColumnNames="status_id"
+                                 constraintName="session_statud_id_fk" initiallyDeferred="false"
+                                 deferrable="false" onUpdate="CASCADE" onDelete="CASCADE"
+                                 referencedTableName="session_status" referencedColumnNames="id"/>
+
+        <createTable tableName="device_type">
+            <column name="id" type="INTEGER">
+                <constraints nullable="false" primaryKeyName="device_type_id_pk" primaryKey="true"/>
+            </column>
+            <column name="name" type="VARCHAR">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <insert tableName="device_type">
+            <column name="id" value="1"/>
+            <column name="name" value="WEB"/>
+        </insert>
+        <insert tableName="device_type">
+            <column name="id" value="2"/>
+            <column name="name" value="MOBILE"/>
+        </insert>
+        <insert tableName="device_type">
+            <column name="id" value="3"/>
+            <column name="name" value="TABLET"/>
+        </insert>
+        <insert tableName="device_type">
+            <column name="id" value="4"/>
+            <column name="name" value="UNKNOWN"/>
+        </insert>
+
+        <addForeignKeyConstraint baseTableName="employee_session" baseColumnNames="device_type"
+                                 constraintName="employee_session_device_type_fk" deferrable="false"
+                                 initiallyDeferred="false" onDelete="CASCADE" onUpdate="CASCADE"
+                                 referencedTableName="device_type" referencedColumnNames="id"/>
     </changeSet>
 </databaseChangeLog>

@@ -6,15 +6,14 @@ import com.learning.emsmybatisliquibase.dto.LoginDto;
 import com.learning.emsmybatisliquibase.dto.SuccessResponseDto;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-
-import java.util.Map;
+import org.springframework.security.oauth2.jwt.Jwt;
 
 public interface AuthService {
     EmployeeResponseDto login(LoginDto loginDto, HttpServletRequest request, HttpServletResponse response) throws JsonProcessingException;
 
-    SuccessResponseDto verifyEmail(String email);
+    EmployeeResponseDto keycloakLogin(Jwt jwt, HttpServletRequest request, HttpServletResponse response);
 
-    Map<String, Boolean> validateToken(String token, String refreshToken, HttpServletRequest request);
+    SuccessResponseDto verifyEmail(String email);
 
     EmployeeResponseDto refreshToken(String refreshToken, HttpServletRequest request, HttpServletResponse response);
 

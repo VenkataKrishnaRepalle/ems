@@ -9,6 +9,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -25,24 +27,22 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<EmployeeResponseDto> login(@RequestBody LoginDto loginDto,
-                                                    HttpServletRequest request, HttpServletResponse response) throws JsonProcessingException {
+                                                     HttpServletRequest request, HttpServletResponse response) throws JsonProcessingException {
         var result = authService.login(loginDto, request, response);
         return new ResponseEntity<>(result, HttpStatus.OK);
     }
 
-    @PostMapping("/refresh-token")
-    public ResponseEntity<EmployeeResponseDto> refreshToken(@CookieValue(name = "refreshToken", required = false) String refreshToken,
-                                                           HttpServletRequest request,
-                                                           HttpServletResponse response) {
-        return new ResponseEntity<>(authService.refreshToken(refreshToken, request, response), HttpStatus.OK);
+    @PostMapping("/keycloak-login")
+    public ResponseEntity<EmployeeResponseDto> keycloakLogin(@AuthenticationPrincipal Jwt jwt,
+                                                             HttpServletRequest request, HttpServletResponse response) {
+        return new ResponseEntity<>(authService.keycloakLogin(jwt, request, response), HttpStatus.OK);
     }
 
-    @PostMapping("/validate-token")
-    public ResponseEntity<Map<String, Boolean>> validateToken(@CookieValue(name = "token", required = false) String token,
-                                                              @CookieValue(name = "refreshToken", required = false) String refreshToken,
-                                                              HttpServletRequest request) {
-        log.info("Employee Controller:: validateToken is called");
-        return new ResponseEntity<>(authService.validateToken(token, refreshToken, request), HttpStatus.OK);
+    @PostMapping("/refresh-token")
+    public ResponseEntity<EmployeeResponseDto> refreshToken(@CookieValue(name = "refreshToken", required = false) String refreshToken,
+                                                            HttpServletRequest request,
+                                                            HttpServletResponse response) {
+        return new ResponseEntity<>(authService.refreshToken(refreshToken, request, response), HttpStatus.OK);
     }
 
     @PostMapping("/verify-email")
